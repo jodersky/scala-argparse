@@ -99,12 +99,35 @@ object ini extends Module {
 }
 
 object examples extends Module {
-  trait ExampleApp extends ScalaNativeModule {
+
+  object testutil extends ScalaNativeModule {
+    def scalaVersion = scala31
+    def scalaNativeVersion = scalaNative
+    def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
+    def ivyDeps = Agg(
+      ivy"com.lihaoyi::utest::0.7.11",
+      ivy"com.lihaoyi::os-lib::0.8.1"
+    )
+  }
+
+  trait ExampleApp extends ScalaNativeModule { self =>
     def scalaVersion = scala31
     def scalaNativeVersion = scalaNative
     def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
     def moduleDeps = Seq(argparse.native(scala31, scalaNative))
-    object test extends Tests with Utest
+    object test extends Tests with Utest {
+      def moduleDeps = super.moduleDeps ++ Seq(testutil)
+      def forkEnv = T {
+        Map(
+          "SNIPPET_FILE" -> (self.millSourcePath / "src" / "shell.txt").toString,
+          "PATH" -> (self.nativeLink() / os.up).toString
+        )
+      }
+    }
+
+    def nativeLink = T {
+      os.Path(scalaNativeWorker().nativeLink(nativeConfig(), (T.dest / "app").toIO))
+    }
   }
 
   object basic extends ExampleApp
@@ -122,11 +145,11 @@ object examples extends Module {
   object reader extends ExampleApp
   object readme extends ExampleApp
 
-  def allExamples = Seq(basic, paramreq)
+  // def allExamples = Seq(basic, paramreq)
 
-  def linkAll = T {
-    T.traverse(allExamples){ example =>
-      example.nativeLink
-    }()
-  }
+  // def linkAll = T {
+  //   T.traverse(allExamples){ example =>
+  //     example.nativeLink
+  //   }()
+  // }
 }

@@ -1,10 +1,5 @@
 def main(args: Array[String]): Unit =
   val parser = argparse.default.ArgumentParser()
-  val files = parser.repeatedParam[java.nio.file.Path](
-    "files",
-    help="remove these files"
-  )
+  val echo = parser.requiredParam[String]("echo")
   parser.parseOrExit(args)
-  for (file <- files.value) {
-    println(s"if this were a real program, we would delete $file")
-  }
+  print(echo.value)

@@ -1,0 +1,10 @@
+$ app
+$ app --help
+usage:
+
+$ app --verbose
+unknown argument: --verbose
+run with '--help' for more information
+$ app foo
+unknown argument: foo
+run with '--help' for more information
