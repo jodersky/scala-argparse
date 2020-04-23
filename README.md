@@ -1,8 +1,8 @@
-# cmdline
+# cmdr
 
 Pragmatic command line parsing and configuration for Scala apps.
 
-# Guiding Principles
+## Guiding Principles
 
 - Avoid ceremony and target the common use-case. *The design is inspired by
   the [`@main` annotation](https://dotty.epfl.ch/docs/reference/changed-features/main-functions.html)
@@ -18,7 +18,7 @@ Pragmatic command line parsing and configuration for Scala apps.
   JVM-only features such as system properties or config files in resource
   loaders.*
 
-# Example
+## Example
 
 ```scala
 object Main {
@@ -62,12 +62,12 @@ $ ./serverapp --port=9090 /srv/www
 0.0.0.0:9090/srv/www
 ```
 
-# Details
+## Details
 
 Look at [the API doc](cmdr/src/cmdr/package.scala) for parsing rules and
 explanations on how it works.
 
-# Glossary
+## Glossary
 
 The documentation frequently refers to 'named' and 'positional' parameters.
 These are defined as follows:
