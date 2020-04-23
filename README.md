@@ -62,6 +62,15 @@ $ ./serverapp --port=9090 /srv/www
 0.0.0.0:9090/srv/www
 ```
 
+```shell
+# all parse errors are displayed; not just the first
+$ ./serverapp --port="aaaahhhhh" a b c
+unknown argument: b
+unknown argument: c
+error processing argument --port: 'aaaahhhhh' is not an integral number
+try 'serverapp --help' for more information
+```
+
 ## Details
 
 Look at [the API doc](cmdr/src/cmdr/package.scala) for parsing rules and
