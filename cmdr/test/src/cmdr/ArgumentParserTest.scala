@@ -117,15 +117,6 @@ object ArgumentParserTest extends TestSuite {
       parser.missing ==> 1
       parser.unknown ==> 0
     }
-    test("flags") {
-      val parser = new TestParser
-      val n1 = parser.requiredParam[String]("--n1")
-      parser.parse("--n1" :: Nil)
-
-      n1.get ==> ""
-      parser.missing ==> 0
-      parser.unknown ==> 0
-    }
     test("typed int") {
       val parser = new TestParser
       val n1 = parser.param("--n1", 2)
@@ -207,6 +198,68 @@ object ArgumentParserTest extends TestSuite {
       n2.get ==> "f"
       p1.get ==> "b"
       r1.get ==> List("c", "g", "h", "--n2=i")
+    }
+    test("missing argument's argument") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1")
+      parser.parse("--n1" :: Nil)
+
+      parser.missing ==> 1
+      parser.unknown ==> 0
+      parser.parseErrors ==> 1
+    }
+    test("flag") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1", flag=true)
+      parser.parse("--n1" :: Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> "true"
+    }
+    test("flag override with embedded") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1", flag=true)
+      parser.parse("--n1=yesss!" :: Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> "yesss!"
+    }
+    test("flag absent without default value") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1", flag=true) // a flag without default value doesn't make much sense but is possible
+      parser.parse(Nil)
+
+      parser.missing ==> 1
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+    }
+    test("flag absent with default value") {
+      val parser = new TestParser
+      val n1 = parser.param[String]("--n1", "false", flag=true)
+      parser.parse(Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> "false"
+    }
+    test("named, not embedded") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1")
+      val n2 = parser.requiredParam[String]("--n2")
+      val p1 = parser.requiredParam[String]("p1")
+      parser.parse("--n1" :: "a" :: "--n1" :: "b" :: "c" :: "--n2" :: "d" :: Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> "b"
+      n2.get ==> "d"
+      p1.get ==> "c"
     }
   }
 }

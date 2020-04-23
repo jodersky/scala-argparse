@@ -93,6 +93,7 @@ class ArgumentParser(
       hasDefault: Boolean,
       env: Option[String],
       help: String,
+      isFlag: Boolean, // flags never take an argument (unless embedded), and are assigned the string "true" if present
       allowRepeat: Boolean,
       useDefault: () => Unit,
       parseAndSet: (String) => Unit
@@ -111,7 +112,8 @@ class ArgumentParser(
       name: String,
       default: Option[A],
       env: Option[String],
-      help: String
+      help: String,
+      flag: Boolean
   )(implicit reader: Reader[A]): Arg[A] = {
     val handle = new Completable[A](name)
     val p = ParamDef(
@@ -119,6 +121,7 @@ class ArgumentParser(
       default.isDefined,
       env,
       help,
+      flag,
       false,
       () => {
         handle._value = default.get
@@ -156,7 +159,8 @@ class ArgumentParser(
     */
   def repeatedParam[A](
       name: String,
-      help: String = ""
+      help: String = "",
+      flag: Boolean = false
   )(implicit reader: Reader[A]): Arg[Seq[A]] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isDone = false
@@ -165,6 +169,7 @@ class ArgumentParser(
       hasDefault = true,
       env = None,
       help = help,
+      isFlag = flag,
       allowRepeat = true,
       useDefault = () => isDone = true, // do nothing, default is an empty collection
       parseAndSet = (value: String) => {
@@ -208,11 +213,25 @@ class ArgumentParser(
     *
     * @param help A help message to display when the user types `--help`
     *
+    * @param flag Set to true if the parameter should be treated as a flag. Flags
+    * are named parameters that are treated specially by the parser:
+    * - they never take arguments, unless the argument is embedded in the flag itself
+    * - they are always assigned the string value "true" if found on the command line
+    * Note that flags are intended to make it easy to pass boolean parameters; it is
+    * quite rare that they are useful for non-boolean params.
+    * The flag field has no effect on positional parameters.
+    *
     * @return A handle to the parameter's future value, available once `parse(args)` has been called.
     */
-  def param[A](name: String, default: A, env: String = null, help: String = "")(
+  def param[A](
+      name: String,
+      default: A,
+      env: String = null,
+      help: String = "",
+      flag: Boolean = false
+  )(
       implicit reader: Reader[A]
-  ): Arg[A] = addParam(name, Some(default), Option(env), help)
+  ): Arg[A] = addParam(name, Some(default), Option(env), help, flag)
 
   /** Define a required parameter.
     *
@@ -224,9 +243,14 @@ class ArgumentParser(
     *
     * @see param
     */
-  def requiredParam[A](name: String, env: String = null, help: String = "")(
+  def requiredParam[A](
+      name: String,
+      env: String = null,
+      help: String = "",
+      flag: Boolean = false
+  )(
       implicit reader: Reader[A]
-  ): Arg[A] = addParam(name, None, Option(env), help)
+  ): Arg[A] = addParam(name, None, Option(env), help, flag)
 
   private def help: String = {
     val b = new StringBuilder
@@ -234,7 +258,7 @@ class ArgumentParser(
     b.result()
   }
 
-  private val Named = "(--[^=]+)=?(.*)?".r
+  private val Named = "(--[^=]+)(?:=(.*))?".r
 
   /** Parse the given arguments with respect to the parameters defined by
     * [[param]], [[requiredParam]] and [[repeatedParam]].
@@ -269,22 +293,46 @@ class ArgumentParser(
       }
 
     // first, iterate over all arguments to detect extraneous ones
+    val argIter = args.iterator
+    var arg: String = null
+    def readArg() = if (argIter.hasNext) arg = argIter.next() else arg = null
+    readArg()
+
     var onlyPositionals = false
-    for (arg <- args) {
+    while (arg != null) {
       if (onlyPositionals) {
         addPositional(arg)
+        readArg()
       } else {
         arg match {
-          case "--"            => onlyPositionals = true
-          case "-h" | "--help" => showAndExit(help)
-          case "--version"     => showAndExit(version)
-          case Named(name, value) if named.contains(name) =>
-            val prev =
-              namedArgs.getOrElseUpdate(name, mutable.ListBuffer.empty[String])
-            namedArgs(name) += value
+          case "--" =>
+            onlyPositionals = true
+            readArg()
+          case "--help" =>
+            showAndExit(help)
+            readArg()
+          case "--version" =>
+            showAndExit(version)
+            readArg()
+          case Named(name, embedded) if named.contains(name) =>
+            readArg()
+            namedArgs.getOrElseUpdate(name, mutable.ListBuffer.empty[String])
+            if (embedded != null) { // embedded argument, i.e. one that contains '='
+              namedArgs(name) += embedded
+            } else if (named(name).isFlag) { // flags never take an arg and are set to "true"
+              namedArgs(name) += "true"
+            } else if (arg == null || arg.matches(Named.regex)) { // non-flags must have an arg
+              reportParseError(name, "argument expected")
+            } else {
+              namedArgs(name) += arg
+              readArg()
+            }
           case Named(name, _) =>
             reportUnknown(name)
-          case positional => addPositional(positional)
+            readArg()
+          case positional =>
+            addPositional(positional)
+            readArg()
         }
       }
     }

@@ -105,7 +105,8 @@ object MainImpl {
             case None       => q"$envBase"
             case Some(prog) => q"""${prog}.toUpperCase + "_" + $envBase"""
           }
-          cmdParamDecls += q"""val $ident = parser.param[$tpe]($dashName, $default, $envName)"""
+          val isFlag = tpe =:= typeOf[Boolean]
+          cmdParamDecls += q"""val $ident = parser.param[$tpe]($dashName, $default, $envName, flag=$isFlag)"""
         } else if (tpe <:< typeOf[Seq[_]]) {
           val t = tpe.typeArgs.head
           cmdRepeatingDecls += q"""val $ident = parser.repeatedParam[$t]($cmdParamName)"""

@@ -27,4 +27,5 @@ object examples extends Module {
   object annotation extends ExampleApp
   object raw extends ExampleApp
   object serverapp extends ExampleApp
+  object flags extends ExampleApp
 }
