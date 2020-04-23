@@ -54,10 +54,11 @@ package object cmdr {
     * 1. A function parameter *with a default value* is associated to a named,
     *    optional command line argument and environment variable.
     *
-    *    - The command line name is given as the `--kebab-case` transformation
-    *      of the function parameter name.
-    *    - The environment variable name is given as the `UPPER_SNAKE_CASE`
-    *      transformation, with the program's name prepended.
+    *      - The command line name is given as the `--kebab-case` transformation
+    *        of the function parameter name.
+    *
+    *      - The environment variable name is given as the `UPPER_SNAKE_CASE`
+    *        transformation, with the program's name prepended.
     *
     * 2. A parameter *without a default value* is associated a positional,
     *    required parameter.

@@ -1,22 +1,22 @@
 # cmdline
 
-Pragmatic argument parsing and configuration for Scala apps.
+Pragmatic command line parsing and configuration for Scala apps.
 
 # Guiding Principles
+
+- Avoid ceremony and target the common use-case. *The design is inspired by
+  the [`@main` annotation](https://dotty.epfl.ch/docs/reference/changed-features/main-functions.html)
+  available in Scala 3 and the [argparse](https://docs.python.org/3/library/argparse.html)
+  package from python.*
+
+- Read configuration from the environment. *This encourages separation of config
+  from code, as described in "the 12 factor app" https://12factor.net/config.*
 
 - Embrace system standards and conventions. *It is assumed that the application
   is run as a first-class executable. All config is read from command line
   arguments and environment variables provided by the OS. We don't rely on
   JVM-only features such as system properties or config files in resource
   loaders.*
-
-- Read configuration from the environment. *This encourages separation of config
-  from code, as described in "the 12 factor app" https://12factor.net/config.*
-
-- Avoid ceremony and target the common use-case. *The design is inspired by
-  the [`@main` annotation](https://dotty.epfl.ch/docs/reference/changed-features/main-functions.html)
-  available in Scala 3 and the [argparse](https://docs.python.org/3/library/argparse.html)
-  package from python.*
 
 # Example
 
@@ -25,61 +25,47 @@ object Main {
 
   @cmdr.main("serverapp", "0.1.0")
   def main(
-      dbConnection: String = "jdbc:sqlite:local.db"
       host: String = "localhost",
       port: Int = 8080,
-      webRoot: java.nio.Path
+      path: java.nio.file.Path
   ): Unit = {
-    println("Actual config:")
-    println(dbConnection)
-    println(host)
-    println(port)
-    println(webRoot)
+    println(s"$host:$port$path")
   }
 
 }
 ```
 
-Assuming the above application has been compiled and assembled into the
-executable 'serverapp' (take a look at [mill
-assembly](http://www.lihaoyi.com/mill/index.html) or
-[sbt-assembly](https://github.com/sbt/sbt-assembly) on how that can be done):
+1. Build the above application by running `./mill examples.serverapp.dist`.
+
+2. Play around with the `./serverapp` executable:
+
+```shell
+$ ./serverapp
+missing argument: path
+try passing `--help` for more information
+```
+
+```shell
+$ ./serverapp /srv/www
+localhost:8080/srv/www
+```
 
 ```shell
 $ ./serverapp --port=9090 /srv/www
-Actual config:
-jdbc:sqlite:local.db
-localhost
-9090
-/srv/www
+localhost:9090/srv/www
 ```
 
 ```shell
 # you can also override named params with environment variables
-$ export SERVERAPP_DB_CONNECTION="jdbc:postgresql:proddb"
+$ export SERVERAPP_HOST="0.0.0.0"
 $ ./serverapp --port=9090 /srv/www
-Actual config:
-jdbc:sqlite:proddb
-localhost
-9090
-/srv/www
+0.0.0.0:9090/srv/www
 ```
-
-```
-$ ./serverapp
-missing argument: web-root
-try passing `--help` for more information
-(exit 2)
-```
-
-# Getting Started
-
-- maven repo
-- requires Scala 2.13
 
 # Details
 
-Look at [this API doc]() for parsing rules and explanations on how it works.
+Look at [the API doc](cmdr/src/cmdr/package.scala) for parsing rules and
+explanations on how it works.
 
 # Glossary
 

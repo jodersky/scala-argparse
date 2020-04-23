@@ -19,7 +19,12 @@ object examples extends Module {
     def scalaVersion = cmdr.scalaVersion
     def scalacOptions = cmdr.scalacOptions
     def moduleDeps = Seq(cmdr)
+    def dist = T {
+      val jar = assembly().path
+      os.copy.over(jar, os.pwd / millSourcePath.last)
+    }
   }
   object annotation extends ExampleApp
   object raw extends ExampleApp
+  object serverapp extends ExampleApp
 }
