@@ -297,11 +297,7 @@ class ArgumentParser(
         case Nil if envFallback.isDefined => param.parseAndSet(envFallback.get)
         case Nil if param.hasDefault      => param.useDefault()
         case Nil                          => reportMissing(name)
-        case list if param.allowRepeat    => for (l <- list) param.parseAndSet(l)
-        case list =>
-          param.parseAndSet(
-            list.last
-          ) // last occurence of named params override
+        case list                         => for (l <- list) param.parseAndSet(l)
       }
     }
 
