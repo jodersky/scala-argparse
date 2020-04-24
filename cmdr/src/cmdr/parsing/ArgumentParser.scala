@@ -285,9 +285,37 @@ class ArgumentParser(
     }
   }
 
-  private def help: String = {
+  def help: String = {
     val b = new StringBuilder
-    b ++= s"usage: $prog ${named.map(_.pretty).mkString(" ")} ${positional.map(_.pretty).mkString(" ")}\n"
+    b ++= s"Usage: $prog "
+    if (!named.isEmpty) {
+      b ++= "[OPTIONS] "
+    }
+    for (param <- positional) {
+      b ++= s"<${param.name}> "
+    }
+    b ++= "\n\n"
+    b ++= description
+    b ++= "\n"
+    if (!named.isEmpty) {
+      // Note that not necessarily all named parameters must be optional. However since that case
+      // is quite rare and not very ergonomic, the default help message here assumes it to be the
+      // case.
+      b ++= "\nOptions:\n"
+      for (param <- named.sortBy(_.name)) {
+        val names = param.names.mkString(", ")
+        b ++= f"  $names%-20s ${param.help}%-50s\n"
+      }
+    }
+
+    val envVars = named.filter(_.env.isDefined)
+    if (!envVars.isEmpty) {
+      b ++= "\nEnvironment:\n"
+      for (param <- envVars) {
+        b ++= f"  ${param.env.get}%-20s ${param.name}%-50s\n"
+      }
+    }
+
     b.result()
   }
 
