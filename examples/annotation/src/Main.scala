@@ -1,6 +1,6 @@
 object Main {
 
-  @cmdr.main("test", "0.1.0")
+  @cmdr.main("test")
   def main(
       configDir: os.FilePath,       // first position
       extraArgs: Seq[String],       // second position and subsequent

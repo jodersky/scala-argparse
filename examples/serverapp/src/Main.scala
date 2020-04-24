@@ -1,6 +1,6 @@
 object Main {
 
-  @cmdr.main("serverapp", "0.1.0")
+  @cmdr.main("serverapp", "An example application.",  "0.1.0")
   def main(
       host: String = "localhost",
       port: Int = 8080,

@@ -154,7 +154,7 @@ package object cmdr {
   @annotation.compileTimeOnly(
     "this program must be compiled with -Ymacro-annotations enabled"
   )
-  class main(name: String = "", version: String = "")
+  class main(name: String = "", description: String, version: String = "")
       extends annotation.StaticAnnotation {
     import scala.language.experimental.macros
     def macroTransform(annottees: Any*): Any = macro cmdr.macros.MainImpl.impl

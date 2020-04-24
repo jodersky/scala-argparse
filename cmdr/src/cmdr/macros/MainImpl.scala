@@ -9,10 +9,15 @@ object MainImpl {
     import c.universe._
     val inputs: List[Tree] = annottees.map(_.tree).toList
 
-    val (cmdName, cmdVersion) = c.prefix.tree match {
-      case q"new $_($name, $version)" => (Some(name), version)
-      case q"new $_($name)"           => (Some(name), Literal(Constant("<unknown>")))
-      case q"new $_()"                => (None, Literal(Constant("<unknown>")))
+    val placeholder = Literal(Constant(""))
+
+    val (cmdName, cmdDescription, cmdVersion) = c.prefix.tree match {
+      case q"new $_($name, $description, $version)" =>
+        (Some(name), description, version)
+      case q"new $_($name, $description)" =>
+        (Some(name), description, placeholder)
+      case q"new $_($name)" => (Some(name), placeholder, placeholder)
+      case q"new $_()"      => (None, placeholder, placeholder)
     }
 
     val (annottee, expandees) = inputs match {
@@ -120,7 +125,7 @@ object MainImpl {
     val res = q"""
     ${expandees.head}
     def main(args: Array[String]): Unit = {
-      val parser = _root_.cmdr.ArgumentParser($cmdName.getOrElse(""), $cmdVersion)
+      val parser = _root_.cmdr.ArgumentParser($cmdName.getOrElse(""), $cmdDescription, $cmdVersion)
       ..$cmdParamDecls
       ..$cmdRepeatingDecls
       parser.parse(args)

@@ -12,8 +12,8 @@ trait Arg[A] {
 }
 
 object ArgumentParser {
-  def apply(prog: String = "", version: String = "", help: String = "") =
-    new ArgumentParser(prog, version, help)
+  def apply(prog: String = "", description: String = "", version: String = "") =
+    new ArgumentParser(prog, description, version)
 }
 
 /** A simple command line argument parser.
@@ -45,8 +45,8 @@ object ArgumentParser {
   */
 class ArgumentParser(
     prog: String,
-    version: String,
-    description: String
+    description: String,
+    version: String
 ) {
 
   private var errors = 0
@@ -91,7 +91,7 @@ class ArgumentParser(
       }
   }
   private case class ParamDef(
-      names: Seq[String], // first element is the primary name, used in error messsages
+      names: Seq[String], // first element is the primary name used in messages
       hasDefault: Boolean,
       env: Option[String],
       help: String,
@@ -124,9 +124,7 @@ class ArgumentParser(
   private def addParamDef(p: ParamDef) = {
     if (p.isNamed) {
       named += p
-      p.names.foreach { s =>
-        aliases += s -> p
-      }
+      p.names.foreach { s => aliases += s -> p }
     } else {
       positional += p
     }
@@ -297,16 +295,20 @@ class ArgumentParser(
     b ++= "\n\n"
     b ++= description
     b ++= "\n"
-    if (!named.isEmpty) {
-      // Note that not necessarily all named parameters must be optional. However since that case
-      // is quite rare and not very ergonomic, the default help message here assumes it to be the
-      // case.
-      b ++= "\nOptions:\n"
-      for (param <- named.sortBy(_.name)) {
-        val names = param.names.mkString(", ")
-        b ++= f"  $names%-20s ${param.help}%-50s\n"
-      }
+
+    // Note that not necessarily all named parameters must be optional. However since that case
+    // is quite rare and not very ergonomic, the default help message here assumes it to be the
+    // case.
+    b ++= "\nOptions:\n"
+    val optLines = mutable.ListBuffer.empty[String]
+    for (param <- named) {
+      val names = param.names.mkString(", ")
+      optLines += f"  $names%-20s ${param.help}%-50s\n"
     }
+    optLines += "  --version            Show the version and exit\n"
+    optLines += "  --help               Show this message and exit\n"
+
+    for (line <- optLines.sorted) b ++= line
 
     val envVars = named.filter(_.env.isDefined)
     if (!envVars.isEmpty) {

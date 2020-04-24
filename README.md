@@ -17,7 +17,7 @@ Pragmatic command line parsing and configuration for Scala apps.
 ```scala
 object Main {
 
-  @cmdr.main("serverapp", "0.1.0")
+  @cmdr.main("serverapp", "An example application.", "0.1.0")
   def main(
       host: String = "localhost",
       port: Int = 8080,
@@ -41,7 +41,19 @@ try 'serverapp --help' for more information
 
 ```
 $ ./serverapp --help
-usage: serverapp [--port=<value>] [--host=<value>] <path>
+Usage: serverapp [OPTIONS] <path> 
+
+An example application.
+
+Options:
+  --help               Show this message and exit
+  --host                                                                 
+  --port                                                                 
+  --version            Show the version and exit
+
+Environment:
+  SERVERAPP_HOST       --host                                            
+  SERVERAPP_PORT       --port                                            
 ```
 
 ```shell
