@@ -37,20 +37,27 @@ object Main {
 
 1. Build the above application by running `./mill examples.serverapp.dist`.
 
-2. Play around with the `./serverapp` executable:
+2. Try running the `./serverapp` executable:
 
 ```shell
 $ ./serverapp
 missing argument: path
-try passing `--help` for more information
+try 'serverapp --help' for more information
+```
+
+```
+$ ./serverapp --help
+usage: serverapp [--port=<value>] [--host=<value>] <path>
 ```
 
 ```shell
+# method params without defaults map to positional args
 $ ./serverapp /srv/www
 localhost:8080/srv/www
 ```
 
 ```shell
+# method params with defaults map to named args
 $ ./serverapp --port=9090 /srv/www
 localhost:9090/srv/www
 ```
