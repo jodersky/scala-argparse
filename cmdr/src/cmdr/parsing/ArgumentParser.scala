@@ -290,7 +290,9 @@ class ArgumentParser(
       b ++= "[OPTIONS] "
     }
     for (param <- positional) {
-      b ++= s"<${param.name}> "
+      b ++= s"<${param.name}>"
+      if (param.allowRepeat) b ++= "..."
+      b ++= " "
     }
     b ++= "\n\n"
     b ++= description

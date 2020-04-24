@@ -1,17 +1,12 @@
 object Main {
 
-  @cmdr.main("test")
+  @cmdr.main("test", "This shows how aliases and help messages can be attached to parameters.")
   def main(
-      configDir: os.FilePath,       // first position
-      extraArgs: Seq[String],       // second position and subsequent
-      host: String = "localhost",   // --host= or env var TEST_HOST=
-      port: Int = 8080,             // --port= or env var TEST_PORT=
-      authKey: String = "1234"      // --auth-key= or env var TEST_AUTH_KEY=
+      @cmdr.alias("-a")
+      @cmdr.help("The authentication key")
+      authKey: String = "1234" // --auth-key= or env var TEST_AUTH_KEY=
   ): Unit = {
-    println(host)
-    println(port)
-    println(configDir)
-    println(extraArgs)
+    println(authKey)
   }
 
 }

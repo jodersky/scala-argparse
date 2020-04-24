@@ -12,7 +12,7 @@ package object cmdr {
 
   /** Annotate this to a method to be used as the program's entrypoint.
     *
-    * This generates a synthetic main method which will take care of parsing
+    * A synthetic main method will be generated which will take care of parsing
     * command line args.
     *
     * = Example =
@@ -22,8 +22,8 @@ package object cmdr {
     *
     *   @cmdr.main("appname", "description", "version")
     *   def entrypoint(
-    *     host: String = "localhost",
-    *     port: Int = 8080,
+    *     @cmdr.help("description") host: String = "localhost",
+    *     @cmdr.alias("-p") port: Int = 8080,
     *     authToken: String = "",
     *     to: java.nio.file.Path,
     *     files: Seq[java.nio.file.Path]
@@ -32,10 +32,24 @@ package object cmdr {
     * }
     * }}}
     *
-    * The above will lead to an executable program with the following usage line:
+    * The above will lead to an executable program with the following help message:
     *
     * {{{
-    * appname [--host=] [--port=] [--auth-token=] to [files...]
+    * Usage: appname [OPTIONS] <to> <files>...
+    *
+    * description
+    *
+    * Options:
+    *   --auth-token
+    *   --help               Show this message and exit
+    *   --host               description
+    *   --port, -p
+    *   --version            Show the version and exit
+    *
+    * Environment:
+    *   APPNAME_HOST         --host
+    *   APPNAME_PORT         --port
+    *   APPNAME_AUTH_TOKEN   --auth-token
     * }}}
     *
     * In other words, it allows overriding `host`, `port` and `authToken` with
@@ -82,6 +96,9 @@ package object cmdr {
     * | `java.nio.file.Path` | Any valid file path | `--foo=/srv/www` |
     *
     * You may implement your own readers for other data types.
+    *
+    * Extra information, such as help string or aliases may added to
+    * parametes via the [[cmdr.help]] and [[cmdr.alias]] annotations.
     *
     * = Command Line Syntax (a.k.a Parsing Rules) =
     *
@@ -159,5 +176,8 @@ package object cmdr {
     import scala.language.experimental.macros
     def macroTransform(annottees: Any*): Any = macro cmdr.macros.MainImpl.impl
   }
+
+  class alias(name: String) extends annotation.Annotation
+  class help(message: String) extends annotation.Annotation
 
 }

@@ -89,6 +89,19 @@ object MainImpl {
 
     val cmdParamIdents = methodParams.map {
       case v @ ValDef(mods, name, tpet, default) =>
+        var help: Tree = Literal(Constant(""))
+        var aliases = List[Tree]()
+        mods.annotations.foreach { annot0 =>
+          val annot1 = c.typecheck(annot0)
+          if (annot1.tpe =:= typeOf[cmdr.help]) {
+            val q"new $_($arg)" = annot1
+            help = arg
+          } else if (annot1.tpe =:= typeOf[cmdr.alias]) {
+            val q"new $_($arg)" = annot1
+            aliases = arg :: aliases
+          }
+        }
+
         val tpe = c.typecheck(tpet, mode = c.TYPEmode).tpe
         val ident = TermName(c.freshName("p"))
         val cmdParamName = util.kebabify(name.toString)
@@ -111,12 +124,12 @@ object MainImpl {
             case Some(prog) => q"""${prog}.toUpperCase + "_" + $envBase"""
           }
           val isFlag = tpe =:= typeOf[Boolean]
-          cmdParamDecls += q"""val $ident = parser.param[$tpe]($dashName, $default, $envName, flag=$isFlag)"""
+          cmdParamDecls += q"""val $ident = parser.param[$tpe]($dashName, $default, $envName, help=$help, aliases = List(..$aliases), flag=$isFlag)"""
         } else if (tpe <:< typeOf[Seq[_]]) {
           val t = tpe.typeArgs.head
-          cmdRepeatingDecls += q"""val $ident = parser.repeatedParam[$t]($cmdParamName)"""
+          cmdRepeatingDecls += q"""val $ident = parser.repeatedParam[$t]($cmdParamName, help=$help)"""
         } else {
-          cmdParamDecls += q"""val $ident = parser.requiredParam[$tpe]($cmdParamName)"""
+          cmdParamDecls += q"""val $ident = parser.requiredParam[$tpe]($cmdParamName, help=$help)"""
         }
         ident
     }
@@ -132,7 +145,7 @@ object MainImpl {
       ${method.name}(..$cmdParamValues)
     }
     """
-    //c.info(c.enclosingPosition, res.toString, true)
+    // c.info(c.enclosingPosition, res.toString, true)
     res
   }
 
