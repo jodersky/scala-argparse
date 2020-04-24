@@ -165,54 +165,6 @@ class ArgumentParser(
     handle
   }
 
-  /** Define a parameter that may be repeated.
-    *
-    * Note that all named parameters may be repeated, regardless if they are
-    * defined as repeated or not. The difference is that for non-repeat-defined
-    * parameters the last value is used, whereas repeat-defined parameters
-    * accumulate values. (This is why [[repeatedParam]] takes an `A` but gives
-    * back a `Seq[A]`, while other params take `A` and give back `A`).
-    *
-    * E.g. consider the command line `--foo=1 --foo=2 --foo=3`
-    *
-    * In case foo is a regular named parameter, then, after parsing, the value
-    * will be `3`. In case it is defined as a repeating parameter, its value will
-    * be `Seq(1,2,3)`.
-    *
-    * Repeated positional parameters consume all remaining positional command line
-    * arguments.
-    */
-  def repeatedParam[A](
-      name: String,
-      aliases: Seq[String] = Seq.empty,
-      help: String = "",
-      flag: Boolean = false
-  )(implicit reader: Reader[A]): Arg[Seq[A]] = {
-    var values = mutable.ArrayBuffer.empty[A]
-    var isDone = false
-    val p = ParamDef(
-      Seq(name) ++ aliases,
-      hasDefault = true,
-      env = None,
-      help = help,
-      isFlag = flag,
-      allowRepeat = true,
-      useDefault = () => isDone = true, // do nothing, default is an empty collection
-      parseAndSet = (value: String) => {
-        reader.read(value) match {
-          case Left(message) => reportParseError(name, message)
-          case Right(value) =>
-            values += value
-            isDone = true
-        }
-      }
-    )
-    addParamDef(p)
-    new Arg[Seq[A]] {
-      def get: Seq[A] = values.toList
-    }
-  }
-
   /** Define an optional parameter, using the given default value if it is not
     * supplied on the command line or by an environment variable.
     *
@@ -284,6 +236,54 @@ class ArgumentParser(
   )(
       implicit reader: Reader[A]
   ): Arg[A] = addParam(name, None, Option(env), aliases, help, flag)
+
+  /** Define a parameter that may be repeated.
+    *
+    * Note that all named parameters may be repeated, regardless if they are
+    * defined as repeated or not. The difference is that for non-repeat-defined
+    * parameters the last value is used, whereas repeat-defined parameters
+    * accumulate values. (This is why [[repeatedParam]] takes an `A` but gives
+    * back a `Seq[A]`, while other params take `A` and give back `A`).
+    *
+    * E.g. consider the command line `--foo=1 --foo=2 --foo=3`
+    *
+    * In case foo is a regular named parameter, then, after parsing, the value
+    * will be `3`. In case it is defined as a repeating parameter, its value will
+    * be `Seq(1,2,3)`.
+    *
+    * Repeated positional parameters consume all remaining positional command line
+    * arguments.
+    */
+  def repeatedParam[A](
+      name: String,
+      aliases: Seq[String] = Seq.empty,
+      help: String = "",
+      flag: Boolean = false
+  )(implicit reader: Reader[A]): Arg[Seq[A]] = {
+    var values = mutable.ArrayBuffer.empty[A]
+    var isDone = false
+    val p = ParamDef(
+      Seq(name) ++ aliases,
+      hasDefault = true,
+      env = None,
+      help = help,
+      isFlag = flag,
+      allowRepeat = true,
+      useDefault = () => isDone = true, // do nothing, default is an empty collection
+      parseAndSet = (value: String) => {
+        reader.read(value) match {
+          case Left(message) => reportParseError(name, message)
+          case Right(value) =>
+            values += value
+            isDone = true
+        }
+      }
+    )
+    addParamDef(p)
+    new Arg[Seq[A]] {
+      def get: Seq[A] = values.toList
+    }
+  }
 
   private def help: String = {
     val b = new StringBuilder
