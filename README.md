@@ -78,9 +78,23 @@ error processing argument --port: 'aaaahhhhh' is not an integral number
 try 'serverapp --help' for more information
 ```
 
+## Usage
+
+This library is published on maven central and may be obtained by adding the
+following coordinates to your build:
+
+- mill: `ivy"io.crashbox::cmdr:<version>"`
+- sbt: `"io.crashbox" %% "cmdr" % "<version>"`
+
+where `<version>` is given by [![Latest version](https://index.scala-lang.org/jodersky/cmdr/cmdr/latest.svg)](https://index.scala-lang.org/jodersky/cmdr/cmdr)
+
+Note that this library requires Scala 2.13 and **requires the scalac option
+"-Ymacro-annotations" to be enabled**. It may also be possible to use this
+library with Scala 2.12 and the macro-paradise plugin.
+
 ## Details
 
-Look at [the API doc](cmdr/src/cmdr/package.scala) for parsing rules and
+Look at [the API docs](https://jodersky.github.io/cmdr/cmdr/package$$main.html) ([defined here](cmdr/src/cmdr/package.scala)) for parsing rules and
 explanations on how it works.
 
 ## Glossary
