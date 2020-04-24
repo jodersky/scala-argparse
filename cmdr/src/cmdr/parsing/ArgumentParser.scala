@@ -98,10 +98,27 @@ class ArgumentParser(
       useDefault: () => Unit,
       parseAndSet: (String) => Unit
   ) {
+    def isNamed = name.startsWith("--")
+
+    def pretty = {
+      val base = if (isNamed && isFlag) {
+        name
+      } else if (isNamed) {
+        s"$name=<value>"
+      } else {
+        s"<$name>"
+      }
+      if (allowRepeat) {
+        s"[$base...]"
+      } else if (hasDefault) {
+        s"[$base]"
+      } else base
+    }
+
     override def toString = name
   }
   private def addParamDef(p: ParamDef) = {
-    if (p.name.startsWith("--")) {
+    if (p.isNamed) {
       named += p.name -> p
     } else {
       positional += p
@@ -254,7 +271,7 @@ class ArgumentParser(
 
   private def help: String = {
     val b = new StringBuilder
-    b ++= s"usage: $prog ${named.keySet.mkString(" ")} ${positional.map(_.name).mkString(" ")}\n"
+    b ++= s"usage: $prog ${named.values.map(_.pretty).mkString(" ")} ${positional.map(_.pretty).mkString(" ")}\n"
     b.result()
   }
 
