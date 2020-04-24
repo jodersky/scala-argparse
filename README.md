@@ -12,12 +12,6 @@ Pragmatic command line parsing and configuration for Scala apps.
 - Read configuration from the environment. *This encourages separation of config
   from code, as described in "the 12 factor app" https://12factor.net/config.*
 
-- Embrace system standards and conventions. *It is assumed that the application
-  is run as a first-class executable. All config is read from command line
-  arguments and environment variables provided by the OS. We don't rely on
-  JVM-only features such as system properties or config files in resource
-  loaders.*
-
 ## Example
 
 ```scala
