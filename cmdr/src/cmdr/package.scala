@@ -20,7 +20,7 @@ package object cmdr {
     * {{{
     * object Main {
     *
-    *   @cmdr.main("appname", "version")
+    *   @cmdr.main("appname", "description", "version")
     *   def entrypoint(
     *     host: String = "localhost",
     *     port: Int = 8080,
