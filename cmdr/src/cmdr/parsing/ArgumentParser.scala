@@ -73,8 +73,10 @@ class ArgumentParser(
     }
   }
 
-  private val named = mutable.Map.empty[String, ParamDef]
+  private val named = mutable.ListBuffer.empty[ParamDef]
   private val positional = mutable.ArrayBuffer.empty[ParamDef]
+
+  private val aliases = mutable.Map.empty[String, ParamDef] // used for lookups
 
   private class Completable[A](name: String) extends Arg[A] {
     var isComplete = false
@@ -89,7 +91,7 @@ class ArgumentParser(
       }
   }
   private case class ParamDef(
-      name: String,
+      names: Seq[String], // first element is the primary name, used in error messsages
       hasDefault: Boolean,
       env: Option[String],
       help: String,
@@ -98,7 +100,9 @@ class ArgumentParser(
       useDefault: () => Unit,
       parseAndSet: (String) => Unit
   ) {
-    def isNamed = name.startsWith("--")
+    require(names.size > 0, "a parameter must have at least one name")
+    def name = names.head
+    def isNamed = name.startsWith("-")
 
     def pretty = {
       val base = if (isNamed && isFlag) {
@@ -119,7 +123,10 @@ class ArgumentParser(
   }
   private def addParamDef(p: ParamDef) = {
     if (p.isNamed) {
-      named += p.name -> p
+      named += p
+      p.names.foreach { s =>
+        aliases += s -> p
+      }
     } else {
       positional += p
     }
@@ -129,12 +136,13 @@ class ArgumentParser(
       name: String,
       default: Option[A],
       env: Option[String],
+      aliases: Seq[String],
       help: String,
       flag: Boolean
   )(implicit reader: Reader[A]): Arg[A] = {
     val handle = new Completable[A](name)
     val p = ParamDef(
-      name,
+      Seq(name) ++ aliases,
       default.isDefined,
       env,
       help,
@@ -176,13 +184,14 @@ class ArgumentParser(
     */
   def repeatedParam[A](
       name: String,
+      aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false
   )(implicit reader: Reader[A]): Arg[Seq[A]] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isDone = false
     val p = ParamDef(
-      name,
+      Seq(name) ++ aliases,
       hasDefault = true,
       env = None,
       help = help,
@@ -220,13 +229,18 @@ class ArgumentParser(
     *
     * @tparam A The type to which an argument shall be converted.
     *
-    * @param name The name of the parameter. A name starting with `--` indicates
+    * @param name The name of the parameter. A name starting with `-` indicates
     * a named parameter, whereas any other name indicates a positional parameter.
+    * Prefer double-dash named params. I.e. prefer "--foo" over "-foo".
     *
     * @param default The default value to use in case no matching argument is provided.
     *
     * @param env The name of an environment variable from which to read the argument
     * in case it is not supplied on the command line. Set to 'null' to ignore.
+    *
+    * @param aliases Other names that may be used for this parameter. This is a
+    * good place to define single-character aliases for frequently used
+    * named parameters. Note that this has no effect for positional parameters.
     *
     * @param help A help message to display when the user types `--help`
     *
@@ -244,11 +258,12 @@ class ArgumentParser(
       name: String,
       default: A,
       env: String = null,
+      aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false
   )(
       implicit reader: Reader[A]
-  ): Arg[A] = addParam(name, Some(default), Option(env), help, flag)
+  ): Arg[A] = addParam(name, Some(default), Option(env), aliases, help, flag)
 
   /** Define a required parameter.
     *
@@ -263,19 +278,20 @@ class ArgumentParser(
   def requiredParam[A](
       name: String,
       env: String = null,
+      aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false
   )(
       implicit reader: Reader[A]
-  ): Arg[A] = addParam(name, None, Option(env), help, flag)
+  ): Arg[A] = addParam(name, None, Option(env), aliases, help, flag)
 
   private def help: String = {
     val b = new StringBuilder
-    b ++= s"usage: $prog ${named.values.map(_.pretty).mkString(" ")} ${positional.map(_.pretty).mkString(" ")}\n"
+    b ++= s"usage: $prog ${named.map(_.pretty).mkString(" ")} ${positional.map(_.pretty).mkString(" ")}\n"
     b.result()
   }
 
-  private val Named = "(--[^=]+)(?:=(.*))?".r
+  private val Named = "(--?[^=]+)(?:=(.*))?".r
 
   /** Parse the given arguments with respect to the parameters defined by
     * [[param]], [[requiredParam]] and [[repeatedParam]].
@@ -331,12 +347,13 @@ class ArgumentParser(
           case "--version" =>
             showAndExit(version)
             readArg()
-          case Named(name, embedded) if named.contains(name) =>
+          case Named(name0, embedded) if aliases.contains(name0) =>
             readArg()
+            val name = aliases(name0).name // ensure that name is long, even if it cam from a short
             namedArgs.getOrElseUpdate(name, mutable.ListBuffer.empty[String])
             if (embedded != null) { // embedded argument, i.e. one that contains '='
               namedArgs(name) += embedded
-            } else if (named(name).isFlag) { // flags never take an arg and are set to "true"
+            } else if (aliases(name).isFlag) { // flags never take an arg and are set to "true"
               namedArgs(name) += "true"
             } else if (arg == null || arg.matches(Named.regex)) { // non-flags must have an arg
               reportParseError(name, "argument expected")
@@ -355,13 +372,13 @@ class ArgumentParser(
     }
 
     // then, iterate over all parameters to detect missing arguments
-    for ((name, param) <- named) {
+    for (param <- named) {
       val envFallback: Option[String] = param.env.flatMap(sys.env.get(_))
 
-      namedArgs.getOrElse(name, mutable.ListBuffer.empty).result match {
+      namedArgs.getOrElse(param.name, mutable.ListBuffer.empty).result match {
         case Nil if envFallback.isDefined => param.parseAndSet(envFallback.get)
         case Nil if param.hasDefault      => param.useDefault()
-        case Nil                          => reportMissing(name)
+        case Nil                          => reportMissing(param.name)
         case list                         => for (l <- list) param.parseAndSet(l)
       }
     }

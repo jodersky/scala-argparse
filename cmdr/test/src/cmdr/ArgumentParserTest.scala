@@ -261,5 +261,35 @@ object ArgumentParserTest extends TestSuite {
       n2.get ==> "d"
       p1.get ==> "c"
     }
+    test("alias short") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1", aliases = List("-a"))
+      parser.parse("-a" :: "a" :: Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> "a"
+    }
+    test("alias long") {
+      val parser = new TestParser
+      val n1 = parser.requiredParam[String]("--n1", aliases = List("--n2"))
+      parser.parse("--n2" :: "a" :: Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> "a"
+    }
+    test("alias and original") {
+      val parser = new TestParser
+      val n1 = parser.repeatedParam[String]("--n1", aliases = List("-a", "-b"))
+      parser.parse("--n1" :: "a" :: "-a" :: "b" :: "-b" :: "c" :: Nil)
+
+      parser.missing ==> 0
+      parser.unknown ==> 0
+      parser.parseErrors ==> 0
+      n1.get ==> List("a", "b", "c")
+    }
   }
 }
