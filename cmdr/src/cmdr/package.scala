@@ -20,9 +20,9 @@ package object cmdr {
     * {{{
     * object Main {
     *
-    *   @cmdr.main("appname", "description", "version")
+    *   @cmdr.main("appname", "An example app.", "version")
     *   def entrypoint(
-    *     @cmdr.help("description") host: String = "localhost",
+    *     @cmdr.help("Interface to listen on") host: String = "localhost",
     *     @cmdr.alias("-p") port: Int = 8080,
     *     authToken: String = "",
     *     to: java.nio.file.Path,
@@ -32,18 +32,18 @@ package object cmdr {
     * }
     * }}}
     *
-    * The above will lead to an executable program with the following help message:
+    * The above will lead to an executable with the following help message:
     *
     * {{{
     * Usage: appname [OPTIONS] <to> <files>...
     *
-    * description
+    * An example app.
     *
     * Options:
-    *   --auth-token
+    *   --auth-token=
     *   --help               Show this message and exit
-    *   --host               description
-    *   --port, -p
+    *   --host=              Interface to listen on
+    *   --port=, -p=
     *   --version            Show the version and exit
     *
     * Environment:
@@ -75,30 +75,31 @@ package object cmdr {
     *        transformation, with the program's name prepended.
     *
     *    If the parameter is of type `Boolean`, the given command line parameter
-    *    will be a "flag" (see next section about parsing rules).
+    *    is a "flag" (see next section about parsing rules).
     *
     * 2. A parameter *without a default value* is given a positional,
     *    required parameter.
     *
-    * 3. A parameter without a default value *and of type `Seq[_]`* is given
+    * 3. A parameter *without a default value and of type `Seq[_]`* is given
     *    all extranous positional parameters. It only makes sense to have one
     *    such parameter, as the first one will consume all remaining arguments.
     *
-    * Command line string arguments are converted to Scala values as defined by
-    * the [[cmdr.parsing.Reader]] typeclass. Here are some common ones:
+    * Command line arguments, which are just strings initially, are converted to
+    * Scala values as defined by the [[cmdr.parsing.Reader]] typeclass. Here are
+    * some common ones:
     *
     * | Type | Format Description | Example |
     * | ---- | ------------------ | ------- |
-    * | `String` | Reads the argument as-is |`--foo=hello`, `--foo="hello, world"` |
-    * | `Int`, `Long` | Integral number | `--foo=42` |
-    * | `Float`, `Double` | Any number | `--foo=42`, `--foo=1.5` |
-    * | `Seq[_]`, `List[_]` (with a default value) | Comma-separated list | `--foo=a1,a2,a3` |
-    * | `java.nio.file.Path` | Any valid file path | `--foo=/srv/www` |
+    * | `String` | Reads the argument as-is. |`--foo=hello`, `--foo="hello, world"` |
+    * | `Int`, `Long` | Integral number. | `--foo=42` |
+    * | `Float`, `Double` | Any number. | `--foo=42`, `--foo=1.5` |
+    * | `Seq[_]`, `List[_]` | Comma-separated list. | `--foo=a1,a2,a3` |
+    * | `java.nio.file.Path` | Any file path. | `--foo=/srv/www` |
     *
     * You may implement your own readers for other data types.
     *
     * Extra information, such as help string or aliases may added to
-    * parametes via the [[cmdr.help]] and [[cmdr.alias]] annotations.
+    * parameters via the [[cmdr.help]] and [[cmdr.alias]] annotations.
     *
     * = Command Line Syntax (a.k.a Parsing Rules) =
     *
@@ -108,9 +109,9 @@ package object cmdr {
     *
     * 1. Named parameters always start with "--". With the exception of flags,
     *    they always take an argument. This argument may either be given in an
-    *    "embedded" way after an '=' sign, or as the next command line
-    *    argument. In case it is given as the next command line argument, it
-    *    must  not start with a '--'.
+    *    "embedded" way after an '=' sign, or as the next command line argument.
+    *    In case it is given as the next command line argument, it must not
+    *    start with a '--'.
     *
     *    A few examples:
     *
@@ -132,9 +133,9 @@ package object cmdr {
     *
     *    Some examples (assuming `--foo` is a flag and `--bar` isn't):
     *
-    *    - `--foo --bar a` sets `--foo` to "true"
+    *    - `--foo` sets `--foo` to "true"
     *
-    *    - `--foo a` sets `--foo` to "true"
+    *    - `--foo a` sets `--foo` to "true" (`a` is considered a positional)
     *
     *    - `--foo=a` sets `--foo` to "a"
     *
@@ -144,11 +145,11 @@ package object cmdr {
     *
     * See [[cmdr.parsing.ArgumentParser]] for further details.
     *
-    * = How It Works Together =
+    * = How It Works =
     *
     * A synthetic main function is appended after the annottee. This main
-    * function defines a command line parser according to the above listed
-    * rules, and then calls the annottee.
+    * function defines a command line parser according to the above rules, and
+    * then calls the annottee.
     *
     * E.g. the above example will lead to a synthetic main similar to the
     * following:
@@ -177,7 +178,10 @@ package object cmdr {
     def macroTransform(annottees: Any*): Any = macro cmdr.macros.MainImpl.impl
   }
 
+  /** Specify a command-line alias by which a parameter may be set. */
   class alias(name: String) extends annotation.Annotation
+
+  /** Attach a help message to a parameter. */
   class help(message: String) extends annotation.Annotation
 
 }

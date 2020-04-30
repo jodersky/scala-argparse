@@ -168,10 +168,10 @@ class ArgumentParser(
     *
     * ErgoTip: always give named parameters a default value.
     *
-    * ''Internal design note: [[param]] and [[requiredParam]] differ only in the presence and absence
-    * of the 'default' parameter. Ideally, they would be merged into one single
-    * method, giving the 'default' parameter a default null value (as is done for
-    * the other optional parameters, such as 'env' and 'help'). Unfortunately,
+    * ''Internal design note: [[param]] and [[requiredParam]] differ only in the
+    * presence of the 'default' parameter. Ideally, they would be merged into one
+    * single method, giving the 'default' parameter a default null value (as is
+    * done for the other optional parameters, such as 'env' and 'help'). Unfortunately,
     * since 'default' is of type A where A may be a primitive type, it cannot
     * be assigned null. The usual solution would be to wrap it in an Option type,
     * but that leads to an ugly API. Hence the method is split into two.
@@ -221,7 +221,8 @@ class ArgumentParser(
     * default value. Instead, missing arguments for this parameter will cause
     * the parser to fail.
     *
-    * ErgoTip: avoid requiring named parameters. Only require positional parameters.
+    * ErgoTip: avoid named parameters that are required. Only require positional
+    * parameters.
     *
     * @see param
     */
@@ -298,13 +299,17 @@ class ArgumentParser(
     b ++= description
     b ++= "\n"
 
-    // Note that not necessarily all named parameters must be optional. However since that case
-    // is quite rare and not very ergonomic, the default help message here assumes it to be the
-    // case.
+    // Note that not necessarily all named parameters must be optional. However
+    // since that is usually the case, this is what the default help message
+    // assumes.
     b ++= "\nOptions:\n"
     val optLines = mutable.ListBuffer.empty[String]
     for (param <- named) {
-      val names = param.names.mkString(", ")
+      val names = if (param.isFlag) {
+        param.names.mkString(", ")
+      } else {
+        param.names.map(_ + "=").mkString(", ")
+      }
       optLines += f"  $names%-20s ${param.help}%-50s\n"
     }
     optLines += "  --version            Show the version and exit\n"

@@ -17,7 +17,7 @@ Pragmatic command line parsing and configuration for Scala apps.
 ```scala
 object Main {
 
-  @cmdr.main("serverapp", "An example application.", "0.1.0")
+  @cmdr.main("serverapp", "An example application.")
   def main(
       host: String = "localhost",
       port: Int = 8080,
@@ -55,6 +55,7 @@ Environment:
   SERVERAPP_HOST       --host                                            
   SERVERAPP_PORT       --port                                            
 ```
+(see documentation on how to add help messages and command aliases)
 
 ```shell
 # method params without defaults map to positional args
@@ -92,21 +93,20 @@ following coordinates to your build:
 - mill: `ivy"io.crashbox::cmdr:<version>"`
 - sbt: `"io.crashbox" %% "cmdr" % "<version>"`
 
-where `<version>` is given by [![Latest version](https://index.scala-lang.org/jodersky/cmdr/cmdr/latest.svg)](https://index.scala-lang.org/jodersky/cmdr/cmdr)
+where `<version>` is given by [![Latest
+version](https://index.scala-lang.org/jodersky/cmdr/cmdr/latest.svg)](https://index.scala-lang.org/jodersky/cmdr/cmdr)
 
 Note that this library requires Scala 2.13 and **requires the scalac option
 "-Ymacro-annotations" to be enabled**. It may also be possible to use this
 library with Scala 2.12 and the macro-paradise plugin.
 
-## Details
+## Documentation
 
-Look at [the API docs](https://jodersky.github.io/cmdr/cmdr/package$$main.html) ([defined here](cmdr/src/cmdr/package.scala)) for parsing rules and
-explanations on how it works.
+Look at [the API docs](https://jodersky.github.io/cmdr/cmdr/package$$main.html)
+([defined here](cmdr/src/cmdr/package.scala)) for parsing rules and explanations
+on how it works.
 
 ## Glossary
-
-The documentation frequently refers to 'named' and 'positional' parameters.
-These are defined as follows:
 
 **parameter**
 : a named variable in an interface definition (command line or method)
