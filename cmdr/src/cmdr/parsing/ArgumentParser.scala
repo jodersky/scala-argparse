@@ -98,7 +98,10 @@ class ArgumentParser(
       isFlag: Boolean, // flags never take an argument (unless embedded), and are assigned the string "true" if present
       allowRepeat: Boolean,
       useDefault: () => Unit,
-      parseAndSet: (String) => Unit
+      parseAndSet: (String) => Unit,
+      // set to true to treat all subsequent parameters as positionals, regardless of their name;
+      // this can be useful for constructing nested commands
+      absorbRemaining: Boolean = false
   ) {
     require(names.size > 0, "a parameter must have at least one name")
     def name = names.head
@@ -136,7 +139,8 @@ class ArgumentParser(
       env: Option[String],
       aliases: Seq[String],
       help: String,
-      flag: Boolean
+      flag: Boolean,
+      absorbRemaining: Boolean
   )(implicit reader: Reader[A]): Arg[A] = {
     val handle = new Completable[A](name)
     val p = ParamDef(
@@ -157,7 +161,8 @@ class ArgumentParser(
             handle._value = value
             handle.isComplete = true
 
-        }
+        },
+      absorbRemaining
     )
     addParamDef(p)
     handle
@@ -210,10 +215,20 @@ class ArgumentParser(
       env: String = null,
       aliases: Seq[String] = Seq.empty,
       help: String = "",
-      flag: Boolean = false
+      flag: Boolean = false,
+      absorbRemaining: Boolean = false
   )(
       implicit reader: Reader[A]
-  ): Arg[A] = addParam(name, Some(default), Option(env), aliases, help, flag)
+  ): Arg[A] =
+    addParam(
+      name,
+      Some(default),
+      Option(env),
+      aliases,
+      help,
+      flag,
+      absorbRemaining
+    )
 
   /** Define a required parameter.
     *
@@ -231,10 +246,12 @@ class ArgumentParser(
       env: String = null,
       aliases: Seq[String] = Seq.empty,
       help: String = "",
-      flag: Boolean = false
+      flag: Boolean = false,
+      absorbRemaining: Boolean = false
   )(
       implicit reader: Reader[A]
-  ): Arg[A] = addParam(name, None, Option(env), aliases, help, flag)
+  ): Arg[A] =
+    addParam(name, None, Option(env), aliases, help, flag, absorbRemaining)
 
   /** Define a parameter that may be repeated.
     *
@@ -354,14 +371,6 @@ class ArgumentParser(
     val positionalArgs = mutable.ArrayBuffer.empty[String]
     var pos = 0 // having this as a separate var from positionalArgs.length allows processing repeated params
 
-    def addPositional(arg: String) =
-      if (pos < positional.length) {
-        positionalArgs += arg
-        if (!positional(pos).allowRepeat) pos += 1
-      } else {
-        reportUnknown(arg)
-      }
-
     // first, iterate over all arguments to detect extraneous ones
     val argIter = args.iterator
     var arg: String = null
@@ -369,6 +378,14 @@ class ArgumentParser(
     readArg()
 
     var onlyPositionals = false
+    def addPositional(arg: String) =
+      if (pos < positional.length) {
+        positionalArgs += arg
+        if (positional(pos).absorbRemaining) onlyPositionals = true
+        if (!positional(pos).allowRepeat) pos += 1
+      } else {
+        reportUnknown(arg)
+      }
     while (arg != null) {
       if (onlyPositionals) {
         addPositional(arg)
@@ -386,11 +403,12 @@ class ArgumentParser(
             readArg()
           case Named(name0, embedded) if aliases.contains(name0) =>
             readArg()
-            val name = aliases(name0).name // ensure that name is long, even if it cam from a short
+            val param = aliases(name0)
+            val name = param.name // ensure that name is long, even if it came from a short
             namedArgs.getOrElseUpdate(name, mutable.ListBuffer.empty[String])
             if (embedded != null) { // embedded argument, i.e. one that contains '='
               namedArgs(name) += embedded
-            } else if (aliases(name).isFlag) { // flags never take an arg and are set to "true"
+            } else if (param.isFlag) { // flags never take an arg and are set to "true"
               namedArgs(name) += "true"
             } else if (arg == null || arg.matches(Named.regex)) { // non-flags must have an arg
               reportParseError(name, "argument expected")
@@ -398,6 +416,7 @@ class ArgumentParser(
               namedArgs(name) += arg
               readArg()
             }
+            if (param.absorbRemaining) onlyPositionals = true
           case Named(name, _) =>
             reportUnknown(name)
             readArg()
