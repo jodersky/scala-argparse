@@ -12,7 +12,7 @@ object cmdr extends ScalaModule with ScalafmtModule with PublishModule {
     def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
     def testFrameworks = Seq("utest.runner.Framework")
   }
-  def publishVersion = "0.1.1"
+  def publishVersion = "0.2.1"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
