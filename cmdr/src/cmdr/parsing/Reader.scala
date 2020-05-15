@@ -44,10 +44,10 @@ object Reader {
   implicit object PathReader extends Reader[os.Path] {
     def read(a: String) =
       try {
-        Right(os.Path(a))
+        Right(os.Path(a, os.pwd))
       } catch {
         case _: IllegalArgumentException =>
-          Left(s"'$a' is not an absolute path")
+          Left(s"'$a' is not a valid path")
       }
   }
   implicit object SubPathReader extends Reader[os.SubPath] {
@@ -68,15 +68,6 @@ object Reader {
           Left(s"'$a' is not a relative path")
       }
   }
-  implicit object FilePathReader extends Reader[os.FilePath] {
-    def read(a: String) =
-      try {
-        Right(os.FilePath(a))
-      } catch {
-        case _: IllegalArgumentException => Left(s"'$a' is not a path")
-      }
-  }
-
   implicit object JavaPathReader extends Reader[java.nio.file.Path] {
     def read(a: String) =
       try {
@@ -93,7 +84,6 @@ object Reader {
         case _: Exception => Left(s"'$a' is not a path")
       }
   }
-  // TODO: reconsider how booleans are treated. Maybe the concept of a flag should be introduced?
   implicit object BooleanReader extends Reader[Boolean] {
     def read(a: String): Either[String, Boolean] = a match {
       case "true"  => Right(true)
@@ -113,6 +103,19 @@ object Reader {
         Left(err)
       } else {
         Right(elems.map(_.getOrElse(sys.error("match error"))).to(factory))
+      }
+    }
+  }
+  implicit def Mapping[K, V](
+      implicit kr: Reader[K],
+      vr: Reader[V]
+  ): Reader[(K, V)] = new Reader[(K, V)] {
+    def read(a: String): Either[String, (K, V)] = {
+      a.split("=", 2) match {
+        case Array(k, v) =>
+          for (k1 <- kr.read(k); v1 <- vr.read(v)) yield (k1 -> v1)
+        case Array(k) => Left(s"expected value after key '$k'")
+        case _        => Left(s"expected key=value pair")
       }
     }
   }
