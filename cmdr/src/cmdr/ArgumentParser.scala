@@ -1,14 +1,17 @@
-package cmdr.parsing
+package cmdr
 
 import scala.collection.mutable
 
 /** An arg represents a handle to a parameter's value. */
 trait Arg[A] {
 
+  @deprecated("use apply() instead", "0.2.1")
+  def get: A = apply()
+
   /** Get the value of this argument. Note that this will throw
     * if the argument has not yet been parsed.
     */
-  def get: A
+  def apply(): A
 }
 
 object ArgumentParser {
@@ -39,8 +42,8 @@ object ArgumentParser {
   * val p1 = parser.param[String]("--this-is-a-named-param", "default value")
   * val p2 = parser.param[Int]("positional-param", 2)
   * parser.parse(Seq("--this-is-a-named-param=other", 5))
-  * println(p1.get)
-  * println(p2.get)
+  * println(p1())
+  * println(p2())
   * }}}
   */
 class ArgumentParser(
@@ -81,7 +84,7 @@ class ArgumentParser(
   private class Completable[A](name: String) extends Arg[A] {
     var isComplete = false
     var _value: A = _
-    def get: A =
+    def apply(): A =
       if (!isComplete) {
         throw new NoSuchElementException(
           s"This argument is not yet available. Make sure to call ArgumentParser#parse(args) before accessing this value."
@@ -297,7 +300,7 @@ class ArgumentParser(
     )
     addParamDef(p)
     new Arg[Seq[A]] {
-      def get: Seq[A] = values.toList
+      def apply(): Seq[A] = values.toList
     }
   }
 
@@ -346,6 +349,8 @@ class ArgumentParser(
   }
 
   private val Named = "(--?[^=]+)(?:=(.*))?".r
+
+  def parse(args: Array[String]): Unit = parse(args.toSeq)
 
   /** Parse the given arguments with respect to the parameters defined by
     * [[param]], [[requiredParam]] and [[repeatedParam]].
@@ -431,7 +436,7 @@ class ArgumentParser(
     for (param <- named) {
       val envFallback: Option[String] = param.env.flatMap(sys.env.get(_))
 
-      namedArgs.getOrElse(param.name, mutable.ListBuffer.empty).result match {
+      namedArgs.getOrElse(param.name, mutable.ListBuffer.empty).result() match {
         case Nil if envFallback.isDefined => param.parseAndSet(envFallback.get)
         case Nil if param.hasDefault      => param.useDefault()
         case Nil                          => reportMissing(param.name)

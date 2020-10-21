@@ -2,7 +2,7 @@
 
 set -o errexit
 
-mill cmdr.docJar
+mill -i cmdr[2.13.3].docJar
 
 docdir=out/cmdr/docJar/dest/javadoc
 git -C "$docdir" init

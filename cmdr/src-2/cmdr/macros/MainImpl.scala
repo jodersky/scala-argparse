@@ -1,6 +1,6 @@
 package cmdr.macros
 
-import scala.reflect.macros.Context
+import scala.reflect.macros.blackbox.Context
 import scala.collection.mutable
 
 object MainImpl {
@@ -133,7 +133,7 @@ object MainImpl {
         }
         ident
     }
-    val cmdParamValues = cmdParamIdents.map(p => q"$p.get")
+    val cmdParamValues = cmdParamIdents.map(p => q"$p()")
 
     val res = q"""
     ${expandees.head}

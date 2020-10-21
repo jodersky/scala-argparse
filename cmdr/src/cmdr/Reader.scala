@@ -1,4 +1,4 @@
-package cmdr.parsing
+package cmdr
 
 import scala.annotation.implicitNotFound
 import scala.collection.Factory
@@ -8,7 +8,7 @@ import java.nio.file.InvalidPathException
   * argument to a given type.
   */
 @implicitNotFound(
-  "Don't know how to read a ${A} from a command line argument. Try implementing your own cmdr.parsing.Rader[$A]."
+  "Don't know how to read a ${A} from a command line argument. Try implementing your own cmdr.Reader[$A]."
 )
 trait Reader[A] {
 

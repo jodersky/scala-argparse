@@ -1,6 +1,6 @@
 #!/bin/bash
 
-mill mill.scalalib.PublishModule/publishAll \
+mill -i mill.scalalib.PublishModule/publishAll \
     --sonatypeCreds "jodersky:$(pass infra/oss.sonatype.org)" \
     --release true \
-    --publishArtifacts cmdr.publishArtifacts
+    --publishArtifacts __.publishArtifacts

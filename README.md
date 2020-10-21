@@ -1,13 +1,13 @@
 # cmdr
 
-Pragmatic command line parsing and configuration for Scala apps.
+Pragmatic command line parsing for Scala apps.
 
 ## Guiding Principles
 
-- Avoid ceremony and target the common use-case. *The design is inspired by
-  the [`@main` annotation](https://dotty.epfl.ch/docs/reference/changed-features/main-functions.html)
-  available in Scala 3 and the [argparse](https://docs.python.org/3/library/argparse.html)
-  package from python.*
+- Avoid ceremony and target the common use-case. *The design is inspired by the
+  [argparse](https://docs.python.org/3/library/argparse.html) package from
+  python and the [`@main` annotation](https://dotty.epfl.ch/docs/reference/changed-features/main-functions.html)
+  available in Scala 3.*
 
 - Read configuration from the environment. *This encourages separation of config
   from code, as described in "the 12 factor app" https://12factor.net/config.*
@@ -15,74 +15,83 @@ Pragmatic command line parsing and configuration for Scala apps.
 ## Example
 
 ```scala
-object Main {
+def main(args: Array[String]): Unit = {
+  val parser = cmdr.ArgumentParser()
 
-  @cmdr.main("serverapp", "An example application.")
-  def main(
-      host: String = "localhost",
-      port: Int = 8080,
-      path: java.nio.file.Path
-  ): Unit = {
-    println(s"$host:$port$path")
-  }
+  val host = parser.param[String](
+    "--host",
+    default = "localhost"
+  )
 
+  val port = parser.param[Int](
+    "--port",
+    default = 8080,
+    aliases = Seq("-p"),
+    env = "PORT"
+  )
+
+  val path = parser.requiredParam[java.nio.file.Path](
+    "path"
+  )
+
+  parser.parse(args)
+  println(s"${host()}:${port()}${path()}")
 }
 ```
 
-1. Build the above application by running `./mill examples.serverapp.dist`.
+1. Build the above application by running `./mill examples.readme.dist`.
 
-2. Try running the `./serverapp` executable:
+2. Try running the `./readme` executable:
 
 ```shell
-$ ./serverapp
+$ ./readme
 missing argument: path
-try 'serverapp --help' for more information
+try ' --help' for more information
 ```
 
-```
-$ ./serverapp --help
-Usage: serverapp [OPTIONS] <path> 
+```shell
+$ ./readme --help
+Usage:  [OPTIONS] <path>
 
-An example application.
+
 
 Options:
   --help               Show this message and exit
-  --host                                                                 
-  --port                                                                 
+  --host=
+  --port=, -p=
   --version            Show the version and exit
 
 Environment:
-  SERVERAPP_HOST       --host                                            
-  SERVERAPP_PORT       --port                                            
+  PORT                 --port
 ```
-(see documentation on how to add help messages and command aliases)
 
 ```shell
-# method params without defaults map to positional args
-$ ./serverapp /srv/www
+$ ./readme /srv/www
 localhost:8080/srv/www
 ```
 
 ```shell
-# method params with defaults map to named args
-$ ./serverapp --port=9090 /srv/www
+$ ./readme --port=9090 /srv/www
 localhost:9090/srv/www
 ```
 
 ```shell
-# you can also override named params with environment variables
-$ export SERVERAPP_HOST="0.0.0.0"
-$ ./serverapp --port=9090 /srv/www
-0.0.0.0:9090/srv/www
+$ ./readme /srv/www --port=9090
+localhost:9090/srv/www
+```
+
+```shell
+$ PORT=80 ./readme /srv/www --host=0.0.0.0
+0.0.0.0:80/srv/www
 ```
 
 ```shell
 # all parse errors are displayed; not just the first
-$ ./serverapp --port="aaaahhhhh" a b c
+$ ./readme --port="aaaahhhhh" a b c
 unknown argument: b
 unknown argument: c
 error processing argument --port: 'aaaahhhhh' is not an integral number
-try 'serverapp --help' for more information
+try '--help' for more information
 ```
 
 ## Usage
@@ -96,9 +105,13 @@ following coordinates to your build:
 where `<version>` is given by [![Latest
 version](https://index.scala-lang.org/jodersky/cmdr/cmdr/latest.svg)](https://index.scala-lang.org/jodersky/cmdr/cmdr)
 
-Note that this library requires Scala 2.13 and **requires the scalac option
-"-Ymacro-annotations" to be enabled**. It may also be possible to use this
-library with Scala 2.12 and the macro-paradise plugin.
+This library is published for Scala 2.13 and Dotty.
+
+- Under Scala 2.13, the additional macros **require the scalac option
+  "-Ymacro-annotations" to be enabled**.
+
+- It may also be possible to use this library with Scala 2.12 and the
+  macro-paradise plugin.
 
 ## Documentation
 
@@ -109,18 +122,18 @@ on how it works.
 ## Glossary
 
 **parameter**
-: a named variable in an interface definition (command line or method)
+: a named variable in an command line definition
 
 **argument**
 : the value assigned to a parameter
 
 ***named* argument**
 : an argument that starts with `--`. The characters following determine the name
-  of the parameter that the argument is assigned to. The actual value assigned to
-  the parameter is given after an '='. For instance `--foo=bar` assigns `bar` to
-  `foo`.
-  Named arguments may appear in any order on a command line.
+of the parameter that the argument is assigned to. The actual value assigned to
+the parameter is given after an '=' or a spance. For instance `--foo=bar`
+assigns `bar` to `foo`. Named arguments may appear in any order on a command
+line.
 
 ***positional* argument**
 : an argument that is not named. Positional arguments are assigned to positional
-  parameters according to their respective order of occurence.
+parameters according to their respective order of occurence.
