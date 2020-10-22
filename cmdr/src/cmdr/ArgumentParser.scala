@@ -2,18 +2,6 @@ package cmdr
 
 import scala.collection.mutable
 
-/** An arg represents a handle to a parameter's value. */
-trait Arg[A] {
-
-  @deprecated("use apply() instead", "0.2.1")
-  def get: A = apply()
-
-  /** Get the value of this argument. Note that this will throw
-    * if the argument has not yet been parsed.
-    */
-  def apply(): A
-}
-
 object ArgumentParser {
   def apply(prog: String = "", description: String = "", version: String = "") =
     new ArgumentParser(prog, description, version)
@@ -46,6 +34,7 @@ object ArgumentParser {
   * println(p2())
   * }}}
   */
+@deprecated("use ArgParser() instead", "0.3.0")
 class ArgumentParser(
     prog: String,
     description: String,
@@ -109,6 +98,11 @@ class ArgumentParser(
     require(names.size > 0, "a parameter must have at least one name")
     def name = names.head
     def isNamed = name.startsWith("-")
+
+    def missing() = {
+      if (hasDefault) useDefault()
+      else reportMissing(name)
+    }
 
     def pretty = {
       val base = if (isNamed && isFlag) {
@@ -438,8 +432,7 @@ class ArgumentParser(
 
       namedArgs.getOrElse(param.name, mutable.ListBuffer.empty).result() match {
         case Nil if envFallback.isDefined => param.parseAndSet(envFallback.get)
-        case Nil if param.hasDefault      => param.useDefault()
-        case Nil                          => reportMissing(param.name)
+        case Nil                          => param.missing()
         case list                         => for (l <- list) param.parseAndSet(l)
       }
     }
@@ -452,11 +445,7 @@ class ArgumentParser(
     }
     for (i <- pos until positional.length) {
       val p = positional(i)
-      if (p.hasDefault) {
-        p.useDefault()
-      } else {
-        reportMissing(positional(i).name)
-      }
+      p.missing()
     }
 
     check()

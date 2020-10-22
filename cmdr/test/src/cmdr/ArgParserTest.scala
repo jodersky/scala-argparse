@@ -2,20 +2,7 @@ package cmdr
 
 import utest._
 
-object ArgumentParserTest extends TestSuite {
-
-  class TestParser extends ArgumentParser("", "", "") {
-    var missing = 0
-    override def reportMissing(name: String): Unit = missing += 1
-    var unknown = 0
-    override def reportUnknown(name: String): Unit = unknown += 1
-    var parseErrors = 0
-    override def reportParseError(
-        name: String,
-        message: String
-    ): Unit = parseErrors += 1
-    override def check(): Unit = ()
-  }
+object ArgParserTest extends TestSuite {
 
   val tests = Tests {
     test("empty") {
@@ -24,6 +11,7 @@ object ArgumentParserTest extends TestSuite {
 
       parser.missing ==> 0
       parser.unknown ==> 0
+      parser.parseErrors ==> 0
     }
     test("positional") {
       val parser = new TestParser
@@ -204,7 +192,7 @@ object ArgumentParserTest extends TestSuite {
       val n1 = parser.requiredParam[String]("--n1")
       parser.parse("--n1" :: Nil)
 
-      parser.missing ==> 1
+      parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 1
     }

@@ -18,7 +18,7 @@ class CmdrModule(val crossScalaVersion: String )
     def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
     def testFrameworks = Seq("utest.runner.Framework")
   }
-  def publishVersion = "0.3.0"
+  def publishVersion = "0.4.0-SNAPSHOT"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
@@ -45,8 +45,10 @@ object examples extends Module {
     }
   }
   object annotation extends ExampleApp
+  object dependent extends ExampleApp
   object raw extends ExampleApp
   object readme extends ExampleApp
   object serverapp extends ExampleApp
+  object subcommands extends ExampleApp
   object flags extends ExampleApp
 }
