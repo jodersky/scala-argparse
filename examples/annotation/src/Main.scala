@@ -1,12 +1,20 @@
 object Main {
 
-  @cmdr.main("test", "This shows how aliases and help messages can be attached to parameters.")
+  @cmdr.main(
+    "serverapp",
+    "An example application which uses a synthetic reader derived from parameters.",
+    "0.1.0"
+  )
   def main(
-      @cmdr.alias("-a")
-      @cmdr.help("The authentication key")
-      authKey: String = "1234" // --auth-key= or env var TEST_AUTH_KEY=
+      host: String = "localhost",
+      @cmdr.alias("-p")
+      @cmdr.help("The port to use")
+      port: Int = 8080,
+      flag: Boolean = false, // boolean args are parsed as flags
+      path: java.nio.file.Path
   ): Unit = {
-    println(authKey)
+    println(s"$host:$port$path")
+    println(s"flag: $flag")
   }
 
 }

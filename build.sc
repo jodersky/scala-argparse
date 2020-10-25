@@ -1,5 +1,8 @@
 import mill._, scalalib._, publish._, scalafmt._
 
+val scala213 = "2.13.3"
+val scala3 = "0.27.0-RC1"
+
 class CmdrModule(val crossScalaVersion: String )
     extends CrossScalaModule
     with ScalafmtModule
@@ -32,23 +35,23 @@ class CmdrModule(val crossScalaVersion: String )
   def artifactName = "cmdr"
 }
 
-object cmdr extends Cross[CmdrModule]("2.13.3", "0.27.0-RC1")
+object cmdr extends Cross[CmdrModule](scala213, scala3)
 
 object examples extends Module {
-  trait ExampleApp extends ScalaModule {
-    def scalaVersion = cmdr("2.13.3").scalaVersion
-    def scalacOptions = cmdr("2.13.3").scalacOptions
-    def moduleDeps = Seq(cmdr("2.13.3"))
+  class ExampleApp(val crossScalaVersion: String) extends CrossScalaModule {
+    def scalaVersion = cmdr(crossScalaVersion).scalaVersion
+    def scalacOptions = cmdr(crossScalaVersion).scalacOptions
+    def moduleDeps = Seq(cmdr(crossScalaVersion))
     def dist = T {
       val jar = assembly().path
       os.copy.over(jar, os.pwd / millSourcePath.last)
     }
+    object test extends Tests {
+      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
+      def testFrameworks = Seq("utest.runner.Framework")
+    }
   }
-  object annotation extends ExampleApp
-  object dependent extends ExampleApp
-  object raw extends ExampleApp
-  object readme extends ExampleApp
-  object serverapp extends ExampleApp
-  object subcommands extends ExampleApp
-  object flags extends ExampleApp
+  object annotation extends Cross[ExampleApp](scala213)
+  object readme extends Cross[ExampleApp](scala213, scala3)
+  object commands extends Cross[ExampleApp](scala213, scala3)
 }
