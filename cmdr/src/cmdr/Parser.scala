@@ -5,15 +5,15 @@ import scala.collection.mutable
 /** Low-level parsing functionality. See ArgParser for a user-friendly API. */
 object Parser {
 
-  /** A parameter definition is the low-level building block to define the grammar
-    * of a command-line, and its functionality.
+  /** A parameter definition is the low-level building block to define the
+    * grammar of a command-line, and its functionality.
     *
     * ParamDefs associate parameter names to actions that are invoked by
     * Parser.parse() in certain situations.
     *
-    * @param names All names that may be used by this parameter. If a name starts
-    * with `-`, it is considered a "named" parameter, otherwise it is considered a
-    * "positional" parameter.
+    * @param names All names that may be used by this parameter. If a name
+    * starts with `-`, it is considered a "named" parameter, otherwise it is
+    * considered a "positional" parameter.
     *
     * Arguments associated to named parameters may appear in any order on the
     * command line, as long as they are prefixed by the parameter's name.
@@ -22,11 +22,15 @@ object Parser {
     * @param parseAndSet A function that is invoked anytime this parameter is
     * encountered on the command line. In case of an named param, the first
     * element is the actual name used, and the second element is the argument or
-    * None if no argument followed. In case of a position param, no name is given
-    * and the argument value is always defined.
+    * None if no argument followed. In case of a position param, no name is
+    * given and the argument value is always defined.
     *
     * @param missing A function that is invoked if this parameter has not been
     * encountered at all.
+    *
+    * @param isFlag Indicates if this named parameter is a flag, i.e. one that
+    * never accepts an argument. In case its name is encountered, its value is
+    * set to "true". Has no effect on positional parameters.
     *
     * @param repeatPositional If this is a positional parameter, it will be the
     * parser will repeat it indefinitely.
@@ -39,6 +43,7 @@ object Parser {
       names: Seq[String],
       parseAndSet: (String, Option[String]) => Unit,
       missing: () => Unit,
+      isFlag: Boolean,
       repeatPositional: Boolean,
       absorbRemaining: Boolean
   ) {
@@ -137,6 +142,8 @@ object Parser {
             namedArgs.getOrElseUpdate(param, mutable.ListBuffer.empty)
             if (embedded != null) { // embedded argument, i.e. one that contains '='
               namedArgs(param) += (name -> Some(embedded))
+            } else if (param.isFlag) { // flags never take an arg and are set to "true"
+              namedArgs(param) += (name -> Some("true"))
             } else if (arg == null || arg.matches(Named.regex)) { // non-flags must have an arg
               namedArgs(param) += (name -> None)
             } else {

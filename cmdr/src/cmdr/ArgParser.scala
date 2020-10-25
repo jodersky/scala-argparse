@@ -100,6 +100,7 @@ class ArgParser(
     Seq("--help"),
     (_, _) => showAndExit(help()),
     missing = () => (),
+    isFlag = true,
     repeatPositional = false,
     absorbRemaining = false
   )
@@ -116,6 +117,7 @@ class ArgParser(
     Seq("--version"),
     (_, _) => showAndExit(version),
     missing = () => (),
+    isFlag = true,
     repeatPositional = false,
     absorbRemaining = false
   )
@@ -202,7 +204,7 @@ class ArgParser(
       env: Option[String],
       aliases: Seq[String],
       help: String,
-      isFlag: Boolean,
+      flag: Boolean,
       absorbRemaining: Boolean
   )(implicit reader: Reader[A]): Arg[A] = {
     val completable = new Completable[A](name)
@@ -217,9 +219,9 @@ class ArgParser(
     }
 
     def parseAndSet(name: String, valueOpt: Option[String]) = valueOpt match {
-      case Some(v)        => read(name, v)
-      case None if isFlag => read(name, "true")
-      case None           => reportParseError(name, "argument expected")
+      case Some(v)      => read(name, v)
+      case None if flag => read(name, "true")
+      case None         => reportParseError(name, "argument expected")
     }
 
     val pdef = ParamDef(
@@ -236,6 +238,7 @@ class ArgParser(
           case None => reportMissing(name)
         }
       },
+      isFlag = flag,
       repeatPositional = false,
       absorbRemaining = absorbRemaining
     )
@@ -244,7 +247,7 @@ class ArgParser(
     paramInfos += ParamInfo(
       pdef.isNamed,
       pdef.names,
-      isFlag,
+      flag,
       false,
       env,
       help
@@ -360,7 +363,7 @@ class ArgParser(
       name: String,
       aliases: Seq[String] = Seq.empty,
       help: String = "",
-      isFlag: Boolean = false
+      flag: Boolean = false
   )(implicit reader: Reader[A]): Arg[Seq[A]] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isSet = false
@@ -378,12 +381,13 @@ class ArgParser(
       names = Seq(name) ++ aliases,
       parseAndSet = (name, valueOpt) => {
         valueOpt match {
-          case Some(v)        => read(name, v)
-          case None if isFlag => read(name, "true")
-          case None           => reportParseError(name, "argument expected")
+          case Some(v)      => read(name, v)
+          case None if flag => read(name, "true")
+          case None         => reportParseError(name, "argument expected")
         }
       },
       missing = () => (),
+      flag,
       repeatPositional = true,
       absorbRemaining = false
     )
@@ -392,7 +396,7 @@ class ArgParser(
     paramInfos += ParamInfo(
       pdef.isNamed,
       pdef.names,
-      isFlag,
+      flag,
       true,
       None,
       help
