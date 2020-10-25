@@ -21,7 +21,7 @@ class CmdrModule(val crossScalaVersion: String )
     def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
     def testFrameworks = Seq("utest.runner.Framework")
   }
-  def publishVersion = "0.4.0-SNAPSHOT"
+  def publishVersion = "0.4.0"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
