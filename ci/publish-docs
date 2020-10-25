@@ -4,7 +4,7 @@ set -o errexit
 
 mill -i cmdr[2.13.3].docJar
 
-docdir=out/cmdr/docJar/dest/javadoc
+docdir=out/cmdr/2.13.3/docJar/dest/javadoc
 git -C "$docdir" init
 git -C "$docdir" config user.name "Joe Doc Champion"
 git -C "$docdir" config user.email "champ@crashbox.io"
