@@ -7,6 +7,18 @@ import Parser.ParamDef
 object ArgParser {
   def apply(prog: String = "", description: String = "", version: String = "") =
     new ArgParser(prog, description, version)
+
+  // used for generating help message
+  case class ParamInfo(
+      isNamed: Boolean,
+      names: Seq[String],
+      isFlag: Boolean,
+      repeats: Boolean,
+      env: Option[String],
+      description: String,
+      completer: String
+  )
+  case class CommandInfo(name: String, action: Seq[String] => Unit)
 }
 
 /** A simple command line argument parser.
@@ -46,6 +58,7 @@ class ArgParser(
     description: String,
     version: String
 ) { self =>
+  import ArgParser.{CommandInfo, ParamInfo}
 
   private var errors = 0
   protected def reportMissing(name: String): Unit = {
@@ -66,7 +79,7 @@ class ArgParser(
     errors += 1
   }
   protected def showAndExit(msg: String): Unit = {
-    System.err.println(msg)
+    System.out.println(msg)
     sys.exit(0)
   }
 
@@ -80,17 +93,6 @@ class ArgParser(
     }
   }
   protected def env: Map[String, String] = sys.env
-
-  // used for generating help message
-  private case class ParamInfo(
-      isNamed: Boolean,
-      names: Seq[String],
-      isFlag: Boolean,
-      repeats: Boolean,
-      env: Option[String],
-      description: String
-  )
-  private case class CommandInfo(name: String, action: Seq[String] => Unit)
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -110,27 +112,54 @@ class ArgParser(
     true,
     false,
     None,
-    "Show this message and exit"
+    "Show this message and exit",
+    ""
   )
 
-  paramDefs += ParamDef(
-    Seq("--version"),
-    (_, _) => showAndExit(version),
-    missing = () => (),
-    isFlag = true,
-    repeatPositional = false,
-    absorbRemaining = false
-  )
-  paramInfos += ParamInfo(
-    true,
-    Seq("--version"),
-    true,
-    false,
-    None,
-    "Show the version and exit"
-  )
+  // the --version flag is only relevant if a version has been specified
+  if (version != "") {
+    paramDefs += ParamDef(
+      Seq("--version"),
+      (_, _) => showAndExit(version),
+      missing = () => (),
+      isFlag = true,
+      repeatPositional = false,
+      absorbRemaining = false
+    )
+    paramInfos += ParamInfo(
+      true,
+      Seq("--version"),
+      true,
+      false,
+      None,
+      "Show the version and exit",
+      ""
+    )
+  }
 
-  def help(): String = {
+  // completion is only helpful if this command has a name
+  if (prog != "") {
+    paramDefs += ParamDef(
+      Seq("--completion"),
+      (_, _) =>
+        showAndExit(BashCompletion.completion(prog, paramInfos, commandInfos)),
+      missing = () => (),
+      isFlag = true,
+      repeatPositional = false,
+      absorbRemaining = false
+    )
+    paramInfos += ParamInfo(
+      true,
+      Seq("--completion"),
+      true,
+      false,
+      None,
+      "Print bash completion and exit",
+      ""
+    )
+  }
+
+  private def help(): String = {
     val (named0, positional) = paramInfos.span(_.isNamed)
     val named = named0.sortBy(_.names.head)
 
@@ -185,7 +214,7 @@ class ArgParser(
     b.result()
   }
 
-  private class Completable[A](name: String) extends Arg[A] {
+  private class ArgPromise[A](name: String) extends Arg[A] {
     var isComplete = false
     var _value: A = _
     def apply(): A =
@@ -205,16 +234,17 @@ class ArgParser(
       aliases: Seq[String],
       help: String,
       flag: Boolean,
-      absorbRemaining: Boolean
+      absorbRemaining: Boolean,
+      completer: Option[String]
   )(implicit reader: Reader[A]): Arg[A] = {
-    val completable = new Completable[A](name)
+    val promise = new ArgPromise[A](name)
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
         case Left(message) => reportParseError(name, message)
         case Right(value) =>
-          completable._value = value
-          completable.isComplete = true
+          promise._value = value
+          promise.isComplete = true
       }
     }
 
@@ -233,8 +263,8 @@ class ArgParser(
         fromEnv match {
           case Some(str) => parseAndSet(s"env ${env.get}", Some(str))
           case None if default.isDefined =>
-            completable._value = default.get
-            completable.isComplete = true
+            promise._value = default.get
+            promise.isComplete = true
           case None => reportMissing(name)
         }
       },
@@ -250,10 +280,11 @@ class ArgParser(
       flag,
       false,
       env,
-      help
+      help,
+      completer.getOrElse(reader.completer)
     )
 
-    completable
+    promise
   }
 
   /** Define an optional parameter, using the given default value if it is not
@@ -295,6 +326,18 @@ class ArgParser(
     * quite rare that they are useful for non-boolean params.
     * The flag field has no effect on positional parameters.
     *
+    * @param absorbRemaining Indicates that any arguments encountered after this parameter
+    * must be treated as positionals, even if they start with `-`. In other words, a
+    * parameter marked with this has the same effect as the `--` separator. It can be
+    * useful for implementing sub-commands. (Note however that this ArgParser has a
+    * dedicated `command` method for such use cases)
+    *
+    * @param completer A bash snippet that is inserted in bash-completions, responsible for setting
+    * completion options for this param. If omitted, the parameter type's (A) default completer
+    * will be used. If present, this must be valid bash and should set COMPREPLY. The bash variable
+    * "$cur" may be used in the snippet, and will contain the current word being completed for this
+    * parameter.
+    *
     * @return A handle to the parameter's future value, available once `parse(args)` has been called.
     */
   def param[A](
@@ -304,7 +347,8 @@ class ArgParser(
       aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false,
-      absorbRemaining: Boolean = false
+      absorbRemaining: Boolean = false,
+      completer: String = null
   )(
       implicit reader: Reader[A]
   ): Arg[A] =
@@ -315,7 +359,8 @@ class ArgParser(
       aliases,
       help,
       flag,
-      absorbRemaining
+      absorbRemaining,
+      Option(completer)
     )
 
   /** Define a required parameter.
@@ -335,11 +380,21 @@ class ArgParser(
       aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false,
-      absorbRemaining: Boolean = false
+      absorbRemaining: Boolean = false,
+      completer: String = null
   )(
       implicit reader: Reader[A]
   ): Arg[A] =
-    singleParam(name, None, Option(env), aliases, help, flag, absorbRemaining)
+    singleParam(
+      name,
+      None,
+      Option(env),
+      aliases,
+      help,
+      flag,
+      absorbRemaining,
+      Option(completer)
+    )
 
   /** Define a parameter that may be repeated.
     *
@@ -363,7 +418,8 @@ class ArgParser(
       name: String,
       aliases: Seq[String] = Seq.empty,
       help: String = "",
-      flag: Boolean = false
+      flag: Boolean = false,
+      completer: String = null
   )(implicit reader: Reader[A]): Arg[Seq[A]] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isSet = false
@@ -399,7 +455,8 @@ class ArgParser(
       flag,
       true,
       None,
-      help
+      help,
+      Option(completer).getOrElse(reader.completer)
     )
 
     new Arg[Seq[A]] {
@@ -420,17 +477,13 @@ class ArgParser(
     * In cmdr, subcommands can easily be modelled by a positional parameter that
     * represents the command, followed by a repeated, all-absorbing parameter
     * which represents the command's arguments. However, since this pattern is
-    * fairly common, this method is provided as a short-cut.
+    * fairly common, this method is provided as a shortcut.
     *
     * @param name the name of the command
     * @param action a function called with the remaining arguments after this
     * command. Note that you may reference an Arg's value in the action.
     */
   def command(name: String, action: Seq[String] => Unit): Unit = {
-    if (commandInfos.isEmpty) {
-      _command = requiredParam[String]("command", absorbRemaining = true)
-      _commandArgs = repeatedParam[String]("args")
-    }
     commandInfos += CommandInfo(name, action)
   }
 
@@ -453,6 +506,20 @@ class ArgParser(
     * 3. An argument cannot be parsed from its string value to its desired type.
     */
   def parse(args: Seq[String]): Unit = {
+
+    if (!commandInfos.isEmpty) {
+      val commands = commandInfos.map(_.name)
+      _command = requiredParam[String](
+        "command",
+        absorbRemaining = true,
+        completer = s"""COMPREPLY=( $$(compgen -W '${commands
+          .mkString(" ")}' -- "$$cur") )"""
+      )
+      _commandArgs = repeatedParam[String](
+        "args"
+      )
+    }
+
     Parser.parse(
       paramDefs.result(),
       args,

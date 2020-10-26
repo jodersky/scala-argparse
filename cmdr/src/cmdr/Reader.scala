@@ -18,6 +18,27 @@ trait Reader[A] {
     * to crash, leading to a horrible user experience.
     */
   def read(a: String): Either[String, A]
+
+  /** Bash completion snippet for arguments of this type.
+    *
+    * Must be valid bash. The variable "$cur" may be assumed to contain the
+    * current word being completed.
+    *
+    * Typically this would set COMPREPLY of compopt. E.g.
+    *
+    * {{{
+    * COMPREPLY=( $(compgen -W 'foo bar baz' -- "$cur") )
+    * }}}
+    *
+    * - or -
+    *
+    * {{{
+    * compopt -o default
+    * }}}
+    *
+    * Leave blank for no completion.
+    */
+  def completer: String = ""
 }
 
 object Reader {
@@ -41,7 +62,11 @@ object Reader {
       }
     }
 
-  implicit object PathReader extends Reader[os.Path] {
+  trait FsPathReader[A] extends Reader[A] {
+    override def completer: String = "compopt -o default"
+  }
+
+  implicit object PathReader extends FsPathReader[os.Path] {
     def read(a: String) =
       try {
         Right(os.Path(a, os.pwd))
@@ -50,7 +75,7 @@ object Reader {
           Left(s"'$a' is not a valid path")
       }
   }
-  implicit object SubPathReader extends Reader[os.SubPath] {
+  implicit object SubPathReader extends FsPathReader[os.SubPath] {
     def read(a: String) =
       try {
         Right(os.SubPath(a))
@@ -59,7 +84,7 @@ object Reader {
           Left(s"'$a' is not a relative child path")
       }
   }
-  implicit object RelPathReader extends Reader[os.RelPath] {
+  implicit object RelPathReader extends FsPathReader[os.RelPath] {
     def read(a: String) =
       try {
         Right(os.RelPath(a))
@@ -68,7 +93,7 @@ object Reader {
           Left(s"'$a' is not a relative path")
       }
   }
-  implicit object JavaPathReader extends Reader[java.nio.file.Path] {
+  implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
       try {
         Right(java.nio.file.Path.of(a))
@@ -76,7 +101,7 @@ object Reader {
         case _: InvalidPathException => Left(s"'$a' is not a path")
       }
   }
-  implicit object JavaFileReader extends Reader[java.io.File] {
+  implicit object JavaFileReader extends FsPathReader[java.io.File] {
     def read(a: String) =
       try {
         Right(new java.io.File(a))
@@ -128,6 +153,7 @@ object Reader {
         case Right(value)  => Right(Some(value))
       }
     }
+    override def completer: String = elementReader.completer
   }
 
 }
