@@ -3,7 +3,7 @@ import mill._, scalalib._, publish._, scalafmt._
 val scala213 = "2.13.3"
 val scala3 = "0.27.0-RC1"
 
-class CmdrModule(val crossScalaVersion: String )
+class CmdrModule(val crossScalaVersion: String)
     extends CrossScalaModule
     with ScalafmtModule
     with PublishModule {
@@ -21,7 +21,7 @@ class CmdrModule(val crossScalaVersion: String )
     def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
     def testFrameworks = Seq("utest.runner.Framework")
   }
-  def publishVersion = "0.4.0"
+  def publishVersion = "0.5.0"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
