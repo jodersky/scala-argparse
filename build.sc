@@ -1,14 +1,14 @@
 import mill._, scalalib._, publish._, scalafmt._
 
 val scala213 = "2.13.3"
-val scala3 = "0.27.0-RC1"
+val scala3 = "3.0.0-M2"
 
 class CmdrModule(val crossScalaVersion: String)
     extends CrossScalaModule
     with ScalafmtModule
     with PublishModule {
 
-  def isDotty = crossScalaVersion.startsWith("0")
+  def isDotty = crossScalaVersion.startsWith("3")
   def scalacOptions = if (!isDotty) Seq("-Ymacro-annotations", "-deprecation") else Seq("-deprecation")
 
   def ivyDeps = if (!isDotty) Agg(
@@ -18,10 +18,10 @@ class CmdrModule(val crossScalaVersion: String)
     ivy"com.lihaoyi::os-lib:0.7.1"
   )
   object test extends Tests {
-    def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
+    def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.5")
     def testFrameworks = Seq("utest.runner.Framework")
   }
-  def publishVersion = "0.5.0"
+  def publishVersion = "0.5.1"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
@@ -47,7 +47,7 @@ object examples extends Module {
       os.copy.over(jar, os.pwd / millSourcePath.last)
     }
     object test extends Tests {
-      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.4")
+      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.5")
       def testFrameworks = Seq("utest.runner.Framework")
     }
   }
