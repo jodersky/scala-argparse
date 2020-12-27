@@ -1,7 +1,7 @@
 package cmdr
 
 /** An arg represents a handle to a parameter's value. */
-trait Arg[A] {
+trait Arg[A] extends (() => A) { self =>
 
   @deprecated("use apply() instead", "0.2.1")
   def get: A = apply()
@@ -12,4 +12,5 @@ trait Arg[A] {
     * will throw otherwise.
     */
   def apply(): A
+
 }
