@@ -1,26 +1,21 @@
-import mill._, scalalib._, publish._, scalafmt._
+import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.3"
 val scala3 = "3.0.0-M2"
 
-class CmdrModule(val crossScalaVersion: String)
+trait Utest extends ScalaModule with TestModule {
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.5")
+  def testFrameworks = Seq("utest.runner.Framework")
+}
+trait CmdrModule
     extends CrossScalaModule
     with ScalafmtModule
     with PublishModule {
 
-  def isDotty = crossScalaVersion.startsWith("3")
-  def scalacOptions = if (!isDotty) Seq("-Ymacro-annotations", "-deprecation") else Seq("-deprecation")
+  def scalacOptions = Seq("-target:jvm-1.8", "-deprecation")
 
-  def ivyDeps = if (!isDotty) Agg(
-    ivy"com.lihaoyi::os-lib:0.7.1",
-    ivy"org.scala-lang:scala-reflect:${scalaVersion()}"
-  ) else Agg(
-    ivy"com.lihaoyi::os-lib:0.7.1"
-  )
-  object test extends Tests {
-    def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.5")
-    def testFrameworks = Seq("utest.runner.Framework")
-  }
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.1")
+
   def publishVersion = "0.5.1"
   def pomSettings = PomSettings(
     description = "cmdr",
@@ -33,15 +28,43 @@ class CmdrModule(val crossScalaVersion: String)
     )
   )
   def artifactName = "cmdr"
+  def sources = if (crossScalaVersion.startsWith("2.11")) {
+    T.sources{
+      super.sources() ++
+      Seq(PathRef(millSourcePath / s"src-2.11"))
+    }
+  } else {
+    T.sources{
+      super.sources() ++
+      Seq(PathRef(millSourcePath / s"src-post-2.11"))
+    }
+  }
 }
 
-object cmdr extends Cross[CmdrModule](scala213, scala3)
+object cmdr extends Module {
+
+  class JvmModule(val crossScalaVersion: String) extends CmdrModule {
+    def millSourcePath = super.millSourcePath / os.up
+    object test extends Tests with Utest
+  }
+  object jvm extends Cross[JvmModule](scala213, scala3)
+
+  class NativeModule(val crossScalaVersion: String, val crossScalaNativeVersion: String)
+      extends CmdrModule
+      with ScalaNativeModule {
+    def scalaNativeVersion = crossScalaNativeVersion
+    def millSourcePath = super.millSourcePath / os.up / os.up
+    object test extends Tests with Utest
+  }
+  object native extends Cross[NativeModule](("2.11.12", "0.4.0-M2"))
+
+}
 
 object examples extends Module {
   class ExampleApp(val crossScalaVersion: String) extends CrossScalaModule {
-    def scalaVersion = cmdr(crossScalaVersion).scalaVersion
-    def scalacOptions = cmdr(crossScalaVersion).scalacOptions
-    def moduleDeps = Seq(cmdr(crossScalaVersion))
+    def scalaVersion = cmdr.jvm(crossScalaVersion).scalaVersion
+    def scalacOptions = cmdr.jvm(crossScalaVersion).scalacOptions
+    def moduleDeps = Seq(cmdr.jvm(crossScalaVersion))
     def dist = T {
       val jar = assembly().path
       os.copy.over(jar, os.pwd / millSourcePath.last)
@@ -51,7 +74,7 @@ object examples extends Module {
       def testFrameworks = Seq("utest.runner.Framework")
     }
   }
-  object annotation extends Cross[ExampleApp](scala213)
+  //object annotation extends Cross[ExampleApp](scala213)
   object readme extends Cross[ExampleApp](scala213, scala3)
   object commands extends Cross[ExampleApp](scala213, scala3)
 }
