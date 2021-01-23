@@ -111,7 +111,10 @@ class ArgParser(
     *
     * Users should prefer [[param]], [[requiredPara]] and [[repeatedParam]] instead.
     */
-  def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
+  def add(pdef: ParamDef, pinfo: Option[ParamInfo]): Unit = {
+    paramDefs += pdef
+    pinfo.foreach(paramInfos += _)
+  }
 
   paramDefs += ParamDef(
     Seq("--help"),
@@ -229,19 +232,6 @@ class ArgParser(
     b.result()
   }
 
-  private class ArgPromise[A](name: String) extends Arg[A] {
-    var isComplete = false
-    var _value: A = _
-    def apply(): A =
-      if (!isComplete) {
-        throw new NoSuchElementException(
-          s"This argument '$name' is not yet available. Make sure to call ArgumentParser#parse(args) before accessing this value."
-        )
-      } else {
-        _value
-      }
-  }
-
   private def singleParam[A](
       name: String,
       default: => Option[A],
@@ -251,15 +241,14 @@ class ArgParser(
       flag: Boolean,
       absorbRemaining: Boolean,
       completer: Option[String]
-  )(implicit reader: Reader[A]): Arg[A] = {
-    val promise = new ArgPromise[A](name)
+  )(implicit reader: Reader[A]): () => A = {
+    var setValue: Option[A] = None
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
         case Left(message) => reportParseError(name, message)
         case Right(value) =>
-          promise._value = value
-          promise.isComplete = true
+          setValue = Some(value)
       }
     }
 
@@ -277,8 +266,7 @@ class ArgParser(
         fromEnv match {
           case Some(str) => parseAndSet(s"env ${env.get}", Some(str))
           case None if default.isDefined =>
-            promise._value = default.get
-            promise.isComplete = true
+            setValue = Some(default.get)
           case None => reportMissing(name)
         }
       },
@@ -298,7 +286,11 @@ class ArgParser(
       completer.getOrElse(reader.completer)
     )
 
-    promise
+    () => setValue.getOrElse(
+      throw new NoSuchElementException(
+        s"This argument is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
+      )
+    )
   }
 
   /** Define an optional parameter, using the given default value if it is not
@@ -365,7 +357,7 @@ class ArgParser(
       completer: String = null
   )(
       implicit reader: Reader[A]
-  ): Arg[A] =
+  ): () => A =
     singleParam(
       name,
       Some(default),
@@ -398,7 +390,7 @@ class ArgParser(
       completer: String = null
   )(
       implicit reader: Reader[A]
-  ): Arg[A] =
+  ): () => A =
     singleParam(
       name,
       None,
@@ -434,7 +426,7 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       completer: String = null
-  )(implicit reader: Reader[A]): Arg[Seq[A]] = {
+  )(implicit reader: Reader[A]): () => Seq[A] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isSet = false
 
@@ -473,9 +465,7 @@ class ArgParser(
       Option(completer).getOrElse(reader.completer)
     )
 
-    new Arg[Seq[A]] {
-      def apply(): Seq[A] = values.toList
-    }
+    () => values.toList
   }
 
   /** Utility to define a sub command.
@@ -517,8 +507,8 @@ class ArgParser(
     * 3. An argument cannot be parsed from its string value to its desired type.
     */
   def parse(args: Seq[String]): Unit = {
-    var _command: Arg[String] = null
-    var _commandArgs: Arg[Seq[String]] = null
+    var _command: () => String = null
+    var _commandArgs: () => Seq[String] = null
 
     if (!commandInfos.isEmpty) {
       val commands = commandInfos.map(_.name)
