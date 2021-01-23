@@ -74,7 +74,7 @@ class ArgParser(
     errors += 1
   }
   protected def reportUnknownCommand(actual: String, available: Seq[String]) = {
-    System.err.println("unknown command: " + _command())
+    System.err.println("unknown command: " + actual)
     System.err.println("expected one of: " + available.mkString(", "))
     errors += 1
   }
@@ -464,9 +464,6 @@ class ArgParser(
     }
   }
 
-  private var _command: Arg[String] = _
-  private var _commandArgs: Arg[Seq[String]] = _
-
   /** Utility to define a sub command.
     *
     * Many modern command line apps actually consist of multiple nested
@@ -506,6 +503,8 @@ class ArgParser(
     * 3. An argument cannot be parsed from its string value to its desired type.
     */
   def parse(args: Seq[String]): Unit = {
+    var _command: Arg[String] = null
+    var _commandArgs: Arg[Seq[String]] = null
 
     if (!commandInfos.isEmpty) {
       val commands = commandInfos.map(_.name)
