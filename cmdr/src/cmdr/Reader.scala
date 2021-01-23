@@ -16,7 +16,7 @@ trait Reader[A] {
     * Note that throwing an exception from a reader will cause the parser
     * to crash, leading to a horrible user experience.
     */
-  def read(a: String): Either[String, A]
+  def read(a: String): Reader.Result[A]
 
   /** Bash completion snippet for arguments of this type.
     *
@@ -41,32 +41,37 @@ trait Reader[A] {
 }
 
 object Reader {
+
+  sealed trait Result[+A]
+  case class Success[A](value: A) extends Result[A]
+  case class Error(message: String) extends Result[Nothing]
+
   implicit object StringReader extends Reader[String] {
-    def read(a: String) = Right(a)
+    def read(a: String) = Success(a)
   }
 
   implicit def IntegralReader[N](implicit numeric: Integral[N]): Reader[N] =
     new Reader[N] {
       def read(a: String) = try {
-        Right(numeric.fromInt(a.toInt))
+        Success(numeric.fromInt(a.toInt))
       } catch {
-        case _: NumberFormatException => Left(s"'$a' is not an integral number")
+        case _: NumberFormatException => Error(s"'$a' is not an integral number")
       }
     }
 
   implicit object FloatReader extends Reader[Float] {
     def read(a: String) = try {
-      Right(a.toFloat)
+      Success(a.toFloat)
     } catch {
-      case _: NumberFormatException => Left(s"'$a' is not a number")
+      case _: NumberFormatException => Error(s"'$a' is not a number")
     }
   }
 
   implicit object DoubleReader extends Reader[Double] {
     def read(a: String) = try {
-      Right(a.toDouble)
+      Success(a.toDouble)
     } catch {
-      case _: NumberFormatException => Left(s"'$a' is not a number")
+      case _: NumberFormatException => Error(s"'$a' is not a number")
     }
   }
 
@@ -77,51 +82,51 @@ object Reader {
   implicit object PathReader extends FsPathReader[os.Path] {
     def read(a: String) =
       try {
-        Right(os.Path(a, os.pwd))
+        Success(os.Path(a, os.pwd))
       } catch {
         case _: IllegalArgumentException =>
-          Left(s"'$a' is not a valid path")
+          Error(s"'$a' is not a valid path")
       }
   }
   implicit object SubPathReader extends FsPathReader[os.SubPath] {
     def read(a: String) =
       try {
-        Right(os.SubPath(a))
+        Success(os.SubPath(a))
       } catch {
         case _: IllegalArgumentException =>
-          Left(s"'$a' is not a relative child path")
+          Error(s"'$a' is not a relative child path")
       }
   }
   implicit object RelPathReader extends FsPathReader[os.RelPath] {
     def read(a: String) =
       try {
-        Right(os.RelPath(a))
+        Success(os.RelPath(a))
       } catch {
         case _: IllegalArgumentException =>
-          Left(s"'$a' is not a relative path")
+          Error(s"'$a' is not a relative path")
       }
   }
   implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
       try {
-        Right(java.nio.file.Path.of(a))
+        Success(java.nio.file.Path.of(a))
       } catch {
-        case _: InvalidPathException => Left(s"'$a' is not a path")
+        case _: InvalidPathException => Error(s"'$a' is not a path")
       }
   }
   implicit object JavaFileReader extends FsPathReader[java.io.File] {
     def read(a: String) =
       try {
-        Right(new java.io.File(a))
+        Success(new java.io.File(a))
       } catch {
-        case _: Exception => Left(s"'$a' is not a path")
+        case _: Exception => Error(s"'$a' is not a path")
       }
   }
   implicit object BooleanReader extends Reader[Boolean] {
-    def read(a: String): Either[String, Boolean] = a match {
-      case "true"  => Right(true)
-      case "false" => Right(false)
-      case _       => Left(s"'$a' is not either 'true' or 'false'")
+    def read(a: String): Result[Boolean] = a match {
+      case "true"  => Success(true)
+      case "false" => Success(false)
+      case _       => Error(s"'$a' is not either 'true' or 'false'")
     }
   }
   implicit def CollectionReader[Elem, Col[Elem]](
@@ -129,13 +134,13 @@ object Reader {
       factory: collection.Factory[Elem, Col[Elem]]
   ): Reader[Col[Elem]] = new Reader[Col[Elem]] {
     def read(a: String) = {
-      val elems: List[Either[String, Elem]] =
+      val elems: List[Result[Elem]] =
         a.split(",").toList.map(elementReader.read(_))
-      if (elems.exists(_.isLeft)) {
-        val Left(err) = elems.find(_.isLeft).get
-        Left(err)
-      } else {
-        Right(elems.map(_.getOrElse(sys.error("match error"))).to(factory))
+
+      elems.find(_.isInstanceOf[Error]) match {
+        case Some(err) => err.asInstanceOf[Error]
+        case None =>
+          Success(elems.map(_.asInstanceOf[Success[Elem]].value).to(factory))
       }
     }
   }
@@ -143,28 +148,28 @@ object Reader {
       implicit kr: Reader[K],
       vr: Reader[V]
   ): Reader[(K, V)] = new Reader[(K, V)] {
-    def read(a: String): Either[String, (K, V)] = {
+    def read(a: String): Result[(K, V)] = {
       a.split("=", 2) match {
         case Array(k, v) =>
           val k1 = kr.read(k)
           val v1 = vr.read(v)
           (k1, v1) match {
-            case (Right(k2), Right(v2)) => Right((k2, v2))
-            case (Left(msg), _) => Left(msg)
-            case (Right(_), Left(msg)) => Left(msg)
+            case (Success(k2), Success(v2)) => Success((k2, v2))
+            case (Error(msg), _) => Error(msg)
+            case (Success(_), Error(msg)) => Error(msg)
           }
-        case Array(k) => Left(s"expected value after key '$k'")
-        case _        => Left(s"expected key=value pair")
+        case Array(k) => Error(s"expected value after key '$k'")
+        case _        => Error(s"expected key=value pair")
       }
     }
   }
   implicit def OptionReader[A](
       implicit elementReader: Reader[A]
   ): Reader[Option[A]] = new Reader[Option[A]] {
-    def read(a: String): Either[String, Option[A]] = {
+    def read(a: String): Result[Option[A]] = {
       elementReader.read(a) match {
-        case Left(message) => Left(message)
-        case Right(value)  => Right(Some(value))
+        case Error(message) => Error(message)
+        case Success(value)  => Success(Some(value))
       }
     }
     override def completer: String = elementReader.completer

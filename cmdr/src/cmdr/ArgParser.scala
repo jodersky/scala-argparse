@@ -57,35 +57,35 @@ class ArgParser(
     prog: String,
     description: String,
     version: String
-) { self =>
+) extends SettingsParser { self =>
   import ArgParser.{CommandInfo, ParamInfo}
 
   private var errors = 0
 
   // called when an expected (i.e. required) parameter is missing
-  protected def reportMissing(name: String): Unit = {
+  def reportMissing(name: String): Unit = {
     System.err.println(s"missing argument: $name")
     errors += 1
   }
 
   // called when an undeclared parameter is encountered
-  protected def reportUnknown(name: String): Unit = {
+  def reportUnknown(name: String): Unit = {
     System.err.println(s"unknown argument: $name")
     errors += 1
   }
 
-  protected def reportParseError(name: String, message: String): Unit = {
+  def reportParseError(name: String, message: String): Unit = {
     System.err.println(s"error processing argument $name: $message")
     errors += 1
   }
 
-  protected def reportUnknownCommand(actual: String, available: Seq[String]) = {
+  def reportUnknownCommand(actual: String, available: Seq[String]) = {
     System.err.println("unknown command: " + actual)
     System.err.println("expected one of: " + available.mkString(", "))
     errors += 1
   }
 
-  protected def showAndExit(msg: String): Unit = {
+  def showAndExit(msg: String): Unit = {
     System.out.println(msg)
     sys.exit(0)
   }
@@ -109,12 +109,17 @@ class ArgParser(
 
   /** Low-level escape hatch for manually adding parameter definitions.
     *
-    * Users should prefer [[param]], [[requiredPara]] and [[repeatedParam]] instead.
+    * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+    * high-level API.
     */
-  def add(pdef: ParamDef, pinfo: Option[ParamInfo]): Unit = {
-    paramDefs += pdef
-    pinfo.foreach(paramInfos += _)
-  }
+  def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
+
+  /** Low-level escape hatch for manually adding parameter information.
+    *
+     * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+    * high-level API.
+    */
+  def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
 
   paramDefs += ParamDef(
     Seq("--help"),
@@ -246,8 +251,8 @@ class ArgParser(
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
-        case Left(message) => reportParseError(name, message)
-        case Right(value) =>
+        case Reader.Error(message) => reportParseError(name, message)
+        case Reader.Success(value) =>
           setValue = Some(value)
       }
     }
@@ -432,8 +437,8 @@ class ArgParser(
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
-        case Left(message) => reportParseError(name, message)
-        case Right(value) =>
+        case Reader.Error(message) => reportParseError(name, message)
+        case Reader.Success(value) =>
           values += value
           isSet = true
       }
