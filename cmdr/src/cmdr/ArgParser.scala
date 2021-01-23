@@ -8,7 +8,7 @@ object ArgParser {
   def apply(prog: String = "", description: String = "", version: String = "") =
     new ArgParser(prog, description, version)
 
-  // used for generating help message
+  /** User-firendly parameter information, used for generating help message */
   case class ParamInfo(
       isNamed: Boolean,
       names: Seq[String],
@@ -61,23 +61,30 @@ class ArgParser(
   import ArgParser.{CommandInfo, ParamInfo}
 
   private var errors = 0
+
+  // called when an expected (i.e. required) parameter is missing
   protected def reportMissing(name: String): Unit = {
     System.err.println(s"missing argument: $name")
     errors += 1
   }
+
+  // called when an undeclared parameter is encountered
   protected def reportUnknown(name: String): Unit = {
     System.err.println(s"unknown argument: $name")
     errors += 1
   }
+
   protected def reportParseError(name: String, message: String): Unit = {
     System.err.println(s"error processing argument $name: $message")
     errors += 1
   }
+
   protected def reportUnknownCommand(actual: String, available: Seq[String]) = {
     System.err.println("unknown command: " + actual)
     System.err.println("expected one of: " + available.mkString(", "))
     errors += 1
   }
+
   protected def showAndExit(msg: String): Unit = {
     System.out.println(msg)
     sys.exit(0)
@@ -92,11 +99,19 @@ class ArgParser(
       true
     }
   }
+
+  // environment for parameters which have declared an environment variable
   protected def env: Map[String, String] = sys.env
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
   private var commandInfos = mutable.ListBuffer.empty[CommandInfo]
+
+  /** Low-level escape hatch for manually adding parameter definitions.
+    *
+    * Users should prefer [[param]], [[requiredPara]] and [[repeatedParam]] instead.
+    */
+  def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
 
   paramDefs += ParamDef(
     Seq("--help"),
@@ -250,7 +265,6 @@ class ArgParser(
 
     def parseAndSet(name: String, valueOpt: Option[String]) = valueOpt match {
       case Some(v)      => read(name, v)
-      case None if flag => read(name, "true")
       case None         => reportParseError(name, "argument expected")
     }
 
