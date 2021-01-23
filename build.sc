@@ -14,9 +14,9 @@ trait CmdrModule
 
   def scalacOptions = Seq("-deprecation")
 
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.2-SNAPSHOT")
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.2")
 
-  def publishVersion = "0.5.1"
+  def publishVersion = "0.6.0"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
