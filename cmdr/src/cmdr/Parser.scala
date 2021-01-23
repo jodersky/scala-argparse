@@ -50,7 +50,7 @@ object Parser {
     require(names.size > 0, "a parameter must have at least one name")
     require(
       names.head != "--",
-      "--is not a valid parameter name; it is used by the parser to explicitly delimit positional parameters"
+      "-- is not a valid parameter name; it is used by the parser to explicitly delimit positional parameters"
     )
     if (names.head.startsWith("-")) {
       require(
@@ -144,7 +144,7 @@ object Parser {
               namedArgs(param) += (name -> Some(embedded))
             } else if (param.isFlag) { // flags never take an arg and are set to "true"
               namedArgs(param) += (name -> Some("true"))
-            } else if (arg == null || arg.matches(Named.regex)) { // non-flags must have an arg
+            } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
               namedArgs(param) += (name -> None)
             } else {
               namedArgs(param) += (name -> Some(arg))

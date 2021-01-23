@@ -40,7 +40,7 @@ trait Reader[A] {
   def completer: String = ""
 }
 
-object Reader extends CollectionReaders {
+object Reader {
   implicit object StringReader extends Reader[String] {
     def read(a: String) = Right(a)
   }
@@ -122,6 +122,21 @@ object Reader extends CollectionReaders {
       case "true"  => Right(true)
       case "false" => Right(false)
       case _       => Left(s"'$a' is not either 'true' or 'false'")
+    }
+  }
+  implicit def CollectionReader[Elem, Col[Elem]](
+      implicit elementReader: Reader[Elem],
+      factory: collection.Factory[Elem, Col[Elem]]
+  ): Reader[Col[Elem]] = new Reader[Col[Elem]] {
+    def read(a: String) = {
+      val elems: List[Either[String, Elem]] =
+        a.split(",").toList.map(elementReader.read(_))
+      if (elems.exists(_.isLeft)) {
+        val Left(err) = elems.find(_.isLeft).get
+        Left(err)
+      } else {
+        Right(elems.map(_.getOrElse(sys.error("match error"))).to(factory))
+      }
     }
   }
   implicit def Mapping[K, V](

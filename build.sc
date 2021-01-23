@@ -1,10 +1,10 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
-val scala213 = "2.13.3"
-val scala3 = "3.0.0-M2"
+val scala213 = "2.13.4"
+val scala3 = "3.0.0-M3"
 
 trait Utest extends ScalaModule with TestModule {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.5")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.7")
   def testFrameworks = Seq("utest.runner.Framework")
 }
 trait CmdrModule
@@ -12,9 +12,9 @@ trait CmdrModule
     with ScalafmtModule
     with PublishModule {
 
-  def scalacOptions = Seq("-target:jvm-1.8", "-deprecation")
+  def scalacOptions = Seq("-deprecation")
 
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.1")
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.2-SNAPSHOT")
 
   def publishVersion = "0.5.1"
   def pomSettings = PomSettings(
@@ -28,17 +28,6 @@ trait CmdrModule
     )
   )
   def artifactName = "cmdr"
-  def sources = if (crossScalaVersion.startsWith("2.11")) {
-    T.sources{
-      super.sources() ++
-      Seq(PathRef(millSourcePath / s"src-2.11"))
-    }
-  } else {
-    T.sources{
-      super.sources() ++
-      Seq(PathRef(millSourcePath / s"src-post-2.11"))
-    }
-  }
 }
 
 object cmdr extends Module {
@@ -56,7 +45,7 @@ object cmdr extends Module {
     def millSourcePath = super.millSourcePath / os.up / os.up
     object test extends Tests with Utest
   }
-  object native extends Cross[NativeModule](("2.11.12", "0.4.0-M2"))
+  object native extends Cross[NativeModule]((scala213, "0.4.0"))
 
 }
 
@@ -70,7 +59,7 @@ object examples extends Module {
       os.copy.over(jar, os.pwd / millSourcePath.last)
     }
     object test extends Tests {
-      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.5")
+      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.7")
       def testFrameworks = Seq("utest.runner.Framework")
     }
   }
