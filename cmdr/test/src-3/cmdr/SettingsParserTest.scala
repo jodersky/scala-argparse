@@ -25,7 +25,6 @@ object SettingsParserTest extends TestSuite {
     }
   }
 
-
   val tests = Tests {
     test("empty") {
       val parser = new TestParser

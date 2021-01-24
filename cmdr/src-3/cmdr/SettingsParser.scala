@@ -100,7 +100,7 @@ object SettingsParser {
     val (pdefs, pinfos) = getPdefs(
       expr,
       '{(name: String, message: String) => ${instance}.reportParseError(name, message)},
-      '{(name: String) =>  ${instance}.reportMissing(name)}
+      '{(name: String) => ${instance}.reportMissing(name)}
     )
 
     '{
