@@ -6,7 +6,10 @@ class TestParser extends ArgParser("", "", "") {
   var unknown = 0
   override def reportUnknown(name: String): Unit = unknown += 1
   var unknownCmds = 0
-  override def reportUnknownCommand(actual: String, available: Seq[String]): Unit = unknownCmds += 1
+  override def reportUnknownCommand(
+      actual: String,
+      available: Seq[String]
+  ): Unit = unknownCmds += 1
   var parseErrors = 0
   override def reportParseError(
       name: String,

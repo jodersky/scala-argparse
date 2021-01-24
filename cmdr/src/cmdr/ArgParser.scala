@@ -18,7 +18,11 @@ object ArgParser {
       description: String,
       completer: String
   )
-  case class CommandInfo(name: String, action: Seq[String] => Unit, description: String)
+  case class CommandInfo(
+      name: String,
+      action: Seq[String] => Unit,
+      description: String
+  )
 }
 
 /** A simple command line argument parser.
@@ -116,7 +120,7 @@ class ArgParser(
 
   /** Low-level escape hatch for manually adding parameter information.
     *
-     * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+    * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
     * high-level API.
     */
   def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
@@ -264,8 +268,8 @@ class ArgParser(
     }
 
     def parseAndSet(name: String, valueOpt: Option[String]) = valueOpt match {
-      case Some(v)      => read(name, v)
-      case None         => reportParseError(name, "argument expected")
+      case Some(v) => read(name, v)
+      case None    => reportParseError(name, "argument expected")
     }
 
     val pdef = ParamDef(
@@ -297,11 +301,12 @@ class ArgParser(
       completer.getOrElse(reader.completer)
     )
 
-    () => setValue.getOrElse(
-      throw new NoSuchElementException(
-        s"This argument is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
+    () =>
+      setValue.getOrElse(
+        throw new NoSuchElementException(
+          s"This argument is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
+        )
       )
-    )
   }
 
   /** Define an optional parameter, using the given default value if it is not
@@ -495,7 +500,11 @@ class ArgParser(
     * @param action a function called with the remaining arguments after this
     * command. Note that you may reference an Arg's value in the action.
     */
-  def command(name: String, action: Seq[String] => Unit, description: String = ""): Unit = {
+  def command(
+      name: String,
+      action: Seq[String] => Unit,
+      description: String = ""
+  ): Unit = {
     commandInfos += CommandInfo(name, action, description)
   }
 

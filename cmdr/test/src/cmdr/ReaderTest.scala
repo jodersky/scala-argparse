@@ -4,39 +4,39 @@ import utest._
 
 object ReaderTest extends TestSuite {
 
-  val tests = Tests{
-    test("int"){
+  val tests = Tests {
+    test("int") {
       val parser = new TestParser
       parser.requiredParam[Int]("p1")
       parser.parse(Seq("1"))
       parser.parseErrors ==> 0
     }
-    test("int is not float"){
+    test("int is not float") {
       val parser = new TestParser
       parser.requiredParam[Int]("p1")
       parser.parse(Seq("1.0"))
       parser.parseErrors ==> 1
     }
-    test("float"){
+    test("float") {
       val parser = new TestParser
       parser.requiredParam[Double]("p1")
       parser.parse(Seq("1.0"))
       parser.parseErrors ==> 0
     }
-    test("float is int"){
+    test("float is int") {
       val parser = new TestParser
       parser.requiredParam[Double]("p1")
       parser.parse(Seq("1"))
       parser.parseErrors ==> 0
     }
-    test("option"){
+    test("option") {
       val parser = new TestParser
       val p = parser.requiredParam[Option[Int]]("p1")
       parser.parse(Seq("1"))
       parser.parseErrors ==> 0
       p() ==> Some(1)
     }
-    test("missing option"){
+    test("missing option") {
       val parser = new TestParser
       val p = parser.requiredParam[Option[Int]]("p1")
       parser.parse(Seq())
@@ -44,21 +44,21 @@ object ReaderTest extends TestSuite {
       // the type does not affect the parser; a missing param is still a missing param
       parser.missing ==> 1
     }
-    test("collection"){
+    test("collection") {
       val parser = new TestParser
       val p = parser.requiredParam[Seq[String]]("-p")
       parser.parse(Seq("-p", "a,b,c", "-p", "c,d,e"))
       parser.check() ==> true
       p() ==> Seq("c", "d", "e")
     }
-    test("repeated collection"){
+    test("repeated collection") {
       val parser = new TestParser
       val p = parser.repeatedParam[Seq[String]]("-p")
       parser.parse(Seq("-p", "a,b,c", "-p", "c,d,e"))
       parser.check() ==> true
       p() ==> List(List("a", "b", "c"), List("c", "d", "e"))
     }
-    test("key-value"){
+    test("key-value") {
       val parser = new TestParser
       val p = parser.repeatedParam[(String, Int)]("-p")
       parser.parse(Seq("-p=a=1", "-p", "c=2"))

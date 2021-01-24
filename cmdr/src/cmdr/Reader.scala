@@ -52,27 +52,31 @@ object Reader {
 
   implicit def IntegralReader[N](implicit numeric: Integral[N]): Reader[N] =
     new Reader[N] {
-      def read(a: String) = try {
-        Success(numeric.fromInt(a.toInt))
-      } catch {
-        case _: NumberFormatException => Error(s"'$a' is not an integral number")
-      }
+      def read(a: String) =
+        try {
+          Success(numeric.fromInt(a.toInt))
+        } catch {
+          case _: NumberFormatException =>
+            Error(s"'$a' is not an integral number")
+        }
     }
 
   implicit object FloatReader extends Reader[Float] {
-    def read(a: String) = try {
-      Success(a.toFloat)
-    } catch {
-      case _: NumberFormatException => Error(s"'$a' is not a number")
-    }
+    def read(a: String) =
+      try {
+        Success(a.toFloat)
+      } catch {
+        case _: NumberFormatException => Error(s"'$a' is not a number")
+      }
   }
 
   implicit object DoubleReader extends Reader[Double] {
-    def read(a: String) = try {
-      Success(a.toDouble)
-    } catch {
-      case _: NumberFormatException => Error(s"'$a' is not a number")
-    }
+    def read(a: String) =
+      try {
+        Success(a.toDouble)
+      } catch {
+        case _: NumberFormatException => Error(s"'$a' is not a number")
+      }
   }
 
   trait FsPathReader[A] extends Reader[A] {
@@ -155,8 +159,8 @@ object Reader {
           val v1 = vr.read(v)
           (k1, v1) match {
             case (Success(k2), Success(v2)) => Success((k2, v2))
-            case (Error(msg), _) => Error(msg)
-            case (Success(_), Error(msg)) => Error(msg)
+            case (Error(msg), _)            => Error(msg)
+            case (Success(_), Error(msg))   => Error(msg)
           }
         case Array(k) => Error(s"expected value after key '$k'")
         case _        => Error(s"expected key=value pair")
@@ -169,7 +173,7 @@ object Reader {
     def read(a: String): Result[Option[A]] = {
       elementReader.read(a) match {
         case Error(message) => Error(message)
-        case Success(value)  => Success(Some(value))
+        case Success(value) => Success(Some(value))
       }
     }
     override def completer: String = elementReader.completer

@@ -198,7 +198,7 @@ object ArgParserTest extends TestSuite {
     }
     test("flag") {
       val parser = new TestParser
-      val n1 = parser.requiredParam[String]("--n1", flag=true)
+      val n1 = parser.requiredParam[String]("--n1", flag = true)
       parser.parse("--n1" :: Nil)
 
       parser.missing ==> 0
@@ -208,7 +208,7 @@ object ArgParserTest extends TestSuite {
     }
     test("flag override with embedded") {
       val parser = new TestParser
-      val n1 = parser.requiredParam[String]("--n1", flag=true)
+      val n1 = parser.requiredParam[String]("--n1", flag = true)
       parser.parse("--n1=yesss!" :: Nil)
 
       parser.missing ==> 0
@@ -218,7 +218,7 @@ object ArgParserTest extends TestSuite {
     }
     test("flag absent without default value") {
       val parser = new TestParser
-      val n1 = parser.requiredParam[String]("--n1", flag=true) // a flag without default value doesn't make much sense but is possible
+      val n1 = parser.requiredParam[String]("--n1", flag = true) // a flag without default value doesn't make much sense but is possible
       parser.parse(Nil)
 
       parser.missing ==> 1
@@ -227,7 +227,7 @@ object ArgParserTest extends TestSuite {
     }
     test("flag absent with default value") {
       val parser = new TestParser
-      val n1 = parser.param[String]("--n1", "false", flag=true)
+      val n1 = parser.param[String]("--n1", "false", flag = true)
       parser.parse(Nil)
 
       parser.missing ==> 0
@@ -240,7 +240,9 @@ object ArgParserTest extends TestSuite {
       val n1 = parser.requiredParam[String]("--n1")
       val n2 = parser.requiredParam[String]("--n2")
       val p1 = parser.requiredParam[String]("p1")
-      parser.parse("--n1" :: "a" :: "--n1" :: "b" :: "c" :: "--n2" :: "d" :: Nil)
+      parser.parse(
+        "--n1" :: "a" :: "--n1" :: "b" :: "c" :: "--n2" :: "d" :: Nil
+      )
 
       parser.missing ==> 0
       parser.unknown ==> 0
