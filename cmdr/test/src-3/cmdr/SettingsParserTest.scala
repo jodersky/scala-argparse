@@ -76,6 +76,21 @@ object SettingsParserTest extends TestSuite {
       param1() ==> "b"
       positional() ==> "pos"
     }
+    test("inherited") {
+      trait Base {
+        var opt1 = ""
+      }
+      class Config extends Base {
+        var opt2 = ""
+      }
+      val parser = new TestParser
+      val settings = parser.settings(Config())
+      parser.parse(Seq("--opt1", "a", "--opt2", "b"))
+
+      parser.check() ==> true
+      settings.opt1 ==> "a"
+      settings.opt2 ==> "b"
+    }
   }
 
 }

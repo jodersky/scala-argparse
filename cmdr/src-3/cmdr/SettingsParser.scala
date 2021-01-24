@@ -30,7 +30,7 @@ object SettingsParser {
     def traverse(instance: Term, tsym: Symbol, prefix: String): Unit = {
       import qctx.reflect._
 
-      for (sym <- tsym.declaredFields) {
+      for (sym <- tsym.memberFields) {
         if (sym.flags.is(Flags.Module)) {
           traverse(instance.select(sym), sym.moduleClass, prefix + kebabify(sym.name) + ".")
         } else if (sym.flags.is(Flags.Mutable)) {
