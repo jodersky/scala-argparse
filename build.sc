@@ -16,7 +16,7 @@ trait CmdrModule
 
   def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.2")
 
-  def publishVersion = "0.7.0"
+  def publishVersion = "0.7.1"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
