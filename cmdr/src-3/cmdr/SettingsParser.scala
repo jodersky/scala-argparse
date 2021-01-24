@@ -20,7 +20,6 @@ object SettingsParser {
   def getPdefs[A: Type](using qctx: Quotes)(
     expr: Expr[A],
     reportParseError: Expr[(String, String) => Unit], // (param name, parse error message)
-    reportMissingArg: Expr[String => Unit] // (param name)
   ): (List[Expr[Parser.ParamDef]], List[Expr[ArgParser.ParamInfo]]) = {
     import qctx.reflect._
 
@@ -63,10 +62,10 @@ object SettingsParser {
             Parser.ParamDef(
               names = Seq(${Expr(name)}),
               parseAndSet = (name, value) => value match {
-                case None => ${reportMissingArg}(name)
+                case None => ${reportParseError}(name, "argument expected")
                 case Some(v) => read(name, v)
               },
-              missing = () => (), // do nothing
+              missing = () => (), // do nothing, all variables have a default value
               isFlag = ${Expr(isFlag)},
               repeatPositional = false,
               absorbRemaining = false
@@ -99,8 +98,7 @@ object SettingsParser {
   def impl[A: Type](using qctx: Quotes)(instance: Expr[ArgParser], expr: Expr[A]): Expr[A] = {
     val (pdefs, pinfos) = getPdefs(
       expr,
-      '{(name: String, message: String) => ${instance}.reportParseError(name, message)},
-      '{(name: String) => ${instance}.reportMissing(name)}
+      '{(name: String, message: String) => ${instance}.reportParseError(name, message)}
     )
 
     '{
