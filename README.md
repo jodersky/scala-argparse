@@ -1,13 +1,12 @@
 # cmdr
 
-Pragmatic command line parsing for Scala apps.
+Pragmatic command line parsing for Scala applications.
 
 ## Guiding Principles
 
-- Avoid ceremony and target the common use-case. *The design is inspired by the
+- Avoid ceremony and target the common use case. *The design is inspired by the
   [argparse](https://docs.python.org/3/library/argparse.html) package from
-  python and the [`@main` annotation](https://dotty.epfl.ch/docs/reference/changed-features/main-functions.html)
-  available in Scala 3.*
+  python.*
 
 - Read configuration from the environment. *This encourages separation of config
   from code, as described in "the 12 factor app" https://12factor.net/config.*
@@ -41,7 +40,7 @@ def main(args: Array[String]): Unit = {
 
 1. Build the above application by running `./mill examples.readme.dist`.
 
-2. Try running the `./readme` executable:
+2. Run the `./readme` executable:
 
 ```shell
 $ ./readme

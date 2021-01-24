@@ -18,7 +18,7 @@ object ArgParser {
       description: String,
       completer: String
   )
-  case class CommandInfo(name: String, action: Seq[String] => Unit)
+  case class CommandInfo(name: String, action: Seq[String] => Unit, description: String)
 }
 
 /** A simple command line argument parser.
@@ -86,14 +86,14 @@ class ArgParser(
   }
 
   def showAndExit(msg: String): Unit = {
-    System.out.println(msg)
+    System.out.print(msg)
     sys.exit(0)
   }
 
   // this should abort if any errors were encountered
   protected def check(): Boolean = {
     if (errors > 0) {
-      System.err.println(s"try '$prog --help' for more information")
+      System.err.println(s"run with '--help' for more information")
       sys.exit(2)
     } else {
       true
@@ -135,7 +135,7 @@ class ArgParser(
     true,
     false,
     None,
-    "Show this message and exit",
+    "show this message and exit",
     ""
   )
 
@@ -143,7 +143,7 @@ class ArgParser(
   if (version != "") {
     paramDefs += ParamDef(
       Seq("--version"),
-      (_, _) => showAndExit(version),
+      (_, _) => showAndExit(version + "\n"),
       missing = () => (),
       isFlag = true,
       repeatPositional = false,
@@ -155,7 +155,7 @@ class ArgParser(
       true,
       false,
       None,
-      "Show the version and exit",
+      "show the version and exit",
       ""
     )
   }
@@ -171,15 +171,15 @@ class ArgParser(
       repeatPositional = false,
       absorbRemaining = false
     )
-    paramInfos += ParamInfo(
-      true,
-      Seq("--completion"),
-      true,
-      false,
-      None,
-      "Print bash completion and exit",
-      ""
-    )
+    // paramInfos += ParamInfo(
+    //   true,
+    //   Seq("--completion"),
+    //   true,
+    //   false,
+    //   None,
+    //   "print bash completion and exit",
+    //   ""
+    // )
   }
 
   private def help(): String = {
@@ -187,23 +187,34 @@ class ArgParser(
     val named = named0.sortBy(_.names.head)
 
     val b = new StringBuilder
-    b ++= s"Usage: $prog "
+    b ++= s"usage: $prog "
     if (!named.isEmpty) {
-      b ++= "[OPTIONS] "
+      b ++= "[options] "
     }
     for (param <- positional) {
       b ++= s"<${param.names.head}>"
       if (param.repeats) b ++= "..."
       b ++= " "
     }
-    b ++= "\n\n"
-    b ++= description
     b ++= "\n"
 
+    if (!description.isEmpty()) {
+      b ++= "\n"
+      b ++= description
+      b ++= "\n\n"
+    }
+
     if (!commandInfos.isEmpty) {
-      b ++= "\nCommand:\n"
+      b ++= "commands:\n"
       for (cmd <- commandInfos) {
-        b ++= s"  ${cmd.name}\n"
+        b ++= f" ${cmd.name}%-14s ${cmd.description}%-58s\n"
+      }
+    }
+
+    if (!positional.isEmpty && commandInfos.isEmpty) {
+      b ++= "positional arguments:\n"
+      for (param <- positional) {
+        b ++= f" ${param.names.head}%-14s ${param.description}%-58s\n"
       }
     }
 
@@ -211,7 +222,7 @@ class ArgParser(
     // since that is usually the case, this is what the default help message
     // assumes.
     if (!named.isEmpty) {
-      b ++= "\nOptions:\n"
+      b ++= "named arguments:\n"
     }
     for (param <- named) {
       val names = if (param.isFlag) {
@@ -219,18 +230,14 @@ class ArgParser(
       } else {
         param.names.map(_ + "=").mkString(", ")
       }
-      b ++= s"\n  $names"
-      if (param.repeats) b ++= "..."
-      b ++= "\n"
-      b ++= s"      ${param.description}\n"
-      //b ++= f"  $names%-20s ${param.description}%-50s\n"
+      b ++= f" $names%-14s ${param.description}%-58s\n"
     }
 
     val envVars = named.filter(_.env.isDefined)
     if (!envVars.isEmpty) {
-      b ++= "\nEnvironment:\n"
+      b ++= "environment variables:\n"
       for (param <- envVars) {
-        b ++= f"  ${param.env.get}%-20s ${param.names.head}"
+        b ++= f" ${param.env.get}%-14s ${param.names.head}\n"
       }
     }
 
@@ -252,8 +259,7 @@ class ArgParser(
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
         case Reader.Error(message) => reportParseError(name, message)
-        case Reader.Success(value) =>
-          setValue = Some(value)
+        case Reader.Success(value) => setValue = Some(value)
       }
     }
 
@@ -489,8 +495,8 @@ class ArgParser(
     * @param action a function called with the remaining arguments after this
     * command. Note that you may reference an Arg's value in the action.
     */
-  def command(name: String, action: Seq[String] => Unit): Unit = {
-    commandInfos += CommandInfo(name, action)
+  def command(name: String, action: Seq[String] => Unit, description: String = ""): Unit = {
+    commandInfos += CommandInfo(name, action, description)
   }
 
   /** Parse the given arguments with respect to the parameters defined by

@@ -3,7 +3,7 @@ object Main {
   def main(args: Array[String]): Unit = {
     val parser = cmdr.ArgParser(
       "gitz",
-      "An example app that implements a tiny part of git's CLI, to illustrate neseted commands."
+      "An example app that implements a tiny part of git's CLI, to illustrate nested commands."
     )
 
     val gitDir = parser.param[os.Path](
@@ -11,13 +11,13 @@ object Main {
       os.pwd / ".git"
     )
 
-    parser.command("clone", args => clone(gitDir())(args))
-    parser.command("remote", args => remote(gitDir())(args))
+    parser.command("clone", args => clone(gitDir(), args), "clone a repository")
+    parser.command("remote", args => remote(gitDir(), args), "manage remotes")
 
     parser.parse(args)
   }
 
-  def clone(gitDir: os.Path)(args: Seq[String]): Unit = {
+  def clone(gitDir: os.Path, args: Seq[String]): Unit = {
     val parser = cmdr.ArgParser("gitz clone")
 
     val p1 = parser.param[Option[Int]]("--depth", None)
@@ -30,15 +30,15 @@ object Main {
     p1().foreach { depth => println("limiting depth to $depth") }
   }
 
-  def remote(gitDir: os.Path)(args: Seq[String]): Unit = {
+  def remote(gitDir: os.Path, args: Seq[String]): Unit = {
     val parser = cmdr.ArgParser("gitz remote")
 
-    parser.command("set-url", args => remoteSetUrl(gitDir)(args))
+    parser.command("set-url", args => remoteSetUrl(gitDir, args))
 
     parser.parse(args)
   }
 
-  def remoteSetUrl(gitDir: os.Path)(args: Seq[String]): Unit = {
+  def remoteSetUrl(gitDir: os.Path, args: Seq[String]): Unit = {
     val parser = cmdr.ArgParser("gitz remote set-url")
 
     val remote = parser.requiredParam[String]("remote")
