@@ -37,7 +37,7 @@ trait Reader[A] {
     *
     * Leave blank for no completion.
     */
-  def completer: String = ""
+  def completer: String => Seq[String] = _ => Seq.empty
 }
 
 object Reader {
@@ -80,7 +80,11 @@ object Reader {
   }
 
   trait FsPathReader[A] extends Reader[A] {
-    override def completer: String = "compopt -o default"
+    override val completer = (prefix: String) => {
+      os.list(os.pwd).map(_.toString())
+    }
+
+      //"compopt -o default"
   }
 
   implicit object PathReader extends FsPathReader[os.Path] {
@@ -176,7 +180,7 @@ object Reader {
         case Success(value) => Success(Some(value))
       }
     }
-    override def completer: String = elementReader.completer
+    override def completer = elementReader.completer
   }
 
 }

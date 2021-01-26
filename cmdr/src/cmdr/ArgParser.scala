@@ -8,6 +8,9 @@ object ArgParser {
   def apply(prog: String = "", description: String = "", version: String = "") =
     new ArgParser(prog, description, version)
 
+  type Completer = String => Seq[String]
+  val NoCompleter = (s: String) => Seq.empty
+
   /** User-firendly parameter information, used for generating help message */
   case class ParamInfo(
       isNamed: Boolean,
@@ -16,7 +19,7 @@ object ArgParser {
       repeats: Boolean,
       env: Option[String],
       description: String,
-      completer: String
+      completer: Completer
   )
   case class CommandInfo(
       name: String,
@@ -62,7 +65,7 @@ class ArgParser(
     description: String,
     version: String
 ) extends SettingsParser { self =>
-  import ArgParser.{CommandInfo, ParamInfo}
+  import ArgParser._
 
   private var errors = 0
 
@@ -140,7 +143,7 @@ class ArgParser(
     false,
     None,
     "show this message and exit",
-    ""
+    NoCompleter
   )
 
   // the --version flag is only relevant if a version has been specified
@@ -160,31 +163,31 @@ class ArgParser(
       false,
       None,
       "show the version and exit",
-      ""
+      NoCompleter
     )
   }
 
-  // completion is only helpful if this command has a name
-  if (prog != "") {
-    paramDefs += ParamDef(
-      Seq("--completion"),
-      (_, _) =>
-        showAndExit(BashCompletion.completion(prog, paramInfos, commandInfos)),
-      missing = () => (),
-      isFlag = true,
-      repeatPositional = false,
-      absorbRemaining = false
-    )
-    // paramInfos += ParamInfo(
-    //   true,
-    //   Seq("--completion"),
-    //   true,
-    //   false,
-    //   None,
-    //   "print bash completion and exit",
-    //   ""
-    // )
-  }
+  // // completion is only helpful if this command has a name
+  // if (prog != "") {
+  //   paramDefs += ParamDef(
+  //     Seq("--completion"),
+  //     (_, _) =>
+  //       showAndExit(BashCompletion.completion(prog, paramInfos, commandInfos)),
+  //     missing = () => (),
+  //     isFlag = true,
+  //     repeatPositional = false,
+  //     absorbRemaining = false
+  //   )
+  //   // paramInfos += ParamInfo(
+  //   //   true,
+  //   //   Seq("--completion"),
+  //   //   true,
+  //   //   false,
+  //   //   None,
+  //   //   "print bash completion and exit",
+  //   //   ""
+  //   // )
+  // }
 
   private def help(): String = {
     val (named0, positional) = paramInfos.span(_.isNamed)
@@ -256,7 +259,7 @@ class ArgParser(
       help: String,
       flag: Boolean,
       absorbRemaining: Boolean,
-      completer: Option[String]
+      completer: Option[Completer]
   )(implicit reader: Reader[A]): () => A = {
     var setValue: Option[A] = None
 
@@ -370,7 +373,7 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
-      completer: String = null
+      completer: Completer = null
   )(
       implicit reader: Reader[A]
   ): () => A =
@@ -403,7 +406,7 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
-      completer: String = null
+      completer: Completer = null
   )(
       implicit reader: Reader[A]
   ): () => A =
@@ -441,7 +444,7 @@ class ArgParser(
       aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false,
-      completer: String = null
+      completer: Completer = null
   )(implicit reader: Reader[A]): () => Seq[A] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isSet = false
@@ -508,6 +511,7 @@ class ArgParser(
     commandInfos += CommandInfo(name, action, description)
   }
 
+
   /** Parse the given arguments with respect to the parameters defined by
     * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
     *
@@ -535,12 +539,15 @@ class ArgParser(
       _command = requiredParam[String](
         "command",
         absorbRemaining = true,
-        completer = s"""COMPREPLY=( $$(compgen -W '${commands
-          .mkString(" ")}' -- "$$cur") )"""
+        completer = prefix => commands.filter(_.startsWith(prefix)).toList
       )
       _commandArgs = repeatedParam[String](
         "args"
       )
+    }
+
+    if (BashCompletion.completeOrFalse(paramInfos.toList, commandInfos.toList, env, args, System.out)) {
+      sys.exit(0)
     }
 
     Parser.parse(

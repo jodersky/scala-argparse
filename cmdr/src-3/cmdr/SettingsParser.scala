@@ -84,7 +84,7 @@ object SettingsParser {
               repeats = false,
               env = ${Expr(env)},
               description = ${Expr(help)},
-              completer = ""
+              completer = ArgParser.NoCompleter
             )
           }
         }

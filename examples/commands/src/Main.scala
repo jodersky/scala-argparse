@@ -17,7 +17,7 @@ object Main {
     parser.parse(args)
   }
 
-  def clone(gitDir: os.Path, args: Seq[String]): Unit = {
+  def clone(gitDir: => os.Path, args: Seq[String]): Unit = {
     val parser = cmdr.ArgParser("gitz clone")
 
     val p1 = parser.param[Option[Int]]("--depth", None)
@@ -30,7 +30,7 @@ object Main {
     p1().foreach { depth => println("limiting depth to $depth") }
   }
 
-  def remote(gitDir: os.Path, args: Seq[String]): Unit = {
+  def remote(gitDir: => os.Path, args: Seq[String]): Unit = {
     val parser = cmdr.ArgParser("gitz remote")
 
     parser.command("set-url", args => remoteSetUrl(gitDir, args))
@@ -38,7 +38,7 @@ object Main {
     parser.parse(args)
   }
 
-  def remoteSetUrl(gitDir: os.Path, args: Seq[String]): Unit = {
+  def remoteSetUrl(gitDir: => os.Path, args: Seq[String]): Unit = {
     val parser = cmdr.ArgParser("gitz remote set-url")
 
     val remote = parser.requiredParam[String]("remote")
