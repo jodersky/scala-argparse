@@ -22,8 +22,8 @@ object Parser {
     * @param parseAndSet A function that is invoked anytime this parameter is
     * encountered on the command line. In case of an named param, the first
     * element is the actual name used, and the second element is the argument or
-    * None if no argument followed. In case of a position param, no name is
-    * given and the argument value is always defined.
+    * None if no argument followed. In case of a position param, the parameter's
+    * first name is given and the argument value is always defined.
     *
     * @param missing A function that is invoked if this parameter has not been
     * encountered at all.
@@ -174,10 +174,12 @@ object Parser {
     }
 
     for (i <- 0 until pos) {
-      positional(i).parseAndSet("", Some(positionalArgs(i)))
+      val param = positional(i)
+      param.parseAndSet(param.names.head, Some(positionalArgs(i)))
     }
     for (i <- pos until positionalArgs.length) {
-      positional(pos).parseAndSet("", Some(positionalArgs(i)))
+      val param = positional(pos)
+      param.parseAndSet(param.names.head, Some(positionalArgs(i)))
     }
     for (i <- pos until positional.length) {
       positional(i).missing()

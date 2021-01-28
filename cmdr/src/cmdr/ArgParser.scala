@@ -26,6 +26,7 @@ object ArgParser {
       action: Seq[String] => Unit,
       description: String
   )
+
 }
 
 /** A simple command line argument parser.
@@ -190,7 +191,7 @@ class ArgParser(
   // }
 
   private def help(): String = {
-    val (named0, positional) = paramInfos.span(_.isNamed)
+    val (named0, positional) = paramInfos.partition(_.isNamed)
     val named = named0.sortBy(_.names.head)
 
     val b = new StringBuilder
@@ -214,14 +215,15 @@ class ArgParser(
     if (!commandInfos.isEmpty) {
       b ++= "commands:\n"
       for (cmd <- commandInfos) {
-        b ++= f" ${cmd.name}%-14s ${cmd.description}%-58s\n"
+        b ++= f" ${cmd.name}%-14s ${cmd.description}%-58s%n"
       }
     }
 
-    if (!positional.isEmpty && commandInfos.isEmpty) {
+    val describedPos = positional.filter(!_.description.isEmpty)
+    if (!describedPos.isEmpty && commandInfos.isEmpty) {
       b ++= "positional arguments:\n"
       for (param <- positional) {
-        b ++= f" ${param.names.head}%-14s ${param.description}%-58s\n"
+        b ++= f" ${param.names.head}%-14s ${param.description}%-58s%n"
       }
     }
 
@@ -237,23 +239,23 @@ class ArgParser(
       } else {
         param.names.map(_ + "=").mkString(", ")
       }
-      b ++= f" $names%-14s ${param.description}%-58s\n"
+      b ++= f" $names%-14s ${param.description}%-58s%n"
     }
 
     val envVars = named.filter(_.env.isDefined)
     if (!envVars.isEmpty) {
       b ++= "environment variables:\n"
       for (param <- envVars) {
-        b ++= f" ${param.env.get}%-14s ${param.names.head}\n"
+        b ++= f" ${param.env.get}%-14s ${param.names.head}%s%n"
       }
     }
 
     b.result()
   }
 
-  private def singleParam[A](
+  def singleParam[A](
       name: String,
-      default: => Option[A],
+      default: Option[() => A],
       env: Option[String],
       aliases: Seq[String],
       help: String,
@@ -284,7 +286,7 @@ class ArgParser(
         fromEnv match {
           case Some(str) => parseAndSet(s"env ${env.get}", Some(str))
           case None if default.isDefined =>
-            setValue = Some(default.get)
+            setValue = Some(default.get())
           case None => reportMissing(name)
         }
       },
@@ -307,7 +309,7 @@ class ArgParser(
     () =>
       setValue.getOrElse(
         throw new NoSuchElementException(
-          s"This argument is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
+          s"This argument '$name' is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
         )
       )
   }
@@ -379,7 +381,7 @@ class ArgParser(
   ): () => A =
     singleParam(
       name,
-      Some(default),
+      Some(() => default),
       Option(env),
       aliases,
       help,
