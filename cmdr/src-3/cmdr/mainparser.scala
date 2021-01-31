@@ -4,6 +4,20 @@ import scala.quoted._
 
 object MacroUtil {
 
+  /** `thisIsKebabCase => this-is-kebab-case` */
+  def kebabify(camelCase: String): String = {
+    val kebab = new StringBuilder
+    var prevIsLower = false
+    for (c <- camelCase) {
+      if (prevIsLower && c.isUpper) {
+        kebab += '-'
+      }
+      kebab += c.toLower
+      prevIsLower = c.isLower
+    }
+    kebab.result()
+  }
+
   def getDefaultParams(using qctx: Quotes)(method: qctx.reflect.Symbol): Map[qctx.reflect.Symbol, Expr[Any]] = {
     import qctx.reflect._
 
@@ -45,7 +59,6 @@ object MacroUtil {
       }
     }
 
-
     defaults.get(param) match {
       // repeated --named
       case Some(default) if paramTpe <:< TypeRepr.of[Seq[_]] =>
@@ -53,7 +66,7 @@ object MacroUtil {
         val tpe = inner.asType.asInstanceOf[Type[Any]]
         '{
           $parser.repeatedParam[tpe.Underlying](
-            name = ${Expr("--" + param.name)},
+            name = ${Expr("--" + kebabify(param.name))},
             aliases = $annot.aliases,
             help = $annot.doc,
             flag = ${Expr(TypeRepr.of[tpe.Underlying] <:< TypeRepr.of[Boolean])}
@@ -65,7 +78,7 @@ object MacroUtil {
         val tpe = paramTpe.asType.asInstanceOf[Type[Any]]
         '{
           $parser.singleParam[tpe.Underlying](
-            name = ${Expr("--" + param.name)},
+            name = ${Expr("--" + kebabify(param.name))},
             default = Some(() => $default),
             env = Option($annot.env),
             aliases = $annot.aliases,
@@ -82,7 +95,7 @@ object MacroUtil {
         val tpe = inner.asType.asInstanceOf[Type[Any]]
         '{
           $parser.repeatedParam[tpe.Underlying](
-            name = ${Expr(param.name)},
+            name = ${Expr(kebabify(param.name))},
             aliases = $annot.aliases,
             help = $annot.doc,
             flag = false
@@ -94,7 +107,7 @@ object MacroUtil {
         val tpe = paramTpe.asType.asInstanceOf[Type[Any]]
         '{
           $parser.singleParam[tpe.Underlying](
-            ${Expr(param.name)},
+            ${Expr(kebabify(param.name))},
             default = None,
             env = Option($annot.env),
             aliases = $annot.aliases,
@@ -149,10 +162,8 @@ object MacroUtil {
     expr
   }
 
-  def parseOrExitImpl[A](using qctx: Quotes, tpe: Type[A])(container: Expr[A], args: Expr[Iterable[String]]): Expr[Unit] = {
+  def parseOrExitSymbol(using qctx: Quotes)(containerTpe: qctx.reflect.Symbol, args: Expr[Iterable[String]]): Expr[Unit] = {
     import qctx.reflect._
-
-    val containerTpe = container.asTerm.tpe.typeSymbol
 
     val mainMethods: List[Symbol] = containerTpe.declaredMethods.filter{ m =>
       try {
@@ -186,12 +197,25 @@ object MacroUtil {
       val accessors: Seq[() => Any] = ${Expr.ofSeq(
         for (param <- mainMethod.paramSymss.flatten) yield paramParser(using qctx)('parser, param, defaults)
       )}
-      parser.parse($args.toSeq)
+      parser.parseOrExit($args.toSeq)
       val results = accessors.map(_())
       ${callFun(using qctx)(mainMethod, 'results)}
       ()
     }
   }
+
+  def parseOrExitExpr(using qctx: Quotes)(container: Expr[_], args: Expr[Iterable[String]]): Expr[Unit] = {
+    import qctx.reflect._
+    parseOrExitSymbol(using qctx)(container.asTerm.tpe.typeSymbol, args)
+  }
+
+  def parseOrExitThis(using qctx: Quotes)(args: Expr[Iterable[String]]): Expr[Unit] = {
+    import qctx.reflect._
+    parseOrExitSymbol(Symbol.spliceOwner.owner.owner, args)
+  }
+
 }
 
-inline def parseOrExit[A](container: A, args: Iterable[String]): Unit = ${MacroUtil.parseOrExitImpl[A]('container, 'args)}
+inline def parseOrExit[A](container: A, args: Iterable[String]): Unit = ${MacroUtil.parseOrExitExpr('container, 'args)}
+
+inline def parseOrExit(args: Iterable[String]): Unit = ${MacroUtil.parseOrExitThis('args)}

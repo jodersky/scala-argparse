@@ -43,7 +43,7 @@ object BashCompletion {
 
       // Notes:
       // - the '-1' makes sure that 'split' will include trailing spaces as
-      //   empty strings. This is necessay to distinguish completion requests
+      //   empty strings. This is necessary to distinguish completion requests
       //   between a partially typed word and an empty new word.
       //   E.g.
       //     "a b c".split("\\s+", -1) == Array("a", "b", "c")
@@ -121,7 +121,10 @@ object BashCompletion {
     // then, do the actual completion, depending on what completer was found in
     // the first step
     if (prefix.startsWith("-")) { // '-' will show all available named params
-      named.flatMap(_.names).filter(_.startsWith(prefix)).foreach(stdout.println)
+      named.flatMap(_.names).filter(_.startsWith(prefix)).foreach{f =>
+        stdout.print(f)
+        stdout.println(" ")
+      }
     } else {
       completer(prefix).foreach(stdout.println)
     }

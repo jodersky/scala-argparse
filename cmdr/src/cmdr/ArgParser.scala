@@ -5,13 +5,18 @@ import scala.collection.mutable
 import Parser.ParamDef
 
 object ArgParser {
-  def apply(prog: String = "", description: String = "", version: String = "") =
-    new ArgParser(prog, description, version)
+  def apply(
+    prog: String = "",
+    description: String = "",
+    version: String = "",
+    reporter: Reporter = new Reporter,
+    env: Map[String, String] = sys.env
+  ) = new ArgParser(prog, description, version, reporter, env)
 
   type Completer = String => Seq[String]
   val NoCompleter = (s: String) => Seq.empty
 
-  /** User-firendly parameter information, used for generating help message */
+  /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
       isNamed: Boolean,
       names: Seq[String],
@@ -26,6 +31,45 @@ object ArgParser {
       action: Seq[String] => Unit,
       description: String
   )
+
+  sealed trait Result
+  case object Success extends Result
+  case object Error extends Result
+  case object EarlyExit extends Result
+
+  private class EarlyExitException extends Exception
+
+  class Reporter{
+    def stdout: java.io.PrintStream = System.out
+    def stderr: java.io.PrintStream = System.err
+
+    private var errors = 0
+
+    // called when an expected (i.e. required) parameter is missing
+    def reportMissing(name: String): Unit = {
+      stderr.println(s"missing argument: $name")
+      errors += 1
+    }
+
+    // called when an undeclared parameter is encountered
+    def reportUnknown(name: String): Unit = {
+      stderr.println(s"unknown argument: $name")
+      errors += 1
+    }
+
+    def reportParseError(name: String, message: String): Unit = {
+      stderr.println(s"error processing argument $name: $message")
+      errors += 1
+    }
+
+    def reportUnknownCommand(actual: String, available: Seq[String]) = {
+      stderr.println("unknown command: " + actual)
+      stderr.println("expected one of: " + available.mkString(", "))
+      errors += 1
+    }
+
+    def hasErrors = errors > 0
+  }
 
 }
 
@@ -62,54 +106,13 @@ object ArgParser {
   * @param version the verion of this app. Used in `--version` request.
   */
 class ArgParser(
-    prog: String,
-    description: String,
-    version: String
+    val prog: String,
+    val description: String,
+    val version: String,
+    val reporter: ArgParser.Reporter,
+    val env: Map[String, String]
 ) extends SettingsParser { self =>
   import ArgParser._
-
-  private var errors = 0
-
-  // called when an expected (i.e. required) parameter is missing
-  def reportMissing(name: String): Unit = {
-    System.err.println(s"missing argument: $name")
-    errors += 1
-  }
-
-  // called when an undeclared parameter is encountered
-  def reportUnknown(name: String): Unit = {
-    System.err.println(s"unknown argument: $name")
-    errors += 1
-  }
-
-  def reportParseError(name: String, message: String): Unit = {
-    System.err.println(s"error processing argument $name: $message")
-    errors += 1
-  }
-
-  def reportUnknownCommand(actual: String, available: Seq[String]) = {
-    System.err.println("unknown command: " + actual)
-    System.err.println("expected one of: " + available.mkString(", "))
-    errors += 1
-  }
-
-  def showAndExit(msg: String): Unit = {
-    System.out.print(msg)
-    sys.exit(0)
-  }
-
-  // this should abort if any errors were encountered
-  protected def check(): Boolean = {
-    if (errors > 0) {
-      System.err.println(s"run with '--help' for more information")
-      sys.exit(2)
-    } else {
-      true
-    }
-  }
-
-  // environment for parameters which have declared an environment variable
-  protected def env: Map[String, String] = sys.env
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -131,7 +134,10 @@ class ArgParser(
 
   paramDefs += ParamDef(
     Seq("--help"),
-    (_, _) => showAndExit(help()),
+    (_, _) => {
+      reporter.stdout.println(help())
+      throw new EarlyExitException
+    },
     missing = () => (),
     isFlag = true,
     repeatPositional = false,
@@ -151,7 +157,10 @@ class ArgParser(
   if (version != "") {
     paramDefs += ParamDef(
       Seq("--version"),
-      (_, _) => showAndExit(version + "\n"),
+      (_, _) => {
+        reporter.stdout.println(version)
+        throw new EarlyExitException
+      },
       missing = () => (),
       isFlag = true,
       repeatPositional = false,
@@ -167,28 +176,6 @@ class ArgParser(
       NoCompleter
     )
   }
-
-  // // completion is only helpful if this command has a name
-  // if (prog != "") {
-  //   paramDefs += ParamDef(
-  //     Seq("--completion"),
-  //     (_, _) =>
-  //       showAndExit(BashCompletion.completion(prog, paramInfos, commandInfos)),
-  //     missing = () => (),
-  //     isFlag = true,
-  //     repeatPositional = false,
-  //     absorbRemaining = false
-  //   )
-  //   // paramInfos += ParamInfo(
-  //   //   true,
-  //   //   Seq("--completion"),
-  //   //   true,
-  //   //   false,
-  //   //   None,
-  //   //   "print bash completion and exit",
-  //   //   ""
-  //   // )
-  // }
 
   private def help(): String = {
     val (named0, positional) = paramInfos.partition(_.isNamed)
@@ -267,14 +254,14 @@ class ArgParser(
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
-        case Reader.Error(message) => reportParseError(name, message)
+        case Reader.Error(message) => reporter.reportParseError(name, message)
         case Reader.Success(value) => setValue = Some(value)
       }
     }
 
     def parseAndSet(name: String, valueOpt: Option[String]) = valueOpt match {
       case Some(v) => read(name, v)
-      case None    => reportParseError(name, "argument expected")
+      case None    => reporter.reportParseError(name, "argument expected")
     }
 
     val pdef = ParamDef(
@@ -287,7 +274,7 @@ class ArgParser(
           case Some(str) => parseAndSet(s"env ${env.get}", Some(str))
           case None if default.isDefined =>
             setValue = Some(default.get())
-          case None => reportMissing(name)
+          case None => reporter.reportMissing(name)
         }
       },
       isFlag = flag,
@@ -453,7 +440,7 @@ class ArgParser(
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
-        case Reader.Error(message) => reportParseError(name, message)
+        case Reader.Error(message) => reporter.reportParseError(name, message)
         case Reader.Success(value) =>
           values += value
           isSet = true
@@ -466,7 +453,7 @@ class ArgParser(
         valueOpt match {
           case Some(v)      => read(name, v)
           case None if flag => read(name, "true")
-          case None         => reportParseError(name, "argument expected")
+          case None         => reporter.reportParseError(name, "argument expected")
         }
       },
       missing = () => (),
@@ -513,26 +500,11 @@ class ArgParser(
     commandInfos += CommandInfo(name, action, description)
   }
 
-
   /** Parse the given arguments with respect to the parameters defined by
     * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
-    *
-    * In case no errors are encountered, the arguments will be populated in the
-    * `Arg`s returned by the parameter definitions.
-    *
-    * In case errors are encountered, the default behaviour is to exit the
-    * program.
-    *
-    * The classes of errors are:
-    *
-    * 1. An unknown argument is encountered. This can either be an unspecified
-    *    named argument or an extranous positional argument.
-    *
-    * 2. A required argument is missing.
-    *
-    * 3. An argument cannot be parsed from its string value to its desired type.
     */
-  def parse(args: Seq[String]): Unit = {
+  def parseResult(args0: Iterable[String]): Result = {
+    val args = args0.toSeq
     var _command: () => String = null
     var _commandArgs: () => Seq[String] = null
 
@@ -548,27 +520,64 @@ class ArgParser(
       )
     }
 
-    if (BashCompletion.completeOrFalse(paramInfos.toList, commandInfos.toList, env, args, System.out)) {
-      sys.exit(0)
+    if (BashCompletion.completeOrFalse(paramInfos.toList, commandInfos.toList, env, args, reporter.stdout)) {
+      return EarlyExit
     }
 
-    Parser.parse(
-      paramDefs.result(),
-      args,
-      reportUnknown
-    )
-    val ok = check()
+    try {
+      Parser.parse(
+        paramDefs.result(),
+        args,
+        reporter.reportUnknown
+      )
+    } catch {
+      case _: EarlyExitException => return EarlyExit
+    }
 
-    if (ok && !commandInfos.isEmpty) {
+    if (reporter.hasErrors) return Error
+
+    if (!commandInfos.isEmpty) {
       commandInfos.find(_.name == _command()) match {
         case Some(cmd) =>
           cmd.action(_commandArgs())
         case None =>
-          reportUnknownCommand(_command(), commandInfos.map(_.name).result())
-          check()
+          reporter.reportUnknownCommand(_command(), commandInfos.map(_.name).result())
+          return Error
       }
     }
+
+    Success
   }
-  def parse(args: Array[String]): Unit = parse(args.toSeq)
+
+  /** Parse the given arguments with respect to the parameters defined by
+    * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
+    *
+    * In case no errors are encountered, the arguments will be populated in the
+    * functions returned by the parameter definitions.
+    *
+    * In case errors are encountered, the default behaviour is to exit the
+    * program.
+    *
+    * The classes of errors are:
+    *
+    * 1. An unknown argument is encountered. This can either be an unspecified
+    *    named argument or an extranous positional argument.
+    *
+    * 2. A required argument is missing.
+    *
+    * 3. An argument cannot be parsed from its string value to its desired type.
+    *
+    * @see parseResult for a version of this function which does not exit
+    */
+  def parseOrExit(args: Iterable[String]): Unit = parseResult(args) match {
+    case Success => ()
+    case EarlyExit => sys.exit(0)
+    case Error => sys.exit(2)
+  }
+
+  @deprecated("use parseOrExit instead", "0.7.2")
+  def parse(args: Seq[String]): Unit = parseOrExit(args)
+  @deprecated("use parseOrExit instead", "0.7.2")
+  def parse(args: Array[String]): Unit = parseOrExit(args.toSeq)
 
 }

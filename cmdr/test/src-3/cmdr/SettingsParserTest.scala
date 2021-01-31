@@ -29,30 +29,27 @@ object SettingsParserTest extends TestSuite {
     test("empty") {
       val parser = new TestParser
       val settings = parser.settings(Settings())
-      parser.parse(Nil)
-      parser.check() ==> true
+      parser.parseResult(Nil) ==> ArgParser.Success
     }
     test("unknown") {
       val parser = new TestParser
       val settings = parser.settings(Settings())
-      parser.parse(Seq("--unknown"))
+      parser.parseResult(Seq("--unknown")) ==> ArgParser.Error
       parser.unknown ==> 1
-      parser.check() ==> false
     }
     test("valid") {
       val parser = new TestParser
       val settings = parser.settings(Settings())
       // format: off
-      parser.parse(List(
+      parser.parseResult(List(
         "--opt1", "world",
         "--opt2=42",
         "--flag",
         "--extra-opt=ok",
         "--http.port", "8080",
         "--http.nested.a", "42"
-      ))
+      )) ==> ArgParser.Success
       // format: on
-      parser.check() ==> true
 
       settings.opt1 ==> "world"
       settings.opt2 ==> 42
@@ -69,8 +66,7 @@ object SettingsParserTest extends TestSuite {
       val param1 = parser.param[String]("--opt3", "a")
       val positional = parser.requiredParam[String]("pos")
 
-      parser.parse(Seq("--http.port=8080", "pos", "--opt3", "b"))
-      parser.check() ==> true
+      parser.parseResult(Seq("--http.port=8080", "pos", "--opt3", "b")) ==> ArgParser.Success
 
       settings.http.port ==> 8080
       param1() ==> "b"
@@ -85,9 +81,8 @@ object SettingsParserTest extends TestSuite {
       }
       val parser = new TestParser
       val settings = parser.settings(Config())
-      parser.parse(Seq("--opt1", "a", "--opt2", "b"))
+      parser.parseResult(Seq("--opt1", "a", "--opt2", "b")) ==> ArgParser.Success
 
-      parser.check() ==> true
       settings.opt1 ==> "a"
       settings.opt2 ==> "b"
     }

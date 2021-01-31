@@ -14,7 +14,7 @@ object Main {
     parser.command("clone", args => clone(gitDir(), args), "clone a repository")
     parser.command("remote", args => remote(gitDir(), args), "manage remotes")
 
-    parser.parse(args)
+    parser.parseOrExit(args)
   }
 
   def clone(gitDir: => os.Path, args: Seq[String]): Unit = {
@@ -23,7 +23,7 @@ object Main {
     val p1 = parser.param[Option[Int]]("--depth", None)
     val p2 = parser.requiredParam[String]("url")
 
-    parser.parse(args)
+    parser.parseOrExit(args)
     println("gitDir: " + gitDir)
 
     println(s"cloning ${p2()}")
@@ -35,7 +35,7 @@ object Main {
 
     parser.command("set-url", args => remoteSetUrl(gitDir, args))
 
-    parser.parse(args)
+    parser.parseOrExit(args)
   }
 
   def remoteSetUrl(gitDir: => os.Path, args: Seq[String]): Unit = {
@@ -44,7 +44,7 @@ object Main {
     val remote = parser.requiredParam[String]("remote")
     val url = parser.requiredParam[String]("url")
 
-    parser.parse(args)
+    parser.parseOrExit(args)
     println("gitDir: " + gitDir)
 
     println(s"setting remote ${remote()} to ${url()}")

@@ -18,25 +18,7 @@ trait Reader[A] {
     */
   def read(a: String): Reader.Result[A]
 
-  /** Bash completion snippet for arguments of this type.
-    *
-    * Must be valid bash. The variable "$cur" may be assumed to contain the
-    * current word being completed.
-    *
-    * Typically this would set COMPREPLY of compopt. E.g.
-    *
-    * {{{
-    * COMPREPLY=( $(compgen -W 'foo bar baz' -- "$cur") )
-    * }}}
-    *
-    * - or -
-    *
-    * {{{
-    * compopt -o default
-    * }}}
-    *
-    * Leave blank for no completion.
-    */
+  /** Compute available bash completions starting with a given string. */
   def completer: String => Seq[String] = _ => Seq.empty
 }
 
@@ -79,12 +61,40 @@ object Reader {
       }
   }
 
-  trait FsPathReader[A] extends Reader[A] {
-    override val completer = (prefix: String) => {
-      os.list(os.pwd).map(_.toString())
-    }
+  val pathCompleter: String => Seq[String] = (prefix: String) => {
+    import java.nio.file.{Files, Path, Paths}
 
-      //"compopt -o default"
+    try {
+      val completions = collection.mutable.ListBuffer.empty[String]
+      val path = Paths.get(prefix)
+
+      def addListing(dir: Path) = Files.list(dir).forEach{ path =>
+        if (path.toString.startsWith(prefix)) {
+          if (Files.isDirectory(path)) {
+            completions += s"$path/"
+          } else {
+            completions += s"$path "
+          }
+        }
+      }
+
+      if (Files.isDirectory(path) && prefix.endsWith("/")) {
+        addListing(path)
+      } else {
+        path.getParent() match {
+          case null => addListing(Paths.get(""))
+          case dir => addListing(dir)
+        }
+      }
+
+      completions.result()
+    } catch {
+      case _: Exception => Seq()
+    }
+  }
+
+  trait FsPathReader[A] extends Reader[A] {
+    override val completer = pathCompleter
   }
 
   implicit object PathReader extends FsPathReader[os.Path] {
@@ -136,6 +146,7 @@ object Reader {
       case "false" => Success(false)
       case _       => Error(s"'$a' is not either 'true' or 'false'")
     }
+    override def completer = prefix => Seq("true", "false").filter(_.startsWith(prefix))
   }
   implicit def CollectionReader[Elem, Col[Elem]](
       implicit elementReader: Reader[Elem],
