@@ -285,11 +285,15 @@ object ArgParserTest extends TestSuite {
       test("help") {
         val parser = new TestParser
         // the --help flag has top priority; it can appear anywhere on the command line
-        parser.parseResult(List("a", "b", "c", "--name", "--help", "foo", "--bar")) ==> ArgParser.EarlyExit
+        parser.parseResult(
+          List("a", "b", "c", "--name", "--help", "foo", "--bar")
+        ) ==> ArgParser.EarlyExit
       }
       test("version") {
         val parser = new TestParser(version = "2.0")
-        parser.parseResult(List("a", "b", "c", "--name", "--version", "foo", "--bar")) ==> ArgParser.EarlyExit
+        parser.parseResult(
+          List("a", "b", "c", "--name", "--version", "foo", "--bar")
+        ) ==> ArgParser.EarlyExit
       }
     }
   }

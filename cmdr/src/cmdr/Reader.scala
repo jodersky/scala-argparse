@@ -68,7 +68,7 @@ object Reader {
       val completions = collection.mutable.ListBuffer.empty[String]
       val path = Paths.get(prefix)
 
-      def addListing(dir: Path) = Files.list(dir).forEach{ path =>
+      def addListing(dir: Path) = Files.list(dir).forEach { path =>
         if (path.toString.startsWith(prefix)) {
           if (Files.isDirectory(path)) {
             completions += s"$path/"
@@ -83,7 +83,7 @@ object Reader {
       } else {
         path.getParent() match {
           case null => addListing(Paths.get(""))
-          case dir => addListing(dir)
+          case dir  => addListing(dir)
         }
       }
 
@@ -146,7 +146,8 @@ object Reader {
       case "false" => Success(false)
       case _       => Error(s"'$a' is not either 'true' or 'false'")
     }
-    override def completer = prefix => Seq("true", "false").filter(_.startsWith(prefix))
+    override def completer =
+      prefix => Seq("true", "false").filter(_.startsWith(prefix))
   }
   implicit def CollectionReader[Elem, Col[Elem]](
       implicit elementReader: Reader[Elem],

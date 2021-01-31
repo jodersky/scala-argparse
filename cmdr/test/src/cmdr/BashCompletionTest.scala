@@ -12,12 +12,18 @@ object BashCompletionTest extends TestSuite {
   }
 
   class CompletionParser(
-    line: String,
-    override val reporter: CompletionReporter = new CompletionReporter()
-  ) extends ArgParser("", "", "", reporter, Map(
-    "COMP_LINE" -> line,
-    "COMP_POINT" -> line.length.toString()
-  ))
+      line: String,
+      override val reporter: CompletionReporter = new CompletionReporter()
+  ) extends ArgParser(
+        "",
+        "",
+        "",
+        reporter,
+        Map(
+          "COMP_LINE" -> line,
+          "COMP_POINT" -> line.length.toString()
+        )
+      )
 
   val tests = Tests {
     test("basic") {
@@ -74,7 +80,11 @@ object BashCompletionTest extends TestSuite {
       val parser = new CompletionParser("cmd --optimize ")
       parser.requiredParam[String]("--option")
       parser.requiredParam[String]("--opt")
-      parser.requiredParam[String]("--optimize", completer = prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix)))
+      parser.requiredParam[String](
+        "--optimize",
+        completer =
+          prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix))
+      )
       parser.parseResult(Seq()) ==> ArgParser.EarlyExit
       parser.reporter.completions ==> List("L1 ", "L2 ", "L11 ")
     }
@@ -82,7 +92,11 @@ object BashCompletionTest extends TestSuite {
       val parser = new CompletionParser("cmd --optimize L1")
       parser.requiredParam[String]("--option")
       parser.requiredParam[String]("--opt")
-      parser.requiredParam[String]("--optimize", completer = prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix)))
+      parser.requiredParam[String](
+        "--optimize",
+        completer =
+          prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix))
+      )
       parser.parseResult(Seq()) ==> ArgParser.EarlyExit
       parser.reporter.completions ==> List("L1 ", "L11 ")
     }
@@ -90,7 +104,11 @@ object BashCompletionTest extends TestSuite {
       val parser = new CompletionParser("cmd --optimize=L1")
       parser.requiredParam[String]("--option")
       parser.requiredParam[String]("--opt")
-      parser.requiredParam[String]("--optimize", completer = prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix)))
+      parser.requiredParam[String](
+        "--optimize",
+        completer =
+          prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix))
+      )
       parser.parseResult(Seq()) ==> ArgParser.EarlyExit
       parser.reporter.completions ==> List("L1 ", "L11 ")
     }

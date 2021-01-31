@@ -17,11 +17,11 @@ object BashCompletion {
     * See `man bash` (search for Programmable Completion) for more information.
     */
   def completeOrFalse(
-    paramInfos: Seq[ParamInfo],
-    commandInfos: Seq[CommandInfo],
-    env: Map[String, String],
-    args: Seq[String],
-    stdout: java.io.PrintStream
+      paramInfos: Seq[ParamInfo],
+      commandInfos: Seq[CommandInfo],
+      env: Map[String, String],
+      args: Seq[String],
+      stdout: java.io.PrintStream
   ): Boolean = {
     val comppoint = env.get("COMP_POINT")
     val compline = env.get("COMP_LINE")
@@ -50,7 +50,13 @@ object BashCompletion {
       //     "a b c ".split("\\s+", -1) == Array("a", "b", "c", "")
       // - .tail is safe, because COMP_LINE will always include $0
       val words = compline.get.take(length).split("\\s+", -1).tail
-      completeOrFalse(paramInfos, commandInfos, env, Seq("--recursive-complete") ++ words, stdout)
+      completeOrFalse(
+        paramInfos,
+        commandInfos,
+        env,
+        Seq("--recursive-complete") ++ words,
+        stdout
+      )
     } else {
       // no completion requested
       false
@@ -58,10 +64,10 @@ object BashCompletion {
   }
 
   private def complete(
-    paramInfos: Seq[ParamInfo],
-    commandInfos: Seq[CommandInfo],
-    args: Seq[String],
-    stdout: java.io.PrintStream
+      paramInfos: Seq[ParamInfo],
+      commandInfos: Seq[CommandInfo],
+      args: Seq[String],
+      stdout: java.io.PrintStream
   ): Unit = {
     val named = paramInfos.filter(_.isNamed)
     val positionals = paramInfos.filter(!_.isNamed)
@@ -82,7 +88,7 @@ object BashCompletion {
     // - follow nested commands
     // - set special completers for positional parameters
     // TODO: handle '--' positional escaping
-    while(arg != null) {
+    while (arg != null) {
       prefix = arg
 
       arg match {
@@ -109,11 +115,15 @@ object BashCompletion {
           readArg()
 
           if (commandInfos.exists(_.name == positional) && arg != null) {
-            return commandInfos.find(_.name == positional).get.action(
-              Seq("--recursive-complete", arg) ++ argIter.toSeq
-            )
+            return commandInfos
+              .find(_.name == positional)
+              .get
+              .action(
+                Seq("--recursive-complete", arg) ++ argIter.toSeq
+              )
           } else {
-            completer = positionalCompleters.nextOption().getOrElse(ArgParser.NoCompleter)
+            completer =
+              positionalCompleters.nextOption().getOrElse(ArgParser.NoCompleter)
           }
       }
     }
@@ -121,7 +131,7 @@ object BashCompletion {
     // then, do the actual completion, depending on what completer was found in
     // the first step
     if (prefix.startsWith("-")) { // '-' will show all available named params
-      named.flatMap(_.names).filter(_.startsWith(prefix)).foreach{f =>
+      named.flatMap(_.names).filter(_.startsWith(prefix)).foreach { f =>
         stdout.print(f)
         stdout.println(" ")
       }

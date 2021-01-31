@@ -6,11 +6,11 @@ import Parser.ParamDef
 
 object ArgParser {
   def apply(
-    prog: String = "",
-    description: String = "",
-    version: String = "",
-    reporter: Reporter = new Reporter,
-    env: Map[String, String] = sys.env
+      prog: String = "",
+      description: String = "",
+      version: String = "",
+      reporter: Reporter = new Reporter,
+      env: Map[String, String] = sys.env
   ) = new ArgParser(prog, description, version, reporter, env)
 
   type Completer = String => Seq[String]
@@ -39,7 +39,7 @@ object ArgParser {
 
   private class EarlyExitException extends Exception
 
-  class Reporter{
+  class Reporter {
     def stdout: java.io.PrintStream = System.out
     def stderr: java.io.PrintStream = System.err
 
@@ -520,7 +520,13 @@ class ArgParser(
       )
     }
 
-    if (BashCompletion.completeOrFalse(paramInfos.toList, commandInfos.toList, env, args, reporter.stdout)) {
+    if (BashCompletion.completeOrFalse(
+          paramInfos.toList,
+          commandInfos.toList,
+          env,
+          args,
+          reporter.stdout
+        )) {
       return EarlyExit
     }
 
@@ -541,7 +547,10 @@ class ArgParser(
         case Some(cmd) =>
           cmd.action(_commandArgs())
         case None =>
-          reporter.reportUnknownCommand(_command(), commandInfos.map(_.name).result())
+          reporter.reportUnknownCommand(
+            _command(),
+            commandInfos.map(_.name).result()
+          )
           return Error
       }
     }
@@ -570,7 +579,7 @@ class ArgParser(
     * @see parseResult for a version of this function which does not exit
     */
   def parseOrExit(args: Iterable[String]): Unit = parseResult(args) match {
-    case Success => ()
+    case Success   => ()
     case EarlyExit => sys.exit(0)
     case Error =>
       reporter.stderr.println("run with '--help' for more information")

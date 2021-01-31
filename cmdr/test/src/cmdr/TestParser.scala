@@ -23,11 +23,17 @@ class TestReporter extends ArgParser.Reporter {
       available: Seq[String]
   ): Unit = unknownCmds += 1
   var parseErrors = 0
-  override def reportParseError(name: String, message: String): Unit = parseErrors += 1
-  override def hasErrors = missing > 0 || unknown > 0 || unknownCmds > 0 || parseErrors > 0
+  override def reportParseError(name: String, message: String): Unit =
+    parseErrors += 1
+  override def hasErrors =
+    missing > 0 || unknown > 0 || unknownCmds > 0 || parseErrors > 0
 }
 
-class TestParser(version: String = "", override val reporter: TestReporter = new TestReporter(), env: Map[String, String] = Map.empty) extends ArgParser("", "", version, reporter, env) {
+class TestParser(
+    version: String = "",
+    override val reporter: TestReporter = new TestReporter(),
+    env: Map[String, String] = Map.empty
+) extends ArgParser("", "", version, reporter, env) {
   def missing = reporter.missing
   def unknown = reporter.unknown
   def unknownCmds = reporter.unknownCmds
