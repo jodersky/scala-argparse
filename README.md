@@ -16,7 +16,7 @@ Pragmatic command line parsing for Scala applications.
 
 ## Example
 
-Both examples hae the same command-line interface.
+Both examples have the same command-line interface.
 
 ### 1. Imperative Style
 

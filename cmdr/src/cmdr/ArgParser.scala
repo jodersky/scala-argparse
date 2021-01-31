@@ -572,7 +572,9 @@ class ArgParser(
   def parseOrExit(args: Iterable[String]): Unit = parseResult(args) match {
     case Success => ()
     case EarlyExit => sys.exit(0)
-    case Error => sys.exit(2)
+    case Error =>
+      reporter.stderr.println("run with '--help' for more information")
+      sys.exit(2)
   }
 
   @deprecated("use parseOrExit instead", "0.7.2")
