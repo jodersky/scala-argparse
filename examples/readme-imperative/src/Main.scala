@@ -23,6 +23,7 @@ object Main {
       "path",
       help = "the path to use"
     )
+
     parser.parseOrExit(args)
     println(s"${host()}:${port()}${path()}")
   }

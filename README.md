@@ -2,17 +2,23 @@
 
 Pragmatic command line parsing for Scala applications.
 
-## Guiding Principles
+## Highlights
 
-- Avoid ceremony and target the common use case. *The design is inspired by the
-  [argparse](https://docs.python.org/3/library/argparse.html) package from
-  python.*
+- Simple interfaces:
 
-- Allow reading configuration from the environment. *This encourages separation
-  of config from code, as described in "the 12 factor app"
-  https://12factor.net/config.*
+  - imperative-style, inspired by the [argparse](https://docs.python.org/3/library/argparse.html)
+    package from python
+
+  - declarative-style, inspired by Scala 3's `@main` annotation
+
+- Embedded bash completion. Simply add `complete -o nospace -C <program>
+  <program>` to `~/.bashrc`
 
 ## Example
+
+Both examples hae the same command-line interface.
+
+### 1. Imperative Style
 
 ```scala
 object Main {
@@ -40,15 +46,38 @@ object Main {
       "path",
       help = "the path to use"
     )
-    parser.parse(args)
+
+    parser.parseOrExit(args)
     println(s"${host()}:${port()}${path()}")
   }
 }
 ```
 
-1. Build the above application by running `./mill examples.readme[2.13.4].dist`.
+### 2. Declarative Style
 
-2. Run the `./readme` executable:
+```scala
+object Main {
+  @cmdr.main(name = "readme", doc = "An example application")
+  def main(
+    @cmdr.arg(doc = "network host")
+    host: String = "localhost",
+    @cmdr.arg(doc = "some port", aliases = Seq("-p"), env = "PORT")
+    port: Int = 8080,
+    @cmdr.arg(doc="the path to use")
+    path: java.nio.file.Path
+  ) = {
+    println(s"$host:$port$path")
+  }
+
+  def main(args: Array[String]): Unit = cmdr.parseOrExit(args)
+}
+```
+
+1. Build the above application by running either:
+  - `./mill examples.readme-imperative[3.0.0-M3].dist`
+  - or, `./mill examples.readme-declarative[3.0.0-M3].dist`
+
+2. Run the `./readme-<imperative|declarative>` executable:
 
 ```
 $ ./readme
