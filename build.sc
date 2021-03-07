@@ -14,7 +14,7 @@ trait CmdrModule
 
   def scalacOptions = Seq("-deprecation")
 
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.2")
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.3")
 
   def publishVersion = "0.8.0"
   def pomSettings = PomSettings(
@@ -35,16 +35,6 @@ object cmdr extends Module {
   class JvmModule(val crossScalaVersion: String) extends CmdrModule {
     def millSourcePath = super.millSourcePath / os.up
     object test extends Tests with Utest
-    // FIXME: scaladoc 3 is not supported by mill yet. Remove the override
-    // once it is.
-    override def docJar =
-      if (crossScalaVersion.startsWith("2")) super.docJar
-      else T {
-        val outDir = T.ctx().dest
-        val javadocDir = outDir / 'javadoc
-        os.makeDir.all(javadocDir)
-        mill.api.Result.Success(mill.modules.Jvm.createJar(Agg(javadocDir))(outDir))
-      }
   }
   object jvm extends Cross[JvmModule](scala213, scala3)
 
