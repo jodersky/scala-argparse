@@ -10,4 +10,5 @@ package object cmdr {
   @deprecated("use ArgParser() instead", "0.3.0")
   type ArgumentParser = ArgParser
   val ArgumentParser = ArgParser
+
 }
