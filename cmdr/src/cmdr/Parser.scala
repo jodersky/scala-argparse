@@ -20,7 +20,7 @@ object Parser {
     * Positional parameters are given arguments in the order they appear in.
     *
     * @param parseAndSet A function that is invoked anytime this parameter is
-    * encountered on the command line. In case of an named param, the first
+    * encountered on the command line. In case of a named param, the first
     * element is the actual name used, and the second element is the argument or
     * None if no argument followed. In case of a position param, the parameter's
     * first name is given and the argument value is always defined.
@@ -106,24 +106,30 @@ object Parser {
     }
 
     // parsed arguments
-    val namedArgs = mutable.Map.empty[ParamDef, mutable.ListBuffer[
-      (String, Option[String]) // name used -> value given (or None if no value given, e.g. flags)
-    ]]
-    val positionalArgs = mutable.ArrayBuffer.empty[String]
+    val namedArgs = mutable.Set.empty[ParamDef]
+    val positionalArgs = mutable.Set.empty[ParamDef]
     var pos = 0 // having this as a separate var from positionalArgs.length allows processing repeated params
 
     // first, iterate over all arguments to detect extraneous ones
-    val argIter = args.iterator
+    var argIter = args.toList
     var arg: String = null
-    def readArg() = if (argIter.hasNext) arg = argIter.next() else arg = null
+    def readArg() = argIter.headOption match {
+      case Some(value) =>
+        argIter = argIter.tail
+        arg = value
+      case None =>
+        arg = null
+    }
     readArg()
 
     var onlyPositionals = false
     def addPositional(arg: String) =
       if (pos < positional.length) {
-        positionalArgs += arg
-        if (positional(pos).absorbRemaining) onlyPositionals = true
-        if (!positional(pos).repeatPositional) pos += 1
+        val param = positional(pos)
+        param.parseAndSet(param.names.head, Some(arg))
+        positionalArgs += param
+        if (param.absorbRemaining) onlyPositionals = true
+        if (!param.repeatPositional) pos += 1
       } else {
         reportUnknown(arg)
       }
@@ -139,15 +145,18 @@ object Parser {
           case Named(name, embedded) if aliases.contains(name) =>
             readArg()
             val param = aliases(name)
-            namedArgs.getOrElseUpdate(param, mutable.ListBuffer.empty)
             if (embedded != null) { // embedded argument, i.e. one that contains '='
-              namedArgs(param) += (name -> Some(embedded))
+              param.parseAndSet(name, Some(embedded))
+              namedArgs += param
             } else if (param.isFlag) { // flags never take an arg and are set to "true"
-              namedArgs(param) += (name -> Some("true"))
+              param.parseAndSet(name, Some("true"))
+              namedArgs += param
             } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
-              namedArgs(param) += (name -> None)
+              param.parseAndSet(name, None)
+              namedArgs += param
             } else {
-              namedArgs(param) += (name -> Some(arg))
+              param.parseAndSet(name, Some(arg))
+              namedArgs += param
               readArg()
             }
             if (param.absorbRemaining) onlyPositionals = true
@@ -161,26 +170,13 @@ object Parser {
       }
     }
 
-    // then, iterate over all parameters to set values or report missing arguments
+    // then, iterate over all parameters to report missing arguments
     for (param <- named) {
-      namedArgs.get(param) match {
-        case None => param.missing()
-        case Some(list) if list.isEmpty =>
-          param.missing() // this shouldn't ever happen, but let's be defensive
-        case Some(list) =>
-          for ((nameUsed, valueOpt) <- list)
-            param.parseAndSet(nameUsed, valueOpt)
+      if (!namedArgs.contains(param)) {
+        param.missing()
       }
     }
 
-    for (i <- 0 until pos) {
-      val param = positional(i)
-      param.parseAndSet(param.names.head, Some(positionalArgs(i)))
-    }
-    for (i <- pos until positionalArgs.length) {
-      val param = positional(pos)
-      param.parseAndSet(param.names.head, Some(positionalArgs(i)))
-    }
     for (i <- pos until positional.length) {
       positional(i).missing()
     }
