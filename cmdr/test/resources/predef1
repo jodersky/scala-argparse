@@ -1,0 +1,9 @@
+# This is an example predef file
+some-option 1
+option2 hello, world
+
+# A flag
+flag
+
+# Embedded
+option-with-embedded-setting=hello=world

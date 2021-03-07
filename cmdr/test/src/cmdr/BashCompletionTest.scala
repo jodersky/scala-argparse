@@ -22,7 +22,8 @@ object BashCompletionTest extends TestSuite {
         Map(
           "COMP_LINE" -> line,
           "COMP_POINT" -> line.length.toString()
-        )
+        ),
+        Seq.empty
       )
 
   val tests = Tests {

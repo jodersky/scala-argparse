@@ -32,8 +32,9 @@ class TestReporter extends ArgParser.Reporter {
 class TestParser(
     version: String = "",
     override val reporter: TestReporter = new TestReporter(),
-    env: Map[String, String] = Map.empty
-) extends ArgParser("", "", version, reporter, env) {
+    env: Map[String, String] = Map.empty,
+    predefs: Seq[os.Path] = Seq.empty
+) extends ArgParser("", "", version, reporter, env, predefs) {
   def missing = reporter.missing
   def unknown = reporter.unknown
   def unknownCmds = reporter.unknownCmds

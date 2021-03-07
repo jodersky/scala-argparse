@@ -10,8 +10,9 @@ object ArgParser {
       description: String = "",
       version: String = "",
       reporter: Reporter = new Reporter,
-      env: Map[String, String] = sys.env
-  ) = new ArgParser(prog, description, version, reporter, env)
+      env: Map[String, String] = sys.env,
+      predefs: Seq[os.Path] = Seq.empty
+  ) = new ArgParser(prog, description, version, reporter, env, predefs)
 
   type Completer = String => Seq[String]
   val NoCompleter = (s: String) => Seq.empty
@@ -110,7 +111,8 @@ class ArgParser(
     val description: String,
     val version: String,
     val reporter: ArgParser.Reporter,
-    val env: Map[String, String]
+    val env: Map[String, String],
+    val predefs: Seq[os.Path]
 ) extends SettingsParser { self =>
   import ArgParser._
 
@@ -504,7 +506,13 @@ class ArgParser(
     * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
     */
   def parseResult(args0: Iterable[String]): Result = {
-    val args = args0.toSeq
+    val predefArgs = for {
+      file <- predefs
+      if os.exists(file)
+      arg <- PredefReader.read(os.read(file))
+    } yield arg
+
+    val args = predefArgs ++ args0.toSeq
     var _command: () => String = null
     var _commandArgs: () => Seq[String] = null
 
