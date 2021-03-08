@@ -12,7 +12,7 @@ trait CmdrModule
     with ScalafmtModule
     with PublishModule {
 
-  def scalacOptions = Seq("-deprecation")
+  def scalacOptions = Seq("-deprecation", "-release", "8")
 
   def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.3")
 
