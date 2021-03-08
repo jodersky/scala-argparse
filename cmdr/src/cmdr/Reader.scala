@@ -18,6 +18,11 @@ trait Reader[A] {
     */
   def read(a: String): Reader.Result[A]
 
+  /** Show a given value as a string. This is used in help dialogs to display
+    * default values.
+    **/
+  def show(a: A): String
+
   /** Compute available bash completions starting with a given string. */
   def completer: String => Seq[String] = _ => Seq.empty
 }
@@ -30,6 +35,7 @@ object Reader {
 
   implicit object StringReader extends Reader[String] {
     def read(a: String) = Success(a)
+    def show(a: String): String = a
   }
 
   implicit def IntegralReader[N](implicit numeric: Integral[N]): Reader[N] =
@@ -41,6 +47,7 @@ object Reader {
           case _: NumberFormatException =>
             Error(s"'$a' is not an integral number")
         }
+      def show(a: N): String = a.toString
     }
 
   implicit object FloatReader extends Reader[Float] {
@@ -50,6 +57,7 @@ object Reader {
       } catch {
         case _: NumberFormatException => Error(s"'$a' is not a number")
       }
+    def show(a: Float): String = a.toString
   }
 
   implicit object DoubleReader extends Reader[Double] {
@@ -59,6 +67,7 @@ object Reader {
       } catch {
         case _: NumberFormatException => Error(s"'$a' is not a number")
       }
+    def show(a: Double): String = a.toString
   }
 
   val pathCompleter: String => Seq[String] = (prefix: String) => {
@@ -105,6 +114,7 @@ object Reader {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a valid path")
       }
+    def show(a: os.Path): String = a.toString
   }
   implicit object SubPathReader extends FsPathReader[os.SubPath] {
     def read(a: String) =
@@ -114,6 +124,7 @@ object Reader {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a relative child path")
       }
+    def show(a: os.SubPath): String = a.toString
   }
   implicit object RelPathReader extends FsPathReader[os.RelPath] {
     def read(a: String) =
@@ -123,6 +134,7 @@ object Reader {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a relative path")
       }
+    def show(a: os.RelPath): String = a.toString
   }
   implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
@@ -131,6 +143,7 @@ object Reader {
       } catch {
         case _: InvalidPathException => Error(s"'$a' is not a path")
       }
+    def show(a: java.nio.file.Path): String = a.toString
   }
   implicit object JavaFileReader extends FsPathReader[java.io.File] {
     def read(a: String) =
@@ -139,6 +152,7 @@ object Reader {
       } catch {
         case _: Exception => Error(s"'$a' is not a path")
       }
+    def show(a: java.io.File): String = a.toString
   }
   implicit object BooleanReader extends Reader[Boolean] {
     def read(a: String): Result[Boolean] = a match {
@@ -146,10 +160,11 @@ object Reader {
       case "false" => Success(false)
       case _       => Error(s"'$a' is not either 'true' or 'false'")
     }
+    def show(a: Boolean): String = a.toString
     override def completer =
       prefix => Seq("true", "false").filter(_.startsWith(prefix))
   }
-  implicit def CollectionReader[Elem, Col[Elem]](
+  implicit def CollectionReader[Elem, Col[Elem] <: Iterable[Elem]](
       implicit elementReader: Reader[Elem],
       factory: collection.Factory[Elem, Col[Elem]]
   ): Reader[Col[Elem]] = new Reader[Col[Elem]] {
@@ -163,6 +178,7 @@ object Reader {
           Success(elems.map(_.asInstanceOf[Success[Elem]].value).to(factory))
       }
     }
+    def show(a: Col[Elem]): String = a.map(elementReader.show(_)).mkString(",")
   }
   implicit def Mapping[K, V](
       implicit kr: Reader[K],
@@ -182,6 +198,7 @@ object Reader {
         case _        => Error(s"expected key=value pair")
       }
     }
+    def show(a: (K, V)): String = kr.show(a._1) + "=" + vr.show(a._2)
   }
   implicit def OptionReader[A](
       implicit elementReader: Reader[A]
@@ -191,6 +208,10 @@ object Reader {
         case Error(message) => Error(message)
         case Success(value) => Success(Some(value))
       }
+    }
+    def show(a: Option[A]): String = a match {
+      case None => ""
+      case Some(value) => elementReader.show(value)
     }
     override def completer = elementReader.completer
   }

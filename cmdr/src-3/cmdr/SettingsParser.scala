@@ -40,9 +40,9 @@ object SettingsParser {
 
           val r = tpe.asType.asInstanceOf[Type[Any]]
 
-          val reader: Expr[Reader[_]] = Implicits.search(readerTpe) match {
+          val reader: Expr[Reader[Any]] = Implicits.search(readerTpe) match {
             case iss: ImplicitSearchSuccess =>
-              iss.tree.asExpr.asInstanceOf[Expr[Reader[_]]]
+              iss.tree.asExpr.asInstanceOf[Expr[Reader[Any]]]
             case isf: ImplicitSearchFailure =>
               report.throwError(s"no implicit ${readerTpe.show} found")
           }
@@ -84,7 +84,8 @@ object SettingsParser {
               repeats = false,
               env = ${Expr(env)},
               description = ${Expr(help)},
-              completer = ArgParser.NoCompleter
+              completer = ArgParser.NoCompleter,
+              showDefault = Some(() => ${reader}.show(${instance.select(sym).asExpr}))
             )
           }
         }

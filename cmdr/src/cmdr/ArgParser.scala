@@ -25,7 +25,8 @@ object ArgParser {
       repeats: Boolean,
       env: Option[String],
       description: String,
-      completer: Completer
+      completer: Completer,
+      showDefault: Option[() => String]
   )
   case class CommandInfo(
       name: String,
@@ -152,7 +153,8 @@ class ArgParser(
     false,
     None,
     "show this message and exit",
-    NoCompleter
+    NoCompleter,
+    None
   )
 
   // the --version flag is only relevant if a version has been specified
@@ -175,7 +177,8 @@ class ArgParser(
       false,
       None,
       "show the version and exit",
-      NoCompleter
+      NoCompleter,
+      None
     )
   }
 
@@ -226,9 +229,9 @@ class ArgParser(
       val names = if (param.isFlag) {
         param.names.mkString(", ")
       } else {
-        param.names.map(_ + "=").mkString(", ")
+        param.names.map(_ + "=").mkString(", ") + param.showDefault.map(_()).getOrElse("")
       }
-      b ++= f" $names%-14s ${param.description}%-58s%n"
+      b ++= f" $names%-20s ${param.description}%-52s%n"
     }
 
     val envVars = named.filter(_.env.isDefined)
@@ -292,7 +295,8 @@ class ArgParser(
       false,
       env,
       help,
-      completer.getOrElse(reader.completer)
+      completer.getOrElse(reader.completer),
+      default.map(d => () => reader.show(d()))
     )
 
     () =>
@@ -472,7 +476,8 @@ class ArgParser(
       true,
       None,
       help,
-      Option(completer).getOrElse(reader.completer)
+      Option(completer).getOrElse(reader.completer),
+      None
     )
 
     () => values.toList
