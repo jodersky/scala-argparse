@@ -147,6 +147,21 @@ Look at [the API docs](https://jodersky.github.io/cmdr/cmdr/ArgParser.html)
 ([defined here](cmdr/src/cmdr/ArgParser.scala)) for parsing rules and
 explanations on how it works.
 
+## Changelog
+
+# 0.9.0
+
+- Show default values of named parameters in help messages.
+- Implement XDG Base Directory Specification.
+- Introduce the concept of a "predef", a flat configuration file which contains
+  command line arguments
+
+# 0.8.0 and before
+
+A command line parser for Scala 2 and 3, featuring:
+- simple interfaces
+- bash completion
+
 ## Glossary
 
 **parameter**

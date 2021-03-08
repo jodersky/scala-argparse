@@ -139,7 +139,7 @@ object Reader {
   implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
       try {
-        Success(java.nio.file.Path.of(a))
+        Success(java.nio.file.Paths.get(a))
       } catch {
         case _: InvalidPathException => Error(s"'$a' is not a path")
       }

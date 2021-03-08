@@ -12,11 +12,11 @@ trait CmdrModule
     with ScalafmtModule
     with PublishModule {
 
-  def scalacOptions = Seq("-deprecation")
+  def scalacOptions = Seq("-deprecation", "-release", "8")
 
   def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.3")
 
-  def publishVersion = "0.8.0"
+  def publishVersion = "0.9.0"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
