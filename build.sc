@@ -2,6 +2,7 @@ import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.4"
 val scala3 = "3.0.0-RC1"
+val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
   def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.7")
@@ -36,7 +37,7 @@ object cmdr extends Module {
     def millSourcePath = super.millSourcePath / os.up
     object test extends Tests with Utest
   }
-  object jvm extends Cross[JvmModule](scala213, scala3)
+  object jvm extends Cross[JvmModule]((Seq(scala213, scala3) ++ dottyCustomVersion):_*)
 
   class NativeModule(val crossScalaVersion: String, val crossScalaNativeVersion: String)
       extends CmdrModule
