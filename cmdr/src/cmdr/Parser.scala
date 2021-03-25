@@ -41,7 +41,7 @@ object Parser {
     */
   case class ParamDef(
       names: Seq[String],
-      parseAndSet: (String, Option[String]) => Unit,
+      parseAndSet: (String, Option[String]) => ParamResult,
       missing: () => Unit,
       isFlag: Boolean,
       repeatPositional: Boolean,
@@ -60,6 +60,13 @@ object Parser {
     }
     def isNamed = names.head.startsWith("-")
   }
+
+  sealed trait ParamResult
+  case object Continue extends ParamResult
+  case class InsertArgs(args: Seq[String]) extends ParamResult
+  case object Abort extends ParamResult // abort parsing, this stops parsing in its track. Other arguments will not be parsed
+
+  private class AbortException extends Exception
 
   // extractor for named arguments
   private val Named = "(--?[^=]+)(?:=(.*))?".r
@@ -85,12 +92,14 @@ object Parser {
     * @param reportUnknown a function invoked when an extranous argument is
     * encountered. An extranous argument can be either an unknown named
     * argument, or a superfluous positional argument
+    *
+    * @return true if no Abort was encountered. Note that this does not necessarily imply failure or success. false otherwise
     */
   def parse(
       params: Seq[ParamDef],
       args: Seq[String],
       reportUnknown: String => Unit
-  ): Unit = {
+  ): Boolean = {
     val named = mutable.ArrayBuffer.empty[ParamDef] // all named params
     val aliases = mutable.Map.empty[String, ParamDef] // map of all possible names of named params
     val positional = mutable.ArrayBuffer.empty[ParamDef]
@@ -122,52 +131,64 @@ object Parser {
     }
     readArg()
 
+    def parseAndSet(param: ParamDef, nameUsed: String, valueOpt: Option[String]): Unit =
+      param.parseAndSet(nameUsed, valueOpt) match {
+        case Abort => throw new AbortException
+        case InsertArgs(extra) => argIter = extra.toList ::: argIter
+        case Continue =>
+      }
+
     var onlyPositionals = false
     def addPositional(arg: String) =
       if (pos < positional.length) {
         val param = positional(pos)
-        param.parseAndSet(param.names.head, Some(arg))
+        parseAndSet(param, param.names.head, Some(arg))
         positionalArgs += param
         if (param.absorbRemaining) onlyPositionals = true
         if (!param.repeatPositional) pos += 1
       } else {
         reportUnknown(arg)
       }
-    while (arg != null) {
-      if (onlyPositionals) {
-        addPositional(arg)
-        readArg()
-      } else {
-        arg match {
-          case "--" =>
-            onlyPositionals = true
-            readArg()
-          case Named(name, embedded) if aliases.contains(name) =>
-            readArg()
-            val param = aliases(name)
-            if (embedded != null) { // embedded argument, i.e. one that contains '='
-              param.parseAndSet(name, Some(embedded))
-              namedArgs += param
-            } else if (param.isFlag) { // flags never take an arg and are set to "true"
-              param.parseAndSet(name, Some("true"))
-              namedArgs += param
-            } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
-              param.parseAndSet(name, None)
-              namedArgs += param
-            } else {
-              param.parseAndSet(name, Some(arg))
-              namedArgs += param
+
+    try {
+      while (arg != null) {
+        if (onlyPositionals) {
+          addPositional(arg)
+          readArg()
+        } else {
+          arg match {
+            case "--" =>
+              onlyPositionals = true
               readArg()
-            }
-            if (param.absorbRemaining) onlyPositionals = true
-          case Named(name, _) =>
-            reportUnknown(name)
-            readArg()
-          case positional =>
-            addPositional(positional)
-            readArg()
+            case Named(name, embedded) if aliases.contains(name) =>
+              readArg()
+              val param = aliases(name)
+              if (embedded != null) { // embedded argument, i.e. one that contains '='
+                parseAndSet(param, name, Some(embedded))
+                namedArgs += param
+              } else if (param.isFlag) { // flags never take an arg and are set to "true"
+                parseAndSet(param, name, Some("true"))
+                namedArgs += param
+              } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
+                parseAndSet(param, name, None)
+                namedArgs += param
+              } else {
+                parseAndSet(param, name, Some(arg))
+                namedArgs += param
+                readArg()
+              }
+              if (param.absorbRemaining) onlyPositionals = true
+            case Named(name, _) =>
+              reportUnknown(name)
+              readArg()
+            case positional =>
+              addPositional(positional)
+              readArg()
+          }
         }
       }
+    } catch {
+      case _: AbortException => return false
     }
 
     // then, iterate over all parameters to report missing arguments
@@ -180,6 +201,8 @@ object Parser {
     for (i <- pos until positional.length) {
       positional(i).missing()
     }
+
+    return true
   }
 
 }

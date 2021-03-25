@@ -62,8 +62,12 @@ object SettingsParser {
             Parser.ParamDef(
               names = Seq(${Expr(name)}),
               parseAndSet = (name, value) => value match {
-                case None => ${reportParseError}(name, "argument expected")
-                case Some(v) => read(name, v)
+                case None =>
+                  ${reportParseError}(name, "argument expected")
+                  Parser.Continue
+                case Some(v) =>
+                  read(name, v)
+                  Parser.Continue
               },
               missing = () => (), // do nothing, all variables have a default value
               isFlag = ${Expr(isFlag)},

@@ -10,9 +10,8 @@ object ArgParser {
       description: String = "",
       version: String = "",
       reporter: Reporter = new Reporter,
-      env: Map[String, String] = sys.env,
-      predefs: Seq[os.Path] = Seq.empty
-  ) = new ArgParser(prog, description, version, reporter, env, predefs)
+      env: Map[String, String] = sys.env
+  ) = new ArgParser(prog, description, version, reporter, env)
 
   type Completer = String => Seq[String]
   val NoCompleter = (s: String) => Seq.empty
@@ -38,8 +37,6 @@ object ArgParser {
   case object Success extends Result
   case object Error extends Result
   case object EarlyExit extends Result
-
-  private class EarlyExitException extends Exception
 
   class Reporter {
     def stdout: java.io.PrintStream = System.out
@@ -112,10 +109,11 @@ class ArgParser(
     val description: String,
     val version: String,
     val reporter: ArgParser.Reporter,
-    val env: Map[String, String],
-    val predefs: Seq[os.Path]
+    val env: Map[String, String]
 ) extends SettingsParser { self =>
   import ArgParser._
+
+  private var predefs: Seq[os.Path] = Seq.empty
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -139,7 +137,7 @@ class ArgParser(
     Seq("--help"),
     (_, _) => {
       reporter.stdout.println(help())
-      throw new EarlyExitException
+      Parser.Abort
     },
     missing = () => (),
     isFlag = true,
@@ -163,7 +161,7 @@ class ArgParser(
       Seq("--version"),
       (_, _) => {
         reporter.stdout.println(version)
-        throw new EarlyExitException
+        Parser.Abort
       },
       missing = () => (),
       isFlag = true,
@@ -245,6 +243,73 @@ class ArgParser(
     b.result()
   }
 
+  /** Read arguments from a file.
+    *
+    * Arguments are inserted at the place that this parameter is encountered.
+    * The predef file must contain named arguments only, without the `--`
+    * prefix.
+    *
+    * For instance, assuming the following parser configuration,
+    *
+    * ```
+    * parser.predef("--config")
+    * parser.requiredParam[Int]("--foo")
+    * parser.requiredParam[String]("--bar")
+    * ```
+    *
+    * then the arguments could be read from a predef file "predef.conf"
+    * containing
+    *
+    * ```
+    * # lines starting with # are ignored
+    * foo 5
+    * bar hello
+    * ```
+    *
+    * by running
+    *
+    * ```
+    * --config predef.conf
+    * ```
+    */
+  def predef(
+    name: String,
+    aliases: Seq[String] = Seq.empty,
+    defaults: Seq[os.Path] = Seq.empty
+  ): this.type = {
+    predefs ++= defaults
+    paramDefs += ParamDef(
+      Seq(name) ++ aliases,
+      parseAndSet = (name, valueOpt) => {
+        valueOpt.map(implicitly[Reader[os.Path]].read) match {
+          case None =>
+            reporter.reportParseError(name, "argument expected")
+            Parser.Continue
+          case Some(Reader.Error(message)) =>
+            reporter.reportParseError(name, message)
+            Parser.Continue
+          case Some(Reader.Success(value)) =>
+            Parser.InsertArgs(PredefReader.read(os.read(value)))
+        }
+      },
+      missing = () => (),
+      isFlag = false,
+      repeatPositional = false,
+      absorbRemaining = false
+    )
+    paramInfos += ParamInfo(
+      isNamed = true,
+      names = Seq(name) ++ aliases,
+      isFlag = false,
+      repeats = true,
+      env = None,
+      description = "yo",
+      completer = NoCompleter,
+      showDefault = None
+    )
+    this
+  }
+
   def singleParam[A](
       name: String,
       default: Option[() => A],
@@ -264,9 +329,12 @@ class ArgParser(
       }
     }
 
-    def parseAndSet(name: String, valueOpt: Option[String]) = valueOpt match {
-      case Some(v) => read(name, v)
-      case None    => reporter.reportParseError(name, "argument expected")
+    def parseAndSet(name: String, valueOpt: Option[String]) = {
+      valueOpt match {
+        case Some(v) => read(name, v)
+        case None    => reporter.reportParseError(name, "argument expected")
+      }
+      Parser.Continue
     }
 
     val pdef = ParamDef(
@@ -461,6 +529,7 @@ class ArgParser(
           case None if flag => read(name, "true")
           case None         => reporter.reportParseError(name, "argument expected")
         }
+        Parser.Continue
       },
       missing = () => (),
       flag,
@@ -543,15 +612,12 @@ class ArgParser(
       return EarlyExit
     }
 
-    try {
-      Parser.parse(
-        paramDefs.result(),
-        args,
-        reporter.reportUnknown
-      )
-    } catch {
-      case _: EarlyExitException => return EarlyExit
-    }
+    if (!Parser.parse(
+      paramDefs.result(),
+      args,
+      reporter.reportUnknown
+    )) return EarlyExit
+
 
     if (reporter.hasErrors) return Error
 

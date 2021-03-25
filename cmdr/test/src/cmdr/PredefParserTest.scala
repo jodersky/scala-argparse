@@ -52,9 +52,7 @@ object PredefParserTest extends TestSuite {
       ) ==> List("--a", "--b", "# comment")
     }
     test("parser") {
-      def mkparser() = new TestParser(
-        predefs = Seq(os.pwd / "cmdr" / "test" / "resources" / "predef1")
-      )
+      def mkparser() = new TestParser().predef("--config", defaults = Seq(os.pwd / "cmdr" / "test" / "resources" / "predef1"))
 
       test("extranous") {
         val parser = mkparser()
@@ -72,6 +70,23 @@ object PredefParserTest extends TestSuite {
         parser.parseResult(Seq("foo")) ==> ArgParser.Success
 
         p1() ==> 1
+        p2() ==> "hello, world"
+        p3() ==> true
+        p4() ==> "hello=world"
+        p5() ==> "foo"
+      }
+
+      test("extra predef") {
+        val parser = mkparser()
+        val p1 = parser.param[Int]("--some-option", 0)
+        val p2 = parser.param[String]("--option2", "")
+        val p3 = parser.param[Boolean]("--flag", false, flag = true)
+        val p4 = parser.param[String]("--option-with-embedded-setting", "")
+        val p5 = parser.requiredParam[String]("pos1")
+
+        parser.parseResult(Seq("foo", "--config", (os.pwd / "cmdr" / "test" / "resources" / "predef2").toString)) ==> ArgParser.Success
+
+        p1() ==> 2
         p2() ==> "hello, world"
         p3() ==> true
         p4() ==> "hello=world"
