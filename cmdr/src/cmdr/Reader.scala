@@ -2,6 +2,8 @@ package cmdr
 
 import scala.annotation.implicitNotFound
 import java.nio.file.InvalidPathException
+import java.io.InputStream
+import java.io.OutputStream
 
 /** A typeclass that defines how to convert a string from a single command line
   * argument to a given type.
@@ -215,5 +217,44 @@ object Reader {
     }
     override def completer = elementReader.completer
   }
-
+  implicit object InputStreamReader extends Reader[() => java.io.InputStream] {
+    override val completer = pathCompleter
+    def read(a: String): Result[() => InputStream] = {
+      if (a == "-") Success(() => System.in)
+      else try {
+        Success(() => java.nio.file.Files.newInputStream(java.nio.file.Paths.get(a)))
+      } catch {
+        case e: Exception => Error(e.getMessage())
+      }
+    }
+    def show(a: () => InputStream): String = ""
+  }
+  implicit object OutputStreamReader extends Reader[() => java.io.OutputStream] {
+    override val completer = pathCompleter
+    def read(a: String): Result[() => OutputStream] = {
+      if (a == "-") Success(() => System.out)
+      else try {
+        Success(() => java.nio.file.Files.newOutputStream(java.nio.file.Paths.get(a)))
+      } catch {
+        case e: Exception => Error(e.getMessage())
+      }
+    }
+    def show(a: () => OutputStream): String = ""
+  }
+  implicit object ReadableReader extends Reader[geny.Readable] {
+    override val completer = pathCompleter
+    def read(a: String): Result[geny.Readable] = InputStreamReader.read(a) match {
+      case Success(open) =>
+        Success(
+          new geny.Readable {
+            def readBytesThrough[A](f: java.io.InputStream => A): A = {
+              val stream = open()
+              try f(stream) finally stream.close()
+            }
+          }
+        )
+      case Error(msg) => Error(msg)
+    }
+    def show(a: geny.Readable): String = ""
+  }
 }

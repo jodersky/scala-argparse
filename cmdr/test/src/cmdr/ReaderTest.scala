@@ -62,6 +62,55 @@ object ReaderTest extends TestSuite {
       parser.parseResult(Seq("-p=a=1", "-p", "c=2")) ==> ArgParser.Success
       p() ==> List("a" -> 1, "c" -> 2)
     }
+    test("input stream") {
+      val parser = new TestParser
+      val param = parser.requiredParam[() => java.io.InputStream]("p1")
+      parser.parseResult(Seq("build.sc"))
+      parser.parseErrors ==> 0
+      val expected = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("build.sc")))
+      val stream = param()()
+      try {
+        scala.io.Source.fromInputStream(stream).mkString ==> expected
+      } finally stream.close()
+    }
+    test("readable") {
+      val parser = new TestParser
+      val param = parser.requiredParam[geny.Readable]("p1")
+      parser.parseResult(Seq("build.sc"))
+      parser.parseErrors ==> 0
+      val expected = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("build.sc")))
+      param().readBytesThrough{ stream =>
+        scala.io.Source.fromInputStream(stream).mkString ==> expected
+      }
+    }
+    test("output stream") {
+      val parser = new TestParser
+      val param = parser.requiredParam[() => java.io.OutputStream]("p1")
+      parser.parseResult(Seq("-"))
+      parser.parseErrors ==> 0
+
+      val testData = "hello, world"
+
+      val bytes = new java.io.ByteArrayOutputStream()
+      val byteStream = new java.io.PrintStream(bytes)
+
+      val savedOut = System.out
+      try {
+        System.setOut(byteStream)
+        val stream = param()()
+        try {
+          stream.write(testData.getBytes())
+          stream.flush()
+        } finally {
+          stream.close()
+        }
+      } finally {
+        System.setOut(savedOut)
+        byteStream.close()
+      }
+
+      bytes.toByteArray().toList ==> testData.getBytes().toList
+    }
   }
 
 }
