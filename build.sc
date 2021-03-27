@@ -64,7 +64,6 @@ object examples extends Module {
       def testFrameworks = Seq("utest.runner.Framework")
     }
   }
-  //object annotation extends Cross[ExampleApp](scala213)
   object `readme-imperative` extends Cross[ExampleApp](scala213, scala3)
   object `readme-declarative` extends Cross[ExampleApp](scala3)
   object commands extends Cross[ExampleApp](scala213, scala3)
