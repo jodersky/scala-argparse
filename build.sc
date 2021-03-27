@@ -1,6 +1,6 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
-val scala213 = "2.13.4"
+val scala213 = "2.13.5"
 val scala3 = "3.0.0-RC1"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
@@ -17,7 +17,7 @@ trait CmdrModule
 
   def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.3")
 
-  def publishVersion = "0.9.0"
+  def publishVersion = "0.10.0"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",

@@ -149,6 +149,14 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.10.0
+
+- Add readers for `() => InputStream`, `() => OutputStream` and `geny.Readable`.
+  These readers follow the convention of using '-' to read/write from
+  stdin/stdout.
+- Change the parser to support inserting parameters during parsing. Predefs can
+  now be specified as parameters.
+
 # 0.9.0
 
 - Show default values of named parameters in help messages.
