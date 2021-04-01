@@ -1,11 +1,11 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.5"
-val scala3 = "3.0.0-RC1"
+val scala3 = "3.0.0-RC2"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.7")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.8")
   def testFrameworks = Seq("utest.runner.Framework")
 }
 trait CmdrModule
@@ -15,9 +15,9 @@ trait CmdrModule
 
   def scalacOptions = Seq("-deprecation", "-release", "8")
 
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.3")
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.4")
 
-  def publishVersion = "0.10.0"
+  def publishVersion = "0.10.1"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
@@ -25,7 +25,7 @@ trait CmdrModule
     licenses = Seq(License.MIT),
     versionControl = VersionControl.github("jodersky", "cmdr"),
     developers = Seq(
-      Developer("jodersky", "Jakob Odersky", "https://githhub.com/jodersky")
+      Developer("jodersky", "Jakob Odersky", "https://github.com/jodersky")
     )
   )
   def artifactName = "cmdr"
@@ -60,7 +60,7 @@ object examples extends Module {
       os.copy.over(jar, os.pwd / millSourcePath.last)
     }
     object test extends Tests {
-      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.7")
+      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.8")
       def testFrameworks = Seq("utest.runner.Framework")
     }
   }
