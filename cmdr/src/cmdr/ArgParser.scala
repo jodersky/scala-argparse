@@ -70,6 +70,39 @@ object ArgParser {
     def hasErrors = errors > 0
   }
 
+  def wrap(in: String, out: StringBuilder, width: Int, newLine: String): Unit = {
+    if (in.length < width) {
+      out ++= in
+      return
+    }
+
+    var offset = 0
+    var segStart = 0
+    var wordStart = 0
+    var col = 0
+
+    while (offset < in.length) {
+      segStart = offset
+      while(offset < in.length && in.charAt(offset).isWhitespace) {
+        offset += 1
+        col += 1
+      }
+      wordStart = offset
+      while(offset < in.length && !in.charAt(offset).isWhitespace) {
+        offset += 1
+        col += 1
+      }
+
+      if (col >= width) {
+        out ++= newLine
+        out ++= in.substring(wordStart, offset)
+        col = offset - wordStart
+      } else {
+        out ++= in.substring(segStart, offset)
+      }
+    }
+  }
+
 }
 
 /** A simple command line argument parser.
@@ -184,6 +217,8 @@ class ArgParser(
     val (named0, positional) = paramInfos.partition(_.isNamed)
     val named = named0.sortBy(_.names.head)
 
+    val width = term.cols.getOrElse(80) - 20
+
     val b = new StringBuilder
     b ++= s"usage: $prog "
     if (!named.isEmpty) {
@@ -205,7 +240,9 @@ class ArgParser(
     if (!commandInfos.isEmpty) {
       b ++= "commands:\n"
       for (cmd <- commandInfos) {
-        b ++= f" ${cmd.name}%-14s ${cmd.description}%-58s%n"
+        b ++= f" ${cmd.name}%-20s"
+        wrap(cmd.description, b, width, "\n                     ")
+        b ++= "\n"
       }
     }
 
@@ -213,7 +250,9 @@ class ArgParser(
     if (!describedPos.isEmpty && commandInfos.isEmpty) {
       b ++= "positional arguments:\n"
       for (param <- positional) {
-        b ++= f" ${param.names.head}%-14s ${param.description}%-58s%n"
+        b ++= f" ${param.names.head}%-20s"
+        wrap(param.description, b, width, "\n                     ")
+        b ++= "\n"
       }
     }
 
@@ -229,14 +268,16 @@ class ArgParser(
       } else {
         param.names.map(_ + "=").mkString(", ") + param.showDefault.map(_()).getOrElse("")
       }
-      b ++= f" $names%-20s ${param.description}%-52s%n"
+      b ++= f" $names%-20s"
+      wrap(param.description, b, width, "\n                     ")
+      b ++= "\n"
     }
 
     val envVars = named.filter(_.env.isDefined)
     if (!envVars.isEmpty) {
       b ++= "environment variables:\n"
       for (param <- envVars) {
-        b ++= f" ${param.env.get}%-14s ${param.names.head}%s%n"
+        b ++= f" ${param.env.get}%-20s ${param.names.head}%s%n"
       }
     }
 
