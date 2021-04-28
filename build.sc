@@ -1,11 +1,11 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.5"
-val scala3 = "3.0.0-RC2"
+val scala3 = "3.0.0-RC3"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.8")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.9")
   def testFrameworks = Seq("utest.runner.Framework")
 }
 trait CmdrModule
@@ -15,9 +15,9 @@ trait CmdrModule
 
   def scalacOptions = Seq("-deprecation", "-release", "8")
 
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.4")
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.6")
 
-  def publishVersion = "0.10.1"
+  def publishVersion = "0.10.2"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
@@ -35,6 +35,7 @@ object cmdr extends Module {
 
   class JvmModule(val crossScalaVersion: String) extends CmdrModule {
     def millSourcePath = super.millSourcePath / os.up
+    def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-jvm")))
     object test extends Tests with Utest
   }
   object jvm extends Cross[JvmModule]((Seq(scala213, scala3) ++ dottyCustomVersion):_*)
@@ -44,6 +45,7 @@ object cmdr extends Module {
       with ScalaNativeModule {
     def scalaNativeVersion = crossScalaNativeVersion
     def millSourcePath = super.millSourcePath / os.up / os.up
+    def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
     object test extends Tests with Utest
   }
   object native extends Cross[NativeModule]((scala213, "0.4.0"))
@@ -60,7 +62,7 @@ object examples extends Module {
       os.copy.over(jar, os.pwd / millSourcePath.last)
     }
     object test extends Tests {
-      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.8")
+      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.9")
       def testFrameworks = Seq("utest.runner.Framework")
     }
   }

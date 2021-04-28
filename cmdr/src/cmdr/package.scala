@@ -1,5 +1,10 @@
 package object cmdr {
 
+  /** An argument accessor is a function that returns an argument, assuming that
+    * parsing was successful.
+    */
+  type Arg[A] = () => A
+
   /** Get the system arguments eagerly, this allows using them in a constructor,
     * outside of main().
     *

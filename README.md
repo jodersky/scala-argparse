@@ -149,6 +149,11 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.10.2
+
+- Wrap text in help messages
+- Add support for Scala 3.0.0-RC3
+
 # 0.10.1
 
 - Add support for Scala 3.0.0-RC2
