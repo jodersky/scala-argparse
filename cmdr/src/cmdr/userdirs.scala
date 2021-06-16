@@ -3,16 +3,18 @@ package cmdr
 /** Common directories for *user* applications, as specified by the [XDG Base
   * Directory
   * Specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html),
-  * with some adaptations made on macOS.
+  * with some adaptations made for macOS.
   *
   * @see dirs for conventional directories for an application of a given name,
   * including system services.
   */
-object xdg {
+object userdirs {
 
   private val isMac = sys.props("os.name").toLowerCase.startsWith("mac")
 
   /** A directory relative to which user-specific data files should be written.
+    *
+    * Should be considered read-writable.
     *
     * Corresponds to XDG_DATA_HOME.
     */
@@ -31,6 +33,8 @@ object xdg {
   /** A list of preference ordered directories relative to which data
     * files should be searched, in addition to [[dataHome]].
     *
+    * Should be considered read-only.
+    *
     * Corresponds to XDG_DATA_DIRS.
     */
   def dataDirs: List[os.Path] =
@@ -43,6 +47,8 @@ object xdg {
 
   /** A directory relative to which user-specific configuration files should be
     * written.
+    *
+    * Should be considered read-writable.
     *
     * Corresponds to XDG_CONFIG_HOME.
     */
@@ -61,6 +67,8 @@ object xdg {
   /** A list of preference ordered directories relative to which configuration
     * files should be searched, in addition to [[configHome]].
     *
+    * Should be considered read-only.
+    *
     * Corresponds to XDG_CONFIG_DIRS.
     */
   def configDirs: List[os.Path] =
@@ -73,6 +81,8 @@ object xdg {
 
   /** A directory in which to read and write user-specific non-essential
     * (cached) data.
+    *
+    * Should be considered read-writable.
     *
     * Corresponds to XDG_CACHE_HOME.
     */
@@ -91,20 +101,37 @@ object xdg {
   /** A directory in which to read and write user-specific runtime files, such
     * as sockets and small temporary files.
     *
-    * Corresponds to XDG_RUNTIME_DIR, with a fallback to ~/.run.
+    * Should be considered read-writable.
+    *
+    * Corresponds to XDG_RUNTIME_DIR, with a fallback to ~/.run
     */
   def runtime: os.Path =
     sys.env
       .get("XDG_RUNTIME_DIR")
       .map(s => os.Path(s))
       .getOrElse {
-        val default = os.home / ".run"
-        os.makeDir.all(default)
-        System.err.println(
-          s"No XDG_RUNTIME_DIR environment variable defined. Using $default instead."
-        )
-        default
+        try {
+          val default = os.home / ".run"
+          os.makeDir.all(default)
+          System.err.println(
+            s"No XDG_RUNTIME_DIR environment variable defined. Using $default instead."
+          )
+          default
+        } catch {
+          case t: Throwable =>
+            throw new RuntimeException("error occurred attempting to find default runtime dir", t)
+        }
       }
+
+  /** Same as userdirs, but with a project name appended to every path. */
+  case class project(name: String) {
+    def dataHome = userdirs.dataHome / name
+    def dataDirs = userdirs.dataDirs.map(_ / name)
+    def configHome = userdirs.configHome / name
+    def configDirs = userdirs.configDirs.map(_ / name)
+    def cacheHome = userdirs.cacheHome / name
+    def runtime = userdirs.runtime / name
+  }
 
 }
 
@@ -141,7 +168,7 @@ case class dirs(name: String, system: Boolean = false) {
   def data: List[os.Path] =
     if (system)
       os.root / "usr" / "share" / name :: os.root / "usr" / "local" / "share" / name :: Nil
-    else xdg.dataHome / name :: xdg.dataDirs.map(_ / name)
+    else userdirs.dataHome / name :: userdirs.dataDirs.map(_ / name)
 
   /** A list of preference ordered directories relative to which configuration
     * files should be searched.
@@ -151,24 +178,24 @@ case class dirs(name: String, system: Boolean = false) {
     */
   def config: List[os.Path] =
     if (system) os.root / "etc" / name :: Nil
-    else xdg.configHome / name :: xdg.configDirs.map(_ / name)
+    else userdirs.configHome / name :: userdirs.configDirs.map(_ / name)
 
   /** A directory in which to read and write non-essential (cached) data. */
   def cache: os.Path =
     if (system) os.root / "var" / "cache" / name
-    else xdg.cacheHome / name
+    else userdirs.cacheHome / name
 
   /** A directory in which to read and write runtime files, such as sockets and
     * small temporary files.
     */
   def runtime: os.Path =
     if (system) os.root / "run" / name
-    else xdg.runtime / name
+    else userdirs.runtime / name
 
   /** A directory for persisting application state. */
   def state: os.Path =
     if (system) os.root / "var" / "lib" / name
-    else xdg.configHome / name
+    else userdirs.configHome / name
 
   /** A directory for storing log files.
     *
@@ -179,7 +206,7 @@ case class dirs(name: String, system: Boolean = false) {
     */
   def log: os.Path =
     if (system) os.root / "var" / "log" / name
-    else xdg.configHome / "log" / name
+    else userdirs.configHome / "log" / name
 
 }
 

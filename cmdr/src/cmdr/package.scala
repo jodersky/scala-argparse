@@ -16,4 +16,9 @@ package object cmdr {
   type ArgumentParser = ArgParser
   val ArgumentParser = ArgParser
 
+  @deprecated("use userdirs instead", "0.10.3")
+  type xdg = userdirs.type
+  @deprecated("use userdirs instead", "0.10.3")
+  val xdg = userdirs
+
 }
