@@ -1,12 +1,12 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
-val scala213 = "2.13.5"
+val scala213 = "2.13.6"
 val scala3 = "3.0.0"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
   def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.10")
-  def testFrameworks = Seq("utest.runner.Framework")
+  def testFramework = "utest.runner.Framework"
 }
 trait CmdrModule
     extends CrossScalaModule
@@ -15,7 +15,7 @@ trait CmdrModule
 
   def scalacOptions = Seq("-deprecation", "-release", "8")
 
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.7")
+  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
 
   def publishVersion = "0.10.3"
   def pomSettings = PomSettings(
@@ -63,7 +63,7 @@ object examples extends Module {
     }
     object test extends Tests {
       def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.10")
-      def testFrameworks = Seq("utest.runner.Framework")
+      def testFramework = "utest.runner.Framework"
     }
   }
   object `readme-imperative` extends Cross[ExampleApp](scala213, scala3)
