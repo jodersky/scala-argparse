@@ -156,6 +156,7 @@ object userdirs {
   * @param system use system-wide paths instead of user-specific ones
   *
   */
+@deprecated("use userdirs for user-specific directories, and the FHS standard for system dirs", "0.10.3")
 case class dirs(name: String, system: Boolean = false) {
 
 
@@ -210,6 +211,7 @@ case class dirs(name: String, system: Boolean = false) {
 
 }
 
+@deprecated("use userdirs for user-specific directories, and the FHS standard for system dirs", "0.10.3")
 object dirs {
 
   /** Check if this application is running as a system service. */
