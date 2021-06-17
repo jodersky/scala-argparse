@@ -247,7 +247,7 @@ class ArgParser(
     if (!commandInfos.isEmpty) {
       b ++= "commands:\n"
       for (cmd <- commandInfos) {
-        b ++= f" ${cmd.name}%-20s"
+        b ++= f"  ${cmd.name}%-20s"
         wrap(cmd.description, b, width, "\n                     ")
         b ++= "\n"
       }
@@ -257,8 +257,8 @@ class ArgParser(
     if (!describedPos.isEmpty && commandInfos.isEmpty) {
       b ++= "positional arguments:\n"
       for (param <- positional) {
-        b ++= f" ${param.names.head}%-20s"
-        wrap(param.description, b, width, "\n                     ")
+        b ++= s"  ${param.names.head}\n        "
+        wrap(param.description, b, width, "\n        ")
         b ++= "\n"
       }
     }
@@ -273,10 +273,13 @@ class ArgParser(
       val names = if (param.isFlag) {
         param.names.mkString(", ")
       } else {
-        param.names.map(_ + "=").mkString(", ") + param.showDefault.map(_()).getOrElse("")
+        param.names.map(_ + "=").mkString(", ")
       }
-      b ++= f" $names%-20s"
-      wrap(param.description, b, width, "\n                     ")
+      b ++= s"  $names\n        "
+      param.showDefault.foreach{ default =>
+        b ++= s"(default: ${default()})\n        "
+      }
+      wrap(param.description, b, width, "\n        ")
       b ++= "\n"
     }
 
@@ -284,7 +287,7 @@ class ArgParser(
     if (!envVars.isEmpty) {
       b ++= "environment variables:\n"
       for (param <- envVars) {
-        b ++= f" ${param.env.get}%-20s ${param.names.head}%s%n"
+        b ++= f"  ${param.env.get}%-30s sets ${param.names.head}%s%n"
       }
     }
 

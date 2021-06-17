@@ -108,6 +108,16 @@ object Reader {
     override val completer = pathCompleter
   }
 
+  implicit object FilePathReader extends FsPathReader[os.FilePath] {
+    def read(a: String) =
+      try {
+        Success(os.FilePath(a))
+      } catch {
+        case _: IllegalArgumentException =>
+          Error(s"'$a' is not a valid path")
+      }
+    def show(a: os.FilePath): String = a.toString
+  }
   implicit object PathReader extends FsPathReader[os.Path] {
     def read(a: String) =
       try {
@@ -212,7 +222,7 @@ object Reader {
       }
     }
     def show(a: Option[A]): String = a match {
-      case None => ""
+      case None => "<none>"
       case Some(value) => elementReader.show(value)
     }
     override def completer = elementReader.completer
