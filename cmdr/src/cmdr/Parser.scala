@@ -66,8 +66,6 @@ object Parser {
   case class InsertArgs(args: Seq[String]) extends ParamResult
   case object Abort extends ParamResult // abort parsing, this stops parsing in its track. Other arguments will not be parsed
 
-  private class AbortException extends Exception
-
   // extractor for named arguments
   private val Named = "(--?[^=]+)(?:=(.*))?".r
 
@@ -131,11 +129,13 @@ object Parser {
     }
     readArg()
 
-    def parseAndSet(param: ParamDef, nameUsed: String, valueOpt: Option[String]): Unit =
+    def parseAndSet(param: ParamDef, nameUsed: String, valueOpt: Option[String]): Boolean =
       param.parseAndSet(nameUsed, valueOpt) match {
-        case Abort => throw new AbortException
-        case InsertArgs(extra) => argIter = extra.toList ::: argIter
-        case Continue =>
+        case Abort => false
+        case InsertArgs(extra) =>
+          argIter = extra.toList ::: argIter
+          true
+        case Continue => true
       }
 
     var onlyPositionals = false
@@ -150,45 +150,41 @@ object Parser {
         reportUnknown(arg)
       }
 
-    try {
-      while (arg != null) {
-        if (onlyPositionals) {
-          addPositional(arg)
-          readArg()
-        } else {
-          arg match {
-            case "--" =>
-              onlyPositionals = true
+    while (arg != null) {
+      if (onlyPositionals) {
+        addPositional(arg)
+        readArg()
+      } else {
+        arg match {
+          case "--" =>
+            onlyPositionals = true
+            readArg()
+          case Named(name, embedded) if aliases.contains(name) =>
+            readArg()
+            val param = aliases(name)
+            if (embedded != null) { // embedded argument, i.e. one that contains '='
+              if (!parseAndSet(param, name, Some(embedded))) return false
+              namedArgs += param
+            } else if (param.isFlag) { // flags never take an arg and are set to "true"
+              if (!parseAndSet(param, name, Some("true"))) return false
+              namedArgs += param
+            } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
+              if (!parseAndSet(param, name, None)) return false
+              namedArgs += param
+            } else {
+              if (!parseAndSet(param, name, Some(arg))) return false
+              namedArgs += param
               readArg()
-            case Named(name, embedded) if aliases.contains(name) =>
-              readArg()
-              val param = aliases(name)
-              if (embedded != null) { // embedded argument, i.e. one that contains '='
-                parseAndSet(param, name, Some(embedded))
-                namedArgs += param
-              } else if (param.isFlag) { // flags never take an arg and are set to "true"
-                parseAndSet(param, name, Some("true"))
-                namedArgs += param
-              } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
-                parseAndSet(param, name, None)
-                namedArgs += param
-              } else {
-                parseAndSet(param, name, Some(arg))
-                namedArgs += param
-                readArg()
-              }
-              if (param.absorbRemaining) onlyPositionals = true
-            case Named(name, _) =>
-              reportUnknown(name)
-              readArg()
-            case positional =>
-              addPositional(positional)
-              readArg()
-          }
+            }
+            if (param.absorbRemaining) onlyPositionals = true
+          case Named(name, _) =>
+            reportUnknown(name)
+            readArg()
+          case positional =>
+            addPositional(positional)
+            readArg()
         }
       }
-    } catch {
-      case _: AbortException => return false
     }
 
     // then, iterate over all parameters to report missing arguments
