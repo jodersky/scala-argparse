@@ -149,6 +149,12 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.11.0
+
+- Upgrade to Scala 2.13.6
+- Refactor XDG directory implemention
+- Refactor default help message
+
 # 0.10.3
 
 - Add support for Scala 3.0.0
