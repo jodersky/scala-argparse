@@ -34,8 +34,15 @@ object ArgParser {
   )
 
   sealed trait Result
+  /** Parsing succeeded. Arguments are available. */
   case object Success extends Result
+
+  /** There was an error during parsing. Arguments are not available. */
   case object Error extends Result
+
+  /** Parsing signalled an early exit. This means that there wasn't an error,
+    * but that not all agruments were parsed, as one of them requested an early
+    * exit. Arguments are not available. */
   case object EarlyExit extends Result
 
   class Reporter {
