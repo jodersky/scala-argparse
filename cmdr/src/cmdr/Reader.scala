@@ -311,4 +311,21 @@ object Reader extends LowPrioReaders {
     }
     def show(a: geny.Readable): String = ""
   }
+  implicit object DurationReader extends Reader[scala.concurrent.duration.Duration] {
+    def read(a: String) = try {
+      Success(scala.concurrent.duration.Duration.create(a))
+    } catch {
+      case _: NumberFormatException => Error(s"could not parse '$a' as a valid duration")
+    }
+    def show(a: scala.concurrent.duration.Duration): String = a.toString
+  }
+  implicit object FiniteDurationReader extends Reader[scala.concurrent.duration.FiniteDuration] {
+    def read(a: String) = DurationReader.read(a) match {
+      case Success(f: scala.concurrent.duration.FiniteDuration) => Success(f)
+      case Success(f: scala.concurrent.duration.Duration) =>
+        Error(s"expected a finite duration, but '$a' is infinite")
+      case Error(msg) => Error(msg)
+    }
+    def show(a: scala.concurrent.duration.FiniteDuration): String = DurationReader.show(a)
+  }
 }
