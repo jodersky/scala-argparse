@@ -29,7 +29,30 @@ trait Reader[A] {
   def completer: String => Seq[String] = _ => Seq.empty
 }
 
-object Reader {
+trait LowPrioReaders {
+  import Reader.Result
+  import Reader.Error
+  import Reader.Success
+
+  implicit def CollectionReader[Elem, Col[Elem] <: Iterable[Elem]](
+      implicit elementReader: Reader[Elem],
+      factory: collection.Factory[Elem, Col[Elem]]
+  ): Reader[Col[Elem]] = new Reader[Col[Elem]] {
+    def read(a: String) = {
+      val elems: List[Result[Elem]] =
+        a.split(",").toList.map(elementReader.read(_))
+
+      elems.find(_.isInstanceOf[Error]) match {
+        case Some(err) => err.asInstanceOf[Error]
+        case None =>
+          Success(elems.map(_.asInstanceOf[Success[Elem]].value).to(factory))
+      }
+    }
+    def show(a: Col[Elem]): String = a.map(elementReader.show(_)).mkString(",")
+  }
+}
+
+object Reader extends LowPrioReaders {
 
   sealed trait Result[+A]
   case class Success[A](value: A) extends Result[A]
@@ -176,22 +199,43 @@ object Reader {
     override def completer =
       prefix => Seq("true", "false").filter(_.startsWith(prefix))
   }
-  implicit def CollectionReader[Elem, Col[Elem] <: Iterable[Elem]](
-      implicit elementReader: Reader[Elem],
-      factory: collection.Factory[Elem, Col[Elem]]
-  ): Reader[Col[Elem]] = new Reader[Col[Elem]] {
+
+  private def colonSeparatedReader[E, Col <: Iterable[E]](
+    implicit elementReader: Reader[E],
+    factory: collection.Factory[E, Col]
+  ): Reader[Col] = new Reader[Col] {
     def read(a: String) = {
-      val elems: List[Result[Elem]] =
-        a.split(",").toList.map(elementReader.read(_))
+      val elems: List[Result[E]] =
+        a.split(":").toList.map(elementReader.read(_))
 
       elems.find(_.isInstanceOf[Error]) match {
         case Some(err) => err.asInstanceOf[Error]
         case None =>
-          Success(elems.map(_.asInstanceOf[Success[Elem]].value).to(factory))
+          Success(elems.map(_.asInstanceOf[Success[E]].value).to(factory))
       }
     }
-    def show(a: Col[Elem]): String = a.map(elementReader.show(_)).mkString(",")
+    def show(a: Col): String = a.map(elementReader.show(_)).mkString(":")
   }
+
+  implicit def FilePathCollectionReader[Col <: Iterable[os.FilePath]]
+    (implicit factory: collection.Factory[os.FilePath, Col]): Reader[Col] =
+      colonSeparatedReader[os.FilePath, Col]
+  implicit def PathCollectionReader[Col <: Iterable[os.Path]]
+    (implicit factory: collection.Factory[os.Path, Col]): Reader[Col] =
+      colonSeparatedReader[os.Path, Col]
+  implicit def RelPathCollectionReader[Col <: Iterable[os.RelPath]]
+    (implicit factory: collection.Factory[os.RelPath, Col]): Reader[Col] =
+      colonSeparatedReader[os.RelPath, Col]
+  implicit def SubPathCollectionReader[Col <: Iterable[os.SubPath]]
+    (implicit factory: collection.Factory[os.SubPath, Col]): Reader[Col] =
+      colonSeparatedReader[os.SubPath, Col]
+  implicit def JPathCollectionReader[Col <: Iterable[java.nio.file.Path]]
+    (implicit factory: collection.Factory[java.nio.file.Path, Col]): Reader[Col] =
+      colonSeparatedReader[java.nio.file.Path, Col]
+  implicit def JFileCollectionReader[Col <: Iterable[java.io.File]]
+    (implicit factory: collection.Factory[java.io.File, Col]): Reader[Col] =
+      colonSeparatedReader[java.io.File, Col]
+
   implicit def Mapping[K, V](
       implicit kr: Reader[K],
       vr: Reader[V]

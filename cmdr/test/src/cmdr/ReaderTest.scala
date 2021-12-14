@@ -111,6 +111,39 @@ object ReaderTest extends TestSuite {
 
       bytes.toByteArray().toList ==> testData.getBytes().toList
     }
+    test("filepathseq") {
+      val parser = new TestParser
+      val param = parser.requiredParam[Iterable[os.FilePath]]("p1")
+      parser.parseResult(Seq("/a:./b:../c:d"))
+      parser.parseErrors ==> 0
+      param() ==> Seq(os.FilePath("/a"), os.FilePath("./b"), os.FilePath("../c"), os.FilePath("d"))
+    }
+    test("pathseq") {
+      val parser = new TestParser
+      val param = parser.requiredParam[Seq[os.Path]]("p1")
+      parser.parseResult(Seq("/a:./b:../c:d"))
+      parser.parseErrors ==> 0
+      //param().map(_.isInstanceOf[os.Path]).foreach(println)
+      param() ==> Seq(os.Path("/a"), os.pwd / "b", os.pwd / os.up / "c", os.pwd / "d")
+    }
+    test("subpathseq") {
+      val parser = new TestParser
+      val param = parser.requiredParam[Seq[os.SubPath]]("p1")
+
+      test("invalid") {
+        parser.parseResult(Seq("/a:./b:../c:d"))
+        parser.parseErrors ==> 1
+      }
+      test("invalid2") {
+        parser.parseResult(Seq("a/../../b"))
+        parser.parseErrors ==> 1
+      }
+      test("valid") {
+        parser.parseResult(Seq("a:./a:a/../b"))
+        parser.parseErrors ==> 0
+        param() ==> Seq(os.SubPath("a"), os.SubPath("a"), os.SubPath("b"))
+      }
+    }
   }
 
 }
