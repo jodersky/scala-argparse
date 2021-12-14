@@ -1,7 +1,7 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.6"
-val scala3 = "3.0.0"
+val scala3 = "3.0.2"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
@@ -17,7 +17,7 @@ trait CmdrModule
 
   def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
 
-  def publishVersion = "0.11.0"
+  def publishVersion = "0.11.0-SNAPSHOT"
   def pomSettings = PomSettings(
     description = "cmdr",
     organization = "io.crashbox",
