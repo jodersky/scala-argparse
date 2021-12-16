@@ -149,6 +149,18 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.12.0
+
+- Add experimental case class parser (Scala 3 only), available under
+  `parser.settings` (the previous mutable settings parser has been renamed to
+  `parser.mutableSettings`).
+- Add readers for:
+  - `scala.concurrent.time.Duration`
+  - Common `java.time` data types
+  - Collections of paths. These readers use `:` as a separator, instead of the
+    usual `,`'.
+- Upgrade to Scala 3.0.2.
+
 # 0.11.0
 
 - Upgrade to Scala 2.13.6
