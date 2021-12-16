@@ -149,6 +149,11 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.12.1
+
+- Add range reader.
+- Upgrade mill to 0.9.10
+
 # 0.12.0
 
 - Add experimental case class parser (Scala 3 only), available under

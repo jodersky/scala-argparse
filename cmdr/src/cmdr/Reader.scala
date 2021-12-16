@@ -373,4 +373,16 @@ object Reader extends LowPrioReaders {
     }
     def show(a: java.time.LocalTime) = a.toString()
   }
+  implicit object RangeReader extends Reader[Range] {
+    def read(str: String) = str.split("\\.\\.") match {
+      case Array(from, to) =>
+        try {
+          cmdr.Reader.Success(from.toInt to to.toInt)
+        } catch {
+          case _: Exception => cmdr.Reader.Error(s"$str must be a numeric range")
+        }
+      case _ => cmdr.Reader.Error(s"expected 'from..to', found: $str")
+    }
+    def show(r: Range) = s"${r.start}..${r.end}"
+  }
 }
