@@ -328,4 +328,49 @@ object Reader extends LowPrioReaders {
     }
     def show(a: scala.concurrent.duration.FiniteDuration): String = DurationReader.show(a)
   }
+  implicit object InstantReader extends Reader[java.time.Instant] {
+    def read(a: String) = try {
+      Success(java.time.Instant.parse(a))
+    } catch {
+      case ex: java.time.format.DateTimeParseException =>
+        Error(s"can not parse $a as an instant in time. The format must follow 'YYYY-MM-DDThh:mm:ss[.S]Z'. Note that the 'T' is literal and the time zone Z must be given.")
+    }
+    def show(a: java.time.Instant) = a.toString()
+  }
+  implicit object ZonedDateTimeReader extends Reader[java.time.ZonedDateTime] {
+    def read(a: String) = try {
+      Success(java.time.ZonedDateTime.parse(a))
+    } catch {
+      case ex: java.time.format.DateTimeParseException =>
+        Error(s"can not parse $a as a zoned date and time")
+    }
+    def show(a: java.time.ZonedDateTime) = a.toString()
+  }
+  implicit object LocalDateTimeReader extends Reader[java.time.LocalDateTime] {
+    def read(a: String) = try {
+      Success(java.time.LocalDateTime.parse(a))
+    } catch {
+      case ex: java.time.format.DateTimeParseException =>
+        Error(s"can not parse $a as a local date and time")
+    }
+    def show(a: java.time.LocalDateTime) = a.toString()
+  }
+  implicit object LocalDateReader extends Reader[java.time.LocalDate] {
+    def read(a: String) = try {
+      Success(java.time.LocalDate.parse(a))
+    } catch {
+      case ex: java.time.format.DateTimeParseException =>
+        Error(s"can not parse $a as a local date")
+    }
+    def show(a: java.time.LocalDate) = a.toString()
+  }
+  implicit object LocalTime extends Reader[java.time.LocalTime] {
+    def read(a: String) = try {
+      Success(java.time.LocalTime.parse(a))
+    } catch {
+      case ex: java.time.format.DateTimeParseException =>
+        Error(s"can not parse $a as a local time")
+    }
+    def show(a: java.time.LocalTime) = a.toString()
+  }
 }
