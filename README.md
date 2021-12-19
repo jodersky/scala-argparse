@@ -149,6 +149,12 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.13.0
+
+- Remove ability to read args from a file (predef reader). This caused ordering
+  issues in the parser and seemed like a recipe for obsuring config origins.
+- Implement an ini-style config parser, and allow params to read from config.
+
 # 0.12.1
 
 - Add range reader.

@@ -1,0 +1,16 @@
+global_key=hello world
+
+[section1]
+foo = a
+bar = a=b
+
+[ section1.test ]
+foo = a
+bar = a=b
+
+[ section2 ]
+; no content
+
+[ section3 ]
+ # ok
+ a=1234 hello world

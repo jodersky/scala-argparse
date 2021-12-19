@@ -42,7 +42,7 @@ object ArgParser {
 
   /** Parsing signalled an early exit. This means that there wasn't an error,
     * but that not all agruments were parsed, as one of them requested an early
-    * exit. Arguments are not available. */
+    * exit (for example --help or --version). Arguments are not available. */
   case object EarlyExit extends Result
 
   class Reporter {
@@ -110,6 +110,10 @@ object ArgParser {
     }
   }
 
+  case class ConfigValue(filename: String, line: Int, col: Int, value: String)
+
+  type ConfigLookupFunction = String => Option[ConfigValue]
+
 }
 
 /** A simple command line argument parser.
@@ -152,6 +156,41 @@ class ArgParser(
     val env: Map[String, String]
 ) extends SettingsParser { self =>
   import ArgParser._
+
+  private var configMap: PartialFunction[String, ConfigValue] = PartialFunction.empty
+
+  def configParam(
+    name: String,
+    aliases: Seq[String] = Seq.empty,
+    defaults: Seq[os.Path] = Seq.empty,
+    makeConfigMap: os.Path => Either[String, ConfigLookupFunction]
+  ): () => ConfigLookupFunction = {
+    def addConfigMap(path: os.Path) = makeConfigMap(path) match {
+      case Left(error) => reporter.reportParseError(name, error)
+      case Right(fct) => configMap = fct.unlift.orElse(configMap)
+    }
+
+    paramDefs += ParamDef(
+      Seq(name) ++ aliases,
+      parseAndSet = (_, valueOpt) =>
+        valueOpt.map(implicitly[Reader[os.Path]].read) match {
+          case None =>
+            reporter.reportParseError(name, "argument expected")
+            Parser.Continue
+          case Some(Reader.Error(message)) =>
+            reporter.reportParseError(name, message)
+            Parser.Continue
+          case Some(Reader.Success(value)) =>
+            addConfigMap(value)
+            Parser.Continue
+        },
+      missing = () => defaults.foreach(addConfigMap), // use defaults if no files are explicitly given
+      isFlag = false,
+      repeatPositional = false,
+      absorbRemaining = false
+    )
+    () => configMap.lift
+  }
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -300,7 +339,8 @@ class ArgParser(
       help: String,
       flag: Boolean,
       absorbRemaining: Boolean,
-      completer: Option[Completer]
+      completer: Option[Completer],
+      config: Option[String]
   )(implicit reader: Reader[A]): () => A = {
     var setValue: Option[A] = None
 
@@ -326,10 +366,15 @@ class ArgParser(
         val fromEnv = env.flatMap(self.env.get(_))
 
         fromEnv match {
-          case Some(str) => parseAndSet(s"env ${env.get}", Some(str))
-          case None if default.isDefined =>
-            setValue = Some(default.get())
-          case None => reporter.reportMissing(name)
+          case Some(str) => parseAndSet(s"from env ${env.get}", Some(str))
+          case None =>
+            val fromConfig = config.flatMap(configMap.lift(_))
+            fromConfig match {
+              case Some(value) => parseAndSet(s"from config '${config.get}' (at ${value.filename}:${value.line}:${value.col})", Some(value.value))
+              case None if default.isDefined =>
+                setValue = Some(default.get())
+              case None =>reporter.reportMissing(name)
+            }
         }
       },
       isFlag = flag,
@@ -418,7 +463,8 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
-      completer: Completer = null
+      completer: Completer = null,
+      config: String = null
   )(
       implicit reader: Reader[A]
   ): () => A =
@@ -430,7 +476,8 @@ class ArgParser(
       help,
       flag,
       absorbRemaining,
-      Option(completer)
+      Option(completer),
+      Option(config)
     )
 
   /** Define a required parameter.
@@ -451,7 +498,8 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
-      completer: Completer = null
+      completer: Completer = null,
+      config: String = null
   )(
       implicit reader: Reader[A]
   ): () => A =
@@ -463,7 +511,8 @@ class ArgParser(
       help,
       flag,
       absorbRemaining,
-      Option(completer)
+      Option(completer),
+      Option(config)
     )
 
   /** Define a parameter that may be repeated.

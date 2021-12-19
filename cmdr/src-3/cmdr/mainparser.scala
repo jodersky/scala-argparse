@@ -85,7 +85,8 @@ object MacroUtil {
             help = $annot.doc,
             flag = ${Expr(TypeRepr.of[tpe.Underlying] <:< TypeRepr.of[Boolean])},
             absorbRemaining = false,
-            completer = None
+            completer = None,
+            None
           )(using ${summonReader(paramTpe)}.asInstanceOf[Reader[tpe.Underlying]])
         }
 
@@ -114,7 +115,8 @@ object MacroUtil {
             help = $annot.doc,
             flag = false,
             absorbRemaining = false,
-            completer = None
+            completer = None,
+            None
           )(using ${summonReader(paramTpe)}.asInstanceOf[Reader[tpe.Underlying]])
         }
     }

@@ -315,7 +315,7 @@ object Reader extends LowPrioReaders {
     def read(a: String) = try {
       Success(scala.concurrent.duration.Duration.create(a))
     } catch {
-      case _: NumberFormatException => Error(s"could not parse '$a' as a valid duration")
+      case _: NumberFormatException => Error(s"'$a' is not a valid duration")
     }
     def show(a: scala.concurrent.duration.Duration): String = a.toString
   }
