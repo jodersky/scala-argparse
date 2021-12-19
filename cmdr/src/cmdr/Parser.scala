@@ -61,9 +61,10 @@ object Parser {
     def isNamed = names.head.startsWith("-")
   }
 
-  sealed trait ParamResult
+  sealed trait ParamResult {
+    def isAbort = this == Abort
+  }
   case object Continue extends ParamResult
-  case class InsertArgs(args: Seq[String]) extends ParamResult
   case object Abort extends ParamResult // abort parsing, this stops parsing in its track. Other arguments will not be parsed
 
   // extractor for named arguments
@@ -113,37 +114,23 @@ object Parser {
     }
 
     // parsed arguments
-    val namedArgs = mutable.Set.empty[ParamDef]
-    val positionalArgs = mutable.Set.empty[ParamDef]
+    val namedArgs = mutable.Map.empty[ParamDef, mutable.ListBuffer[
+      (String, Option[String]) // name used -> value given (or None if no value given, e.g. flags)
+    ]]
+    val positionalArgs = mutable.ArrayBuffer.empty[String]
     var pos = 0 // having this as a separate var from positionalArgs.length allows processing repeated params
 
     // first, iterate over all arguments to detect extraneous ones
-    var argIter = args.toList
+    var argIter = args.iterator
     var arg: String = null
-    def readArg() = argIter.headOption match {
-      case Some(value) =>
-        argIter = argIter.tail
-        arg = value
-      case None =>
-        arg = null
-    }
+    def readArg() = if (argIter.hasNext) arg = argIter.next() else arg = null
     readArg()
-
-    def parseAndSet(param: ParamDef, nameUsed: String, valueOpt: Option[String]): Boolean =
-      param.parseAndSet(nameUsed, valueOpt) match {
-        case Abort => false
-        case InsertArgs(extra) =>
-          argIter = extra.toList ::: argIter
-          true
-        case Continue => true
-      }
 
     var onlyPositionals = false
     def addPositional(arg: String) =
       if (pos < positional.length) {
         val param = positional(pos)
-        parseAndSet(param, param.names.head, Some(arg))
-        positionalArgs += param
+        positionalArgs += arg
         if (param.absorbRemaining) onlyPositionals = true
         if (!param.repeatPositional) pos += 1
       } else {
@@ -162,18 +149,15 @@ object Parser {
           case Named(name, embedded) if aliases.contains(name) =>
             readArg()
             val param = aliases(name)
+            namedArgs.getOrElseUpdate(param, mutable.ListBuffer.empty)
             if (embedded != null) { // embedded argument, i.e. one that contains '='
-              if (!parseAndSet(param, name, Some(embedded))) return false
-              namedArgs += param
+              namedArgs(param) += (name -> Some(embedded))
             } else if (param.isFlag) { // flags never take an arg and are set to "true"
-              if (!parseAndSet(param, name, Some("true"))) return false
-              namedArgs += param
+              namedArgs(param) += (name -> Some("true"))
             } else if (arg == null || arg.matches(Named.regex)) { // non-flags may have an arg
-              if (!parseAndSet(param, name, None)) return false
-              namedArgs += param
+              namedArgs(param) += (name -> None)
             } else {
-              if (!parseAndSet(param, name, Some(arg))) return false
-              namedArgs += param
+              namedArgs(param) += (name -> Some(arg))
               readArg()
             }
             if (param.absorbRemaining) onlyPositionals = true
@@ -187,13 +171,25 @@ object Parser {
       }
     }
 
-    // then, iterate over all parameters to report missing arguments
+    // then, iterate over all parameters to set values or report missing arguments
     for (param <- named) {
-      if (!namedArgs.contains(param)) {
-        param.missing()
+      namedArgs.get(param) match {
+        case None => param.missing()
+        case Some(list) if list.isEmpty =>
+          param.missing() // this shouldn't ever happen, but let's be defensive
+        case Some(list) =>
+          for ((nameUsed, valueOpt) <- list)
+            if (param.parseAndSet(nameUsed, valueOpt).isAbort) return false
       }
     }
 
+    for (i <- 0 until pos) {
+      if (positional(i).parseAndSet(positional(i).names.head, Some(positionalArgs(i))).isAbort)
+        return false
+    }
+    for (i <- pos until positionalArgs.length) {
+      if (positional(pos).parseAndSet(positional(pos).names.head, Some(positionalArgs(i))).isAbort) return false
+    }
     for (i <- pos until positional.length) {
       positional(i).missing()
     }

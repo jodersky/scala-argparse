@@ -153,8 +153,6 @@ class ArgParser(
 ) extends SettingsParser { self =>
   import ArgParser._
 
-  private var predefs: Seq[os.Path] = Seq.empty
-
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
   private var commandInfos = mutable.ListBuffer.empty[CommandInfo]
@@ -292,73 +290,6 @@ class ArgParser(
     }
 
     b.result()
-  }
-
-  /** Read arguments from a file.
-    *
-    * Arguments are inserted at the place that this parameter is encountered.
-    * The predef file must contain named arguments only, without the `--`
-    * prefix.
-    *
-    * For instance, assuming the following parser configuration,
-    *
-    * ```
-    * parser.predef("--config")
-    * parser.requiredParam[Int]("--foo")
-    * parser.requiredParam[String]("--bar")
-    * ```
-    *
-    * then the arguments could be read from a predef file "predef.conf"
-    * containing
-    *
-    * ```
-    * # lines starting with # are ignored
-    * foo 5
-    * bar hello
-    * ```
-    *
-    * by running
-    *
-    * ```
-    * --config predef.conf
-    * ```
-    */
-  def predef(
-    name: String,
-    aliases: Seq[String] = Seq.empty,
-    defaults: Seq[os.Path] = Seq.empty
-  ): this.type = {
-    predefs ++= defaults
-    paramDefs += ParamDef(
-      Seq(name) ++ aliases,
-      parseAndSet = (name, valueOpt) => {
-        valueOpt.map(implicitly[Reader[os.Path]].read) match {
-          case None =>
-            reporter.reportParseError(name, "argument expected")
-            Parser.Continue
-          case Some(Reader.Error(message)) =>
-            reporter.reportParseError(name, message)
-            Parser.Continue
-          case Some(Reader.Success(value)) =>
-            Parser.InsertArgs(PredefReader.read(os.read(value)))
-        }
-      },
-      missing = () => (),
-      isFlag = false,
-      repeatPositional = false,
-      absorbRemaining = false
-    )
-    paramInfos += ParamInfo(
-      isNamed = true,
-      names = Seq(name) ++ aliases,
-      isFlag = false,
-      repeats = true,
-      env = None,
-      description = "yo",
-      completer = NoCompleter,
-      showDefault = None
-    )
-    this
   }
 
   def singleParam[A](
@@ -631,13 +562,7 @@ class ArgParser(
     * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
     */
   def parseResult(args0: Iterable[String]): Result = {
-    val predefArgs = for {
-      file <- predefs
-      if os.exists(file)
-      arg <- PredefReader.read(os.read(file))
-    } yield arg
-
-    val args = predefArgs ++ args0.toSeq
+    val args = args0.toSeq
     var _command: () => String = null
     var _commandArgs: () => Seq[String] = null
 
