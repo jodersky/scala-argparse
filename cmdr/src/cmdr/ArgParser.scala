@@ -118,7 +118,7 @@ object ArgParser {
 
 /** A simple command line argument parser.
   *
-  * = Usage =
+  * Usage:
   *
   * 1. Define parameters with [[param]], [[requiredParam]], [[repeatedParam]]
   *    and [[command]]. Each of these methods gives back a handle to a future
@@ -133,15 +133,18 @@ object ArgParser {
   *    with 2. (This behaviour may be changed by subclassing and redefining the
   *    `check()` method).
   *
-  * = Example =
+  * Example
   *
-  * {{{
-  * val parser = cmdr.ArgumentParser("appname", "0.1.0") val p1 =
-  * parser.param[String]("--this-is-a-named-param", default = "default value")
+  * ```
+  * val parser = cmdr.ArgumentParser("appname", "0.1.0")
+  *
+  * val p1 = parser.param[String]("--this-is-a-named-param", default = "default value")
   * val p2 = parser.param[Int]("positional-param", default = 2)
+  *
   * parser.parse(Seq("--this-is-a-named-param=other", 5)) println(p1())
+  *
   * println(p2())
-  * }}}
+  * ```
   *
   * @param prog the name of this command (only used in the default help message)
   * @param description a short description of this command. Used in help
@@ -405,7 +408,7 @@ class ArgParser(
   /** Define an optional parameter, using the given default value if it is not
     * supplied on the command line or by an environment variable.
     *
-    * ErgoTip: always give named parameters a default value.
+    * *ErgoTip: always give named parameters a default value.*
     *
     * ''Internal design note: [[param]] and [[requiredParam]] differ only in the
     * presence of the 'default' parameter. Ideally, they would be merged into one
@@ -486,8 +489,8 @@ class ArgParser(
     * default value. Instead, missing arguments for this parameter will cause
     * the parser to fail.
     *
-    * ErgoTip: avoid named parameters that are required. Only require positional
-    * parameters.
+    * *ErgoTip: avoid named parameters that are required. Only require
+    * positional parameters.*
     *
     * @see param
     */
