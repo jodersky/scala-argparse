@@ -1,4 +1,4 @@
-# cmdr
+# scala-argparse
 
 Pragmatic command line parsing for Scala applications.
 
@@ -23,7 +23,7 @@ Both examples have the same command-line interface.
 ```scala
 object Main {
   def main(args: Array[String]): Unit = {
-    val parser = cmdr.ArgParser(
+    val parser = argparse.ArgParser(
       "readme",
       "An example application"
     )
@@ -57,19 +57,19 @@ object Main {
 
 ```scala
 object Main {
-  @cmdr.main(name = "readme", doc = "An example application")
+  @argparse.main(name = "readme", doc = "An example application")
   def main(
-    @cmdr.arg(doc = "network host")
+    @argparse.arg(doc = "network host")
     host: String = "localhost",
-    @cmdr.arg(doc = "some port", aliases = Seq("-p"), env = "PORT")
+    @argparse.arg(doc = "some port", aliases = Seq("-p"), env = "PORT")
     port: Int = 8080,
-    @cmdr.arg(doc="the path to use")
+    @argparse.arg(doc="the path to use")
     path: java.nio.file.Path
   ) = {
     println(s"$host:$port$path")
   }
 
-  def main(args: Array[String]): Unit = cmdr.parseOrExit(args)
+  def main(args: Array[String]): Unit = argparse.parseOrExit(args)
 }
 ```
 
@@ -135,16 +135,16 @@ run with '--help' for more information
 This library is published for Scala 2.13 (JVM and Native), and 3. It is
 available on maven central under the coordinates:
 
-- mill: `ivy"io.crashbox::cmdr::<version>"`
-- sbt: `"io.crashbox" %%% "cmdr" % "<version>"`
+- mill: `ivy"io.crashbox::argparse::<version>"`
+- sbt: `"io.crashbox" %%% "argparse" % "<version>"`
 
 where `<version>` is given by [![Latest
-version](https://index.scala-lang.org/jodersky/cmdr/cmdr/latest.svg)](https://index.scala-lang.org/jodersky/cmdr/cmdr)
+version](https://index.scala-lang.org/jodersky/argparse/argparse/latest.svg)](https://index.scala-lang.org/jodersky/argparse/argparse)
 
 ## Documentation
 
-Look at [the API docs](https://jodersky.github.io/cmdr/cmdr/ArgParser.html)
-([defined here](cmdr/src/cmdr/ArgParser.scala)) for parsing rules and
+Look at [the API docs](https://jodersky.github.io/argparse/argparse/ArgParser.html)
+([defined here](argparse/src/argparse/ArgParser.scala)) for parsing rules and
 explanations on how it works.
 
 ## Changelog

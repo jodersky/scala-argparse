@@ -1,6 +1,6 @@
 object Main {
   def main(args: Array[String]): Unit = {
-    val parser = cmdr.ArgParser(
+    val parser = argparse.ArgParser(
       "readme",
       "An example application"
     )

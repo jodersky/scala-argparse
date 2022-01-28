@@ -1,15 +1,15 @@
 object Main {
-  @cmdr.main(name = "readme", doc = "An example application")
+  @argparse.main(name = "readme", doc = "An example application")
   def main(
-      @cmdr.arg(doc = "network host")
+      @argparse.arg(doc = "network host")
       host: String = "localhost",
-      @cmdr.arg(doc = "some port", aliases = Seq("-p"), env = "PORT")
+      @argparse.arg(doc = "some port", aliases = Seq("-p"), env = "PORT")
       port: Int = 8080,
-      @cmdr.arg(doc = "the path to use")
+      @argparse.arg(doc = "the path to use")
       path: java.nio.file.Path
   ) = {
     println(s"$host:$port$path")
   }
 
-  def main(args: Array[String]): Unit = cmdr.parseOrExit(args)
+  def main(args: Array[String]): Unit = argparse.parseOrExit(args)
 }
