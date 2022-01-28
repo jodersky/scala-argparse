@@ -17,7 +17,7 @@ trait ArgParseModule
 
   def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
 
-  def publishVersion = "0.14.0-SNAPSHOT"
+  def publishVersion = "0.14.0"
   def pomSettings = PomSettings(
     description = "argparse",
     organization = "io.crashbox",

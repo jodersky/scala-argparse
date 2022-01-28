@@ -149,6 +149,10 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.14.0
+
+Rename project to scala-argparse.
+
 # 0.13.0
 
 - Remove ability to read args from a file (predef reader). This caused ordering
