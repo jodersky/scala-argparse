@@ -89,7 +89,8 @@ object MutableSettingsParser {
               env = ${Expr(env)},
               description = ${Expr(help)},
               completer = ArgParser.NoCompleter,
-              showDefault = Some(() => ${reader}.show(${instance.select(sym).asExpr}))
+              showDefault = Some(() => ${reader}.show(${instance.select(sym).asExpr})),
+              bashCompleter = Reader.BashCompleter.Empty
             )
           }
         }

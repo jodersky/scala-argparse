@@ -25,7 +25,8 @@ object ArgParser {
       env: Option[String],
       description: String,
       completer: Completer,
-      showDefault: Option[() => String]
+      showDefault: Option[() => String],
+      bashCompleter: Reader.BashCompleter
   )
   case class CommandInfo(
       name: String,
@@ -196,8 +197,8 @@ class ArgParser(
   }
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
-  private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
-  private var commandInfos = mutable.ListBuffer.empty[CommandInfo]
+  val paramInfos = mutable.ListBuffer.empty[ParamInfo]
+  var commandInfos = mutable.ListBuffer.empty[CommandInfo]
 
   /** Low-level escape hatch for manually adding parameter definitions.
     *
@@ -232,7 +233,8 @@ class ArgParser(
     None,
     "show this message and exit",
     NoCompleter,
-    None
+    None,
+    Reader.BashCompleter.Empty
   )
 
   // the --version flag is only relevant if a version has been specified
@@ -256,9 +258,42 @@ class ArgParser(
       None,
       "show the version and exit",
       NoCompleter,
-      None
+      None,
+      Reader.BashCompleter.Empty
     )
   }
+
+  paramDefs += ParamDef(
+    Seq("--bash-completion"),
+    (_, name) => {
+      try {
+        StandaloneBashCompletion.completeAndThrow(
+          reporter.stdout,
+          paramInfos.toList,
+          commandInfos.toList,
+          Seq("---nested-completion", name.get)
+        )
+      } catch {
+        case _: StandaloneBashCompletion.CompletionReturned =>
+      }
+      Parser.Abort
+    },
+    missing = () => (),
+    isFlag = false,
+    repeatPositional = false,
+    absorbRemaining = false
+  )
+  // paramInfos += ParamInfo(
+  //   true,
+  //   Seq("--version"),
+  //   true,
+  //   false,
+  //   None,
+  //   "show the version and exit",
+  //   NoCompleter,
+  //   None,
+  //   Reader.BashCompleter.Empty
+  // )
 
   private def help(): String = {
     val (named0, positional) = paramInfos.partition(_.isNamed)
@@ -343,7 +378,8 @@ class ArgParser(
       flag: Boolean,
       absorbRemaining: Boolean,
       completer: Option[Completer],
-      config: Option[String]
+      config: Option[String],
+      bashCompleter: Option[Reader.BashCompleter]
   )(implicit reader: Reader[A]): () => A = {
     var setValue: Option[A] = None
 
@@ -394,7 +430,8 @@ class ArgParser(
       env,
       help,
       completer.getOrElse(reader.completer),
-      default.map(d => () => reader.show(d()))
+      default.map(d => () => reader.show(d())),
+      bashCompleter.getOrElse(reader.bashCompleter)
     )
 
     () =>
@@ -467,7 +504,8 @@ class ArgParser(
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
       completer: Completer = null,
-      config: String = null
+      config: String = null,
+      bashCompleter: Reader.BashCompleter = null
   )(
       implicit reader: Reader[A]
   ): () => A =
@@ -480,7 +518,8 @@ class ArgParser(
       flag,
       absorbRemaining,
       Option(completer),
-      Option(config)
+      Option(config),
+      Option(bashCompleter)
     )
 
   /** Define a required parameter.
@@ -502,7 +541,8 @@ class ArgParser(
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
       completer: Completer = null,
-      config: String = null
+      config: String = null,
+      bashCompleter: Reader.BashCompleter = null,
   )(
       implicit reader: Reader[A]
   ): () => A =
@@ -515,7 +555,8 @@ class ArgParser(
       flag,
       absorbRemaining,
       Option(completer),
-      Option(config)
+      Option(config),
+      Option(bashCompleter)
     )
 
   /** Define a parameter that may be repeated.
@@ -541,7 +582,8 @@ class ArgParser(
       aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false,
-      completer: Completer = null
+      completer: Completer = null,
+      bashCompleter: Reader.BashCompleter = null
   )(implicit reader: Reader[A]): () => Seq[A] = {
     var values = mutable.ArrayBuffer.empty[A]
     var isSet = false
@@ -580,7 +622,8 @@ class ArgParser(
       None,
       help,
       Option(completer).getOrElse(reader.completer),
-      None
+      None,
+      Option(bashCompleter).getOrElse(reader.bashCompleter)
     )
 
     () => values.toList
@@ -623,7 +666,8 @@ class ArgParser(
       _command = requiredParam[String](
         "command",
         absorbRemaining = true,
-        completer = prefix => commands.filter(_.startsWith(prefix)).toList
+        completer = prefix => commands.filter(_.startsWith(prefix)).toList,
+        bashCompleter = Reader.BashCompleter.Fixed(commands.toSet)
       )
       _commandArgs = repeatedParam[String](
         "args"
@@ -639,6 +683,12 @@ class ArgParser(
         )) {
       return EarlyExit
     }
+    StandaloneBashCompletion.completeAndThrow(
+      reporter.stdout,
+      paramInfos.toList,
+      commandInfos.toList,
+      args
+    )
 
     if (!Parser.parse(
       paramDefs.result(),

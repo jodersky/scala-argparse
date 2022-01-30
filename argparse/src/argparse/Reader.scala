@@ -22,11 +22,24 @@ trait Reader[A] {
 
   /** Show a given value as a string. This is used in help dialogs to display
     * default values.
-    **/
+    */
   def show(a: A): String
 
-  /** Compute available bash completions starting with a given string. */
+  /** Compute available shell completions starting with a given string. This is
+    * used by embedded bash completion, where the user program is responsible
+    * for generating completions.
+    */
   def completer: String => Seq[String] = _ => Seq.empty
+
+  /** A completer for bash. This is used by standalone bash completion, where a
+    * bash script generates completion, without the involvement of the the user
+    * program.
+    *
+    * If your program is implemented with Scala on the JVM, the startup time is
+    * considerable and hence standalone completion should be preferred for a
+    * snappy user experience.
+    */
+  def bashCompleter: Reader.BashCompleter = Reader.BashCompleter.Empty
 }
 
 trait LowPrioReaders {
@@ -57,6 +70,13 @@ object Reader extends LowPrioReaders {
   sealed trait Result[+A]
   case class Success[A](value: A) extends Result[A]
   case class Error(message: String) extends Result[Nothing]
+
+  sealed trait BashCompleter
+  object BashCompleter {
+    case object Empty extends BashCompleter // no completion
+    case class Fixed(alternatives: Set[String]) extends BashCompleter // completion picked from a fixed set of words
+    case object Default extends BashCompleter // default bash completion (uses paths)
+  }
 
   implicit object StringReader extends Reader[String] {
     def read(a: String) = Success(a)
@@ -129,6 +149,7 @@ object Reader extends LowPrioReaders {
 
   trait FsPathReader[A] extends Reader[A] {
     override val completer = pathCompleter
+    override val bashCompleter = BashCompleter.Default
   }
 
   implicit object FilePathReader extends FsPathReader[os.FilePath] {
