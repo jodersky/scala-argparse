@@ -81,7 +81,7 @@ object BashCompletion {
     val positionalCompleters: Iterator[String => Seq[String]] =
       positionals.map(_.completer).iterator
 
-    var completer: ArgParser.Completer = ArgParser.NoCompleter
+    var completer: String => Seq[String] = _ => Seq.empty
     var prefix: String = ""
 
     // first, iterate over all arguments and:
@@ -124,7 +124,7 @@ object BashCompletion {
               )
           } else {
             completer =
-              positionalCompleters.nextOption().getOrElse(ArgParser.NoCompleter)
+              positionalCompleters.nextOption().getOrElse(_ => Seq.empty)
           }
       }
     }

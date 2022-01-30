@@ -13,9 +13,6 @@ object ArgParser {
       env: Map[String, String] = sys.env
   ) = new ArgParser(prog, description, version, reporter, env)
 
-  type Completer = String => Seq[String]
-  val NoCompleter = (s: String) => Seq.empty
-
   /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
       isNamed: Boolean,
@@ -24,8 +21,8 @@ object ArgParser {
       repeats: Boolean,
       env: Option[String],
       description: String,
-      completer: Completer,
       showDefault: Option[() => String],
+      completer: String => Seq[String],
       bashCompleter: Reader.BashCompleter
   )
   case class CommandInfo(
@@ -192,8 +189,8 @@ class ArgParser(
     false,
     None,
     "show this message and exit",
-    NoCompleter,
     None,
+    _ => Seq.empty,
     Reader.BashCompleter.Empty
   )
 
@@ -217,8 +214,8 @@ class ArgParser(
       false,
       None,
       "show the version and exit",
-      NoCompleter,
       None,
+      _ => Seq.empty,
       Reader.BashCompleter.Empty
     )
   }
@@ -243,17 +240,6 @@ class ArgParser(
     repeatPositional = false,
     absorbRemaining = false
   )
-  // paramInfos += ParamInfo(
-  //   true,
-  //   Seq("--version"),
-  //   true,
-  //   false,
-  //   None,
-  //   "show the version and exit",
-  //   NoCompleter,
-  //   None,
-  //   Reader.BashCompleter.Empty
-  // )
 
   private def help(): String = {
     val (named0, positional) = paramInfos.partition(_.isNamed)
@@ -337,7 +323,7 @@ class ArgParser(
       help: String,
       flag: Boolean,
       absorbRemaining: Boolean,
-      completer: Option[Completer],
+      completer: Option[String => Seq[String]],
       bashCompleter: Option[Reader.BashCompleter]
   )(implicit reader: Reader[A]): () => A = {
     var setValue: Option[A] = None
@@ -383,8 +369,8 @@ class ArgParser(
       false,
       env,
       help,
-      completer.getOrElse(reader.completer),
       default.map(d => () => reader.show(d())),
+      completer.getOrElse(reader.completer),
       bashCompleter.getOrElse(reader.bashCompleter)
     )
 
@@ -457,7 +443,7 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
-      completer: Completer = null,
+      completer: String => Seq[String] = null,
       bashCompleter: Reader.BashCompleter = null
   )(
       implicit reader: Reader[A]
@@ -492,7 +478,7 @@ class ArgParser(
       help: String = "",
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
-      completer: Completer = null,
+      completer: String => Seq[String] = null,
       bashCompleter: Reader.BashCompleter = null,
   )(
       implicit reader: Reader[A]
@@ -532,7 +518,7 @@ class ArgParser(
       aliases: Seq[String] = Seq.empty,
       help: String = "",
       flag: Boolean = false,
-      completer: Completer = null,
+      completer: String => Seq[String] = null,
       bashCompleter: Reader.BashCompleter = null
   )(implicit reader: Reader[A]): () => Seq[A] = {
     var values = mutable.ArrayBuffer.empty[A]
@@ -571,8 +557,8 @@ class ArgParser(
       true,
       None,
       help,
-      Option(completer).getOrElse(reader.completer),
       None,
+      Option(completer).getOrElse(reader.completer),
       Option(bashCompleter).getOrElse(reader.bashCompleter)
     )
 
