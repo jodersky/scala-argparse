@@ -110,11 +110,6 @@ object ArgParser {
       }
     }
   }
-
-  case class ConfigValue(filename: String, line: Int, col: Int, value: String)
-
-  type ConfigLookupFunction = String => Option[ConfigValue]
-
 }
 
 /** A simple command line argument parser.
@@ -160,41 +155,6 @@ class ArgParser(
     val env: Map[String, String]
 ) extends SettingsParser { self =>
   import ArgParser._
-
-  private var configMap: PartialFunction[String, ConfigValue] = PartialFunction.empty
-
-  def configParam(
-    name: String,
-    aliases: Seq[String] = Seq.empty,
-    defaults: Seq[os.Path] = Seq.empty,
-    makeConfigMap: os.Path => Either[String, ConfigLookupFunction]
-  ): () => ConfigLookupFunction = {
-    def addConfigMap(path: os.Path) = makeConfigMap(path) match {
-      case Left(error) => reporter.reportParseError(name, error)
-      case Right(fct) => configMap = fct.unlift.orElse(configMap)
-    }
-
-    paramDefs += ParamDef(
-      Seq(name) ++ aliases,
-      parseAndSet = (_, valueOpt) =>
-        valueOpt.map(implicitly[Reader[os.Path]].read) match {
-          case None =>
-            reporter.reportParseError(name, "argument expected")
-            Parser.Continue
-          case Some(Reader.Error(message)) =>
-            reporter.reportParseError(name, message)
-            Parser.Continue
-          case Some(Reader.Success(value)) =>
-            addConfigMap(value)
-            Parser.Continue
-        },
-      missing = () => defaults.foreach(addConfigMap), // use defaults if no files are explicitly given
-      isFlag = false,
-      repeatPositional = false,
-      absorbRemaining = false
-    )
-    () => configMap.lift
-  }
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -378,7 +338,6 @@ class ArgParser(
       flag: Boolean,
       absorbRemaining: Boolean,
       completer: Option[Completer],
-      config: Option[String],
       bashCompleter: Option[Reader.BashCompleter]
   )(implicit reader: Reader[A]): () => A = {
     var setValue: Option[A] = None
@@ -406,14 +365,9 @@ class ArgParser(
 
         fromEnv match {
           case Some(str) => parseAndSet(s"from env ${env.get}", Some(str))
-          case None =>
-            val fromConfig = config.flatMap(configMap.lift(_))
-            fromConfig match {
-              case Some(value) => parseAndSet(s"from config '${config.get}' (at ${value.filename}:${value.line}:${value.col})", Some(value.value))
-              case None if default.isDefined =>
-                setValue = Some(default.get())
-              case None =>reporter.reportMissing(name)
-            }
+          case None if default.isDefined =>
+            setValue = Some(default.get())
+          case None => reporter.reportMissing(name)
         }
       },
       isFlag = flag,
@@ -504,7 +458,6 @@ class ArgParser(
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
       completer: Completer = null,
-      config: String = null,
       bashCompleter: Reader.BashCompleter = null
   )(
       implicit reader: Reader[A]
@@ -518,7 +471,6 @@ class ArgParser(
       flag,
       absorbRemaining,
       Option(completer),
-      Option(config),
       Option(bashCompleter)
     )
 
@@ -541,7 +493,6 @@ class ArgParser(
       flag: Boolean = false,
       absorbRemaining: Boolean = false,
       completer: Completer = null,
-      config: String = null,
       bashCompleter: Reader.BashCompleter = null,
   )(
       implicit reader: Reader[A]
@@ -555,7 +506,6 @@ class ArgParser(
       flag,
       absorbRemaining,
       Option(completer),
-      Option(config),
       Option(bashCompleter)
     )
 

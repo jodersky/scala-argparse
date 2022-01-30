@@ -86,7 +86,6 @@ object MacroUtil {
             flag = ${Expr(TypeRepr.of[tpe.Underlying] <:< TypeRepr.of[Boolean])},
             absorbRemaining = false,
             completer = None,
-            None,
             bashCompleter = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[Reader[tpe.Underlying]])
         }
@@ -117,7 +116,6 @@ object MacroUtil {
             flag = false,
             absorbRemaining = false,
             completer = None,
-            None,
             bashCompleter = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[Reader[tpe.Underlying]])
         }
