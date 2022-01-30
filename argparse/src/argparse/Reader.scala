@@ -9,7 +9,8 @@ import java.io.OutputStream
   * argument to a given type.
   */
 @implicitNotFound(
-  "Don't know how to read a ${A} from a command line argument. Try implementing your own argparse.Reader[$A]."
+  "No argparse.Reader[${A}] found. A reader is required to parse a command line argument from a string to a ${A}. " +
+  "Please define a given argparse.Reader[$A]."
 )
 trait Reader[A] {
 
