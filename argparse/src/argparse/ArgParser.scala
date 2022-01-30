@@ -9,9 +9,10 @@ object ArgParser {
       prog: String = "",
       description: String = "",
       version: String = "",
-      reporter: Reporter = new Reporter,
-      env: Map[String, String] = sys.env
-  ) = new ArgParser(prog, description, version, reporter, env)
+      env: Map[String, String] = sys.env,
+      stdout: java.io.PrintStream = System.out,
+      stderr: java.io.PrintStream = System.err
+  ) = new ArgParser(prog, description, version, env, stdout, stderr)
 
   /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
@@ -42,38 +43,6 @@ object ArgParser {
     * but that not all agruments were parsed, as one of them requested an early
     * exit (for example --help or --version). Arguments are not available. */
   case object EarlyExit extends Result
-
-  class Reporter {
-    def stdout: java.io.PrintStream = System.out
-    def stderr: java.io.PrintStream = System.err
-
-    private var errors = 0
-
-    // called when an expected (i.e. required) parameter is missing
-    def reportMissing(name: String): Unit = {
-      stderr.println(s"missing argument: $name")
-      errors += 1
-    }
-
-    // called when an undeclared parameter is encountered
-    def reportUnknown(name: String): Unit = {
-      stderr.println(s"unknown argument: $name")
-      errors += 1
-    }
-
-    def reportParseError(name: String, message: String): Unit = {
-      stderr.println(s"error processing argument $name: $message")
-      errors += 1
-    }
-
-    def reportUnknownCommand(actual: String, available: Seq[String]) = {
-      stderr.println("unknown command: " + actual)
-      stderr.println("expected one of: " + available.mkString(", "))
-      errors += 1
-    }
-
-    def hasErrors = errors > 0
-  }
 
   def wrap(in: String, out: StringBuilder, width: Int, newLine: String): Unit = {
     if (in.length < width) {
@@ -148,10 +117,38 @@ class ArgParser(
     val prog: String,
     val description: String,
     val version: String,
-    val reporter: ArgParser.Reporter,
-    val env: Map[String, String]
+    val env: Map[String, String],
+    val stdout: java.io.PrintStream = System.out,
+    val stderr: java.io.PrintStream = System.err
 ) extends SettingsParser { self =>
   import ArgParser._
+
+  private var errors = 0
+
+  // called when an expected (i.e. required) parameter is missing
+  protected def reportMissing(name: String): Unit = {
+    stderr.println(s"missing argument: $name")
+    errors += 1
+  }
+
+  // called when an undeclared parameter is encountered
+  protected def reportUnknown(name: String): Unit = {
+    stderr.println(s"unknown argument: $name")
+    errors += 1
+  }
+
+  protected[argparse] def reportParseError(name: String, message: String): Unit = {
+    stderr.println(s"error processing argument $name: $message")
+    errors += 1
+  }
+
+  protected def reportUnknownCommand(actual: String, available: Seq[String]) = {
+    stderr.println("unknown command: " + actual)
+    stderr.println("expected one of: " + available.mkString(", "))
+    errors += 1
+  }
+
+  protected def hasErrors = errors > 0 // TODO: make public?
 
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -174,7 +171,7 @@ class ArgParser(
   paramDefs += ParamDef(
     Seq("--help"),
     (_, _) => {
-      reporter.stdout.println(help())
+      stdout.println(help())
       Parser.Abort
     },
     missing = () => (),
@@ -199,7 +196,7 @@ class ArgParser(
     paramDefs += ParamDef(
       Seq("--version"),
       (_, _) => {
-        reporter.stdout.println(version)
+        stdout.println(version)
         Parser.Abort
       },
       missing = () => (),
@@ -225,7 +222,7 @@ class ArgParser(
     (_, name) => {
       try {
         StandaloneBashCompletion.completeAndThrow(
-          reporter.stdout,
+          stdout,
           paramInfos.toList,
           commandInfos.toList,
           Seq("---nested-completion", name.get)
@@ -330,7 +327,7 @@ class ArgParser(
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
-        case Reader.Error(message) => reporter.reportParseError(name, message)
+        case Reader.Error(message) => reportParseError(name, message)
         case Reader.Success(value) => setValue = Some(value)
       }
     }
@@ -338,7 +335,7 @@ class ArgParser(
     def parseAndSet(name: String, valueOpt: Option[String]) = {
       valueOpt match {
         case Some(v) => read(name, v)
-        case None    => reporter.reportParseError(name, "argument expected")
+        case None    => reportParseError(name, "argument expected")
       }
       Parser.Continue
     }
@@ -353,7 +350,7 @@ class ArgParser(
           case Some(str) => parseAndSet(s"from env ${env.get}", Some(str))
           case None if default.isDefined =>
             setValue = Some(default.get())
-          case None => reporter.reportMissing(name)
+          case None => reportMissing(name)
         }
       },
       isFlag = flag,
@@ -526,7 +523,7 @@ class ArgParser(
 
     def read(name: String, strValue: String): Unit = {
       reader.read(strValue) match {
-        case Reader.Error(message) => reporter.reportParseError(name, message)
+        case Reader.Error(message) => reportParseError(name, message)
         case Reader.Success(value) =>
           values += value
           isSet = true
@@ -539,7 +536,7 @@ class ArgParser(
         valueOpt match {
           case Some(v)      => read(name, v)
           case None if flag => read(name, "true")
-          case None         => reporter.reportParseError(name, "argument expected")
+          case None         => reportParseError(name, "argument expected")
         }
         Parser.Continue
       },
@@ -615,12 +612,12 @@ class ArgParser(
           commandInfos.toList,
           env,
           args,
-          reporter.stdout
+          stdout
         )) {
       return EarlyExit
     }
     StandaloneBashCompletion.completeAndThrow(
-      reporter.stdout,
+      stdout,
       paramInfos.toList,
       commandInfos.toList,
       args
@@ -629,18 +626,18 @@ class ArgParser(
     if (!Parser.parse(
       paramDefs.result(),
       args,
-      reporter.reportUnknown
+      reportUnknown
     )) return EarlyExit
 
 
-    if (reporter.hasErrors) return Error
+    if (hasErrors) return Error
 
     if (!commandInfos.isEmpty) {
       commandInfos.find(_.name == _command()) match {
         case Some(cmd) =>
           cmd.action(_commandArgs())
         case None =>
-          reporter.reportUnknownCommand(
+          reportUnknownCommand(
             _command(),
             commandInfos.map(_.name).result()
           )
@@ -675,7 +672,7 @@ class ArgParser(
     case Success   => ()
     case EarlyExit => sys.exit(0)
     case Error =>
-      reporter.stderr.println("run with '--help' for more information")
+      stderr.println("run with '--help' for more information")
       sys.exit(2)
   }
 

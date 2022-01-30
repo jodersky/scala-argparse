@@ -104,7 +104,7 @@ object MutableSettingsParser {
   def impl[A: Type](using qctx: Quotes)(instance: Expr[ArgParser], expr: Expr[A]): Expr[A] = {
     val (pdefs, pinfos) = getPdefs(
       expr,
-      '{(name: String, message: String) => ${instance}.reporter.reportParseError(name, message)}
+      '{(name: String, message: String) => ${instance}.reportParseError(name, message)}
     )
 
     '{
