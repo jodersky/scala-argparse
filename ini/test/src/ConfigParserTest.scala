@@ -1,8 +1,8 @@
-package argparse
-
 import utest._
 
 object ConfigParserTest extends TestSuite {
+  import argparse.ini
+
   val tests = Tests{
     test("basic") {
       ini.read("hello=world") ==> ini.Section("hello" -> ini.Str("world"))
@@ -10,7 +10,7 @@ object ConfigParserTest extends TestSuite {
       ini.read("") ==> ini.Section()
     }
     test("file") {
-      ini.read(os.pwd / "argparse" / "test" / "resources" / "ini1") ==>
+      ini.read(os.pwd / "ini" / "test" / "resources" / "ini1") ==>
         ini.Section(
           "global_key" -> ini.Str("hello world"),
           "section1" -> ini.Section(

@@ -2,21 +2,15 @@ import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.6"
 val scala3 = "3.0.2"
+val scalaNative = "0.4.0"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
   def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.10")
   def testFramework = "utest.runner.Framework"
 }
-trait ArgParseModule
-    extends CrossScalaModule
-    with ScalafmtModule
-    with PublishModule {
 
-  def scalacOptions = Seq("-deprecation", "-release", "8")
-
-  def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
-
+trait Publish extends PublishModule {
   def publishVersion = "0.14.0"
   def pomSettings = PomSettings(
     description = "argparse",
@@ -28,10 +22,19 @@ trait ArgParseModule
       Developer("jodersky", "Jakob Odersky", "https://github.com/jodersky")
     )
   )
-  def artifactName = "argparse"
 }
 
 object argparse extends Module {
+
+  trait ArgParseModule
+    extends CrossScalaModule
+    with ScalafmtModule
+    with Publish {
+
+    def scalacOptions = Seq("-deprecation", "-release", "8")
+    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
+    def artifactName = "argparse"
+  }
 
   class JvmModule(val crossScalaVersion: String) extends ArgParseModule {
     def millSourcePath = super.millSourcePath / os.up
@@ -48,7 +51,38 @@ object argparse extends Module {
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
     object test extends Tests with Utest
   }
-  object native extends Cross[NativeModule]((scala213, "0.4.0"))
+  object native extends Cross[NativeModule]((scala213, scalaNative))
+
+}
+
+object ini extends Module {
+
+  trait IniModule
+    extends CrossScalaModule
+    with ScalafmtModule
+    with Publish {
+
+    def scalacOptions = Seq("-deprecation", "-release", "8")
+    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
+    def artifactName = "argparse-ini"
+  }
+
+  class JvmModule(val crossScalaVersion: String) extends IniModule {
+    def millSourcePath = super.millSourcePath / os.up
+    def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-jvm")))
+    object test extends Tests with Utest
+  }
+  object jvm extends Cross[JvmModule]((Seq(scala213, scala3) ++ dottyCustomVersion):_*)
+
+  class NativeModule(val crossScalaVersion: String, val crossScalaNativeVersion: String)
+      extends IniModule
+      with ScalaNativeModule {
+    def scalaNativeVersion = crossScalaNativeVersion
+    def millSourcePath = super.millSourcePath / os.up / os.up
+    def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
+    object test extends Tests with Utest
+  }
+  object native extends Cross[NativeModule]((scala213, scalaNative))
 
 }
 
