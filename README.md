@@ -145,7 +145,7 @@ version](https://index.scala-lang.org/jodersky/argparse/argparse/latest.svg)](ht
 
 ## Documentation
 
-Look at [the API docs](https://jodersky.github.io/argparse/argparse/ArgumentParser.html)
+Look at [the API docs](https://jodersky.github.io/scala-argparse/api/argparse/ArgumentParser.html)
 ([defined here](argparse/src/argparse/ArgumentParser.scala)) for parsing rules and
 explanations on how it works.
 
