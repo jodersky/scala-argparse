@@ -23,10 +23,7 @@ Both examples have the same command-line interface.
 ```scala
 object Main {
   def main(args: Array[String]): Unit = {
-    val parser = argparse.ArgumentParser(
-      "readme",
-      "An example application"
-    )
+    val parser = argparse.ArgumentParser("An example application")
 
     val host = parser.param[String](
       "--host",
@@ -57,7 +54,7 @@ object Main {
 
 ```scala
 object Main {
-  @argparse.main(name = "readme", doc = "An example application")
+  @argparse.main("An example application")
   def main(
     @argparse.arg(doc = "network host")
     host: String = "localhost",
@@ -74,8 +71,8 @@ object Main {
 ```
 
 1. Build the above application by running either:
-  - `./mill examples.readme-imperative[3.0.0-M3].dist`
-  - or, `./mill examples.readme-declarative[3.0.0-M3].dist`
+  - `./mill examples.readme-imperative[3.0.2].dist`
+  - or, `./mill examples.readme-declarative[3.0.2].dist`
 
 2. Run the `./readme-<imperative|declarative>` executable:
 
@@ -132,7 +129,7 @@ run with '--help' for more information
 
 ## Usage
 
-This library is published for Scala 2.13 (JVM and Native), and 3. It is
+This library is published for Scala 3 and 2.13, for the JVM and Native. It is
 available on maven central under the coordinates:
 
 - mill: `ivy"io.crashbox::argparse::<version>"`
