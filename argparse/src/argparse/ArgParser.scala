@@ -9,10 +9,9 @@ object ArgParser {
       prog: String = "",
       description: String = "",
       version: String = "",
-      env: Map[String, String] = sys.env,
       stdout: java.io.PrintStream = System.out,
       stderr: java.io.PrintStream = System.err
-  ) = new ArgParser(prog, description, version, env, stdout, stderr)
+  ) = new ArgParser(prog, description, version, stdout, stderr)
 
   /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
@@ -117,9 +116,8 @@ class ArgParser(
     val prog: String,
     val description: String,
     val version: String,
-    val env: Map[String, String],
-    val stdout: java.io.PrintStream = System.out,
-    val stderr: java.io.PrintStream = System.err
+    val stdout: java.io.PrintStream,
+    val stderr: java.io.PrintStream
 ) extends SettingsParser { self =>
   import ArgParser._
 
@@ -153,6 +151,8 @@ class ArgParser(
   private val paramDefs = mutable.ListBuffer.empty[ParamDef]
   val paramInfos = mutable.ListBuffer.empty[ParamInfo]
   var commandInfos = mutable.ListBuffer.empty[CommandInfo]
+
+  private var env: Map[String, String] = Map.empty
 
   /** Low-level escape hatch for manually adding parameter definitions.
     *
@@ -589,8 +589,9 @@ class ArgParser(
   /** Parse the given arguments with respect to the parameters defined by
     * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
     */
-  def parseResult(args0: Iterable[String]): Result = {
-    val args = args0.toSeq
+  def parseResult(args: Iterable[String], env: Map[String, String] = sys.env): Result = {
+    self.env = env
+
     var _command: () => String = null
     var _commandArgs: () => Seq[String] = null
 
@@ -677,8 +678,8 @@ class ArgParser(
   }
 
   @deprecated("use parseOrExit instead", "0.7.2")
-  def parse(args: Seq[String]): Unit = parseOrExit(args)
+  def parse(args: Iterable[String]): Unit = parseOrExit(args)
   @deprecated("use parseOrExit instead", "0.7.2")
-  def parse(args: Array[String]): Unit = parseOrExit(args.toSeq)
+  def parse(args: Array[String]): Unit = parseOrExit(args)
 
 }

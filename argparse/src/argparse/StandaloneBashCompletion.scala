@@ -298,15 +298,15 @@ object StandaloneBashCompletion {
       out: java.io.PrintStream,
       paramInfos: Seq[ParamInfo],
       commandInfos: Seq[CommandInfo],
-      args: Seq[String]
+      args: Iterable[String]
   ): Unit = {
     // Since argparse supports independent nested commands, we must have a way
     // to recursively request completion from nested commands. We use the
     // 'magic' parameter "---nested-completion" to achieve this. If that
     // argument is encountered, then it is assumed that we are generating a
     // completion script.
-    if (args.length == 2 && args.head == "---nested-completion") {
-      all(out, args(1), paramInfos, commandInfos)
+    if (!args.isEmpty && args.head == "---nested-completion") {
+      all(out, args.tail.head, paramInfos, commandInfos)
       throw CompletionReturned()
     }
   }

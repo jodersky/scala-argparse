@@ -21,7 +21,7 @@ object BashCompletion {
       paramInfos: Seq[ParamInfo],
       commandInfos: Seq[CommandInfo],
       env: Map[String, String],
-      args: Seq[String],
+      args: Iterable[String],
       stdout: java.io.PrintStream
   ): Boolean = {
     val comppoint = env.get("COMP_POINT")
@@ -34,7 +34,7 @@ object BashCompletion {
     // command line, and that all remaining arguments represent the command line
     // to be completed. The initial command line is extracted from bash's
     // COMP_LINE environment variable.
-    if (args.length > 0 && args.head == "--recursive-complete") {
+    if (!args.isEmpty && args.head == "--recursive-complete") {
       // nested completion
       complete(paramInfos, commandInfos, args.tail, stdout)
       true
@@ -67,7 +67,7 @@ object BashCompletion {
   private def complete(
       paramInfos: Seq[ParamInfo],
       commandInfos: Seq[CommandInfo],
-      args: Seq[String],
+      args: Iterable[String],
       stdout: java.io.PrintStream
   ): Unit = {
     val named = paramInfos.filter(_.isNamed)

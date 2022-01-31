@@ -96,7 +96,7 @@ object Parser {
     */
   def parse(
       params: Seq[ParamDef],
-      args: Seq[String],
+      args: Iterable[String],
       reportUnknown: String => Unit
   ): Boolean = {
     val named = mutable.ArrayBuffer.empty[ParamDef] // all named params

@@ -7,13 +7,11 @@ object NullStream extends java.io.OutputStream {
 }
 
 class TestParser(
-    version: String = "",
-    env: Map[String, String] = Map.empty
+    version: String = ""
 ) extends ArgParser(
   "",
   "",
   version,
-  env,
   new java.io.PrintStream(NullStream),
   new java.io.PrintStream(NullStream)
 ) {
