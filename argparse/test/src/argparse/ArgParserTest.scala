@@ -289,12 +289,6 @@ object ArgParserTest extends TestSuite {
           List("a", "b", "c", "--name", "--help", "foo", "--bar")
         ) ==> ArgParser.EarlyExit
       }
-      test("version") {
-        val parser = new TestParser(version = "2.0")
-        parser.parseResult(
-          List("a", "b", "c", "--name", "--version", "foo", "--bar")
-        ) ==> ArgParser.EarlyExit
-      }
     }
   }
 }

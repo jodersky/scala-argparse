@@ -6,7 +6,7 @@ object BashCompletionTest extends TestSuite {
 
   class CompletionParser() {
     val data = new java.io.ByteArrayOutputStream
-    val parser = ArgParser("", "", "", new java.io.PrintStream(data), System.err)
+    val parser = ArgParser("", new java.io.PrintStream(data), System.err)
     def completions = data.toString("utf-8").split("\n").toList
   }
 

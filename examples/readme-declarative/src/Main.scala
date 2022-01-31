@@ -1,5 +1,5 @@
 object Main {
-  @argparse.main(name = "readme", doc = "An example application")
+  @argparse.main(doc = "An example application")
   def main(
       @argparse.arg(doc = "network host")
       host: String = "localhost",

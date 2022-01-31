@@ -1,9 +1,7 @@
 package argparse
 
 case class main(
-    name: String = "",
-    doc: String = "",
-    version: String = ""
+    doc: String = ""
 ) extends annotation.StaticAnnotation
 
 case class arg(

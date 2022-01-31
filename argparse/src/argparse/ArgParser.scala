@@ -6,12 +6,10 @@ import Parser.ParamDef
 
 object ArgParser {
   def apply(
-      prog: String = "",
       description: String = "",
-      version: String = "",
       stdout: java.io.PrintStream = System.out,
       stderr: java.io.PrintStream = System.err
-  ) = new ArgParser(prog, description, version, stdout, stderr)
+  ) = new ArgParser(description, stdout, stderr)
 
   /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
@@ -40,7 +38,7 @@ object ArgParser {
 
   /** Parsing signalled an early exit. This means that there wasn't an error,
     * but that not all agruments were parsed, as one of them requested an early
-    * exit (for example --help or --version). Arguments are not available. */
+    * exit (for example --help). Arguments are not available. */
   case object EarlyExit extends Result
 
   def wrap(in: String, out: StringBuilder, width: Int, newLine: String): Unit = {
@@ -97,7 +95,7 @@ object ArgParser {
   * Example
   *
   * ```
-  * val parser = argparse.ArgumentParser("appname", "0.1.0")
+  * val parser = argparse.ArgumentParser("0.1.0")
   *
   * val p1 = parser.param[String]("--this-is-a-named-param", default = "default value")
   * val p2 = parser.param[Int]("positional-param", default = 2)
@@ -107,15 +105,11 @@ object ArgParser {
   * println(p2())
   * ```
   *
-  * @param prog the name of this command (only used in the default help message)
   * @param description a short description of this command. Used in help
   * messages.
-  * @param version the verion of this app. Used in `--version` request.
   */
 class ArgParser(
-    val prog: String,
     val description: String,
-    val version: String,
     val stdout: java.io.PrintStream,
     val stderr: java.io.PrintStream
 ) extends SettingsParser { self =>
@@ -191,32 +185,6 @@ class ArgParser(
     Reader.BashCompleter.Empty
   )
 
-  // the --version flag is only relevant if a version has been specified
-  if (version != "") {
-    paramDefs += ParamDef(
-      Seq("--version"),
-      (_, _) => {
-        stdout.println(version)
-        Parser.Abort
-      },
-      missing = () => (),
-      isFlag = true,
-      repeatPositional = false,
-      absorbRemaining = false
-    )
-    paramInfos += ParamInfo(
-      true,
-      Seq("--version"),
-      true,
-      false,
-      None,
-      "show the version and exit",
-      None,
-      _ => Seq.empty,
-      Reader.BashCompleter.Empty
-    )
-  }
-
   paramDefs += ParamDef(
     Seq("--bash-completion"),
     (_, name) => {
@@ -245,7 +213,7 @@ class ArgParser(
     val width = term.cols.getOrElse(80) - 20
 
     val b = new StringBuilder
-    b ++= s"usage: $prog "
+    b ++= s"usage: "
     if (!named.isEmpty) {
       b ++= "[options] "
     }

@@ -2,7 +2,6 @@ object Main {
 
   def main(args: Array[String]): Unit = {
     val parser = argparse.ArgParser(
-      "gitz",
       "An example app that implements a tiny part of git's CLI, to illustrate nested commands."
     )
 
@@ -18,7 +17,7 @@ object Main {
   }
 
   def clone(gitDir: => os.Path, args: Seq[String]): Unit = {
-    val parser = argparse.ArgParser("gitz clone")
+    val parser = argparse.ArgParser()
 
     val p1 = parser.param[Option[Int]]("--depth", None)
     val p2 = parser.requiredParam[String]("url")
@@ -31,7 +30,7 @@ object Main {
   }
 
   def remote(gitDir: => os.Path, args: Seq[String]): Unit = {
-    val parser = argparse.ArgParser("gitz remote")
+    val parser = argparse.ArgParser()
 
     parser.command("set-url", args => remoteSetUrl(gitDir, args))
 
@@ -39,7 +38,7 @@ object Main {
   }
 
   def remoteSetUrl(gitDir: => os.Path, args: Seq[String]): Unit = {
-    val parser = argparse.ArgParser("gitz remote set-url")
+    val parser = argparse.ArgParser()
 
     val remote = parser.requiredParam[String]("remote")
     val url = parser.requiredParam[String]("url")

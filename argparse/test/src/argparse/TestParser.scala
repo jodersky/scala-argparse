@@ -6,12 +6,8 @@ object NullStream extends java.io.OutputStream {
   override def write(x: Array[Byte], y: Int, z: Int): Unit = ()
 }
 
-class TestParser(
-    version: String = ""
-) extends ArgParser(
+class TestParser extends ArgParser(
   "",
-  "",
-  version,
   new java.io.PrintStream(NullStream),
   new java.io.PrintStream(NullStream)
 ) {
