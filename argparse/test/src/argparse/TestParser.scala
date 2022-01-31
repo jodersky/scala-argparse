@@ -8,6 +8,8 @@ object NullStream extends java.io.OutputStream {
 
 class TestParser extends ArgParser(
   "",
+  true,
+  true,
   new java.io.PrintStream(NullStream),
   new java.io.PrintStream(NullStream)
 ) {

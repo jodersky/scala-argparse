@@ -3,13 +3,16 @@ package argparse
 import scala.collection.mutable
 
 import Parser.ParamDef
+import os.isFile
 
 object ArgParser {
   def apply(
       description: String = "",
+      enableHelpFlag: Boolean = true,
+      enableBashCompletionFlag: Boolean = true,
       stdout: java.io.PrintStream = System.out,
       stderr: java.io.PrintStream = System.err
-  ) = new ArgParser(description, stdout, stderr)
+  ) = new ArgParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr)
 
   /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
@@ -107,9 +110,12 @@ object ArgParser {
   *
   * @param description a short description of this command. Used in help
   * messages.
+  * @param enableHelpFlag include a `--help` flag which will print a generated help message
   */
 class ArgParser(
     val description: String,
+    val enableHelpFlag: Boolean,
+    val enableBashCompletionFlag: Boolean,
     val stdout: java.io.PrintStream,
     val stderr: java.io.PrintStream
 ) extends SettingsParser { self =>
@@ -162,51 +168,33 @@ class ArgParser(
     */
   def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
 
-  paramDefs += ParamDef(
-    Seq("--help"),
-    (_, _) => {
-      stdout.println(help())
-      Parser.Abort
-    },
-    missing = () => (),
-    isFlag = true,
-    repeatPositional = false,
-    absorbRemaining = false
-  )
-  paramInfos += ParamInfo(
-    true,
-    Seq("--help"),
-    true,
-    false,
-    None,
-    "show this message and exit",
-    None,
-    _ => Seq.empty,
-    Reader.BashCompleter.Empty
-  )
+  if (enableHelpFlag) {
+    paramDefs += ParamDef(
+      Seq("--help"),
+      (_, _) => {
+        stdout.println(help())
+        Parser.Abort
+      },
+      missing = () => (),
+      isFlag = true,
+      repeatPositional = false,
+      absorbRemaining = false
+    )
+    paramInfos += ParamInfo(
+      isNamed = true,
+      names = Seq("--help"),
+      isFlag = true,
+      repeats = false,
+      env = None,
+      description = "show this message and exit",
+      showDefault = None,
+      completer = _ => Seq.empty,
+      bashCompleter = Reader.BashCompleter.Empty
+    )
+  }
 
-  paramDefs += ParamDef(
-    Seq("--bash-completion"),
-    (_, name) => {
-      try {
-        StandaloneBashCompletion.completeAndThrow(
-          stdout,
-          paramInfos.toList,
-          commandInfos.toList,
-          Seq("---nested-completion", name.get)
-        )
-      } catch {
-        case _: StandaloneBashCompletion.CompletionReturned =>
-      }
-      Parser.Abort
-    },
-    missing = () => (),
-    isFlag = false,
-    repeatPositional = false,
-    absorbRemaining = false
-  )
-
-  private def help(): String = {
+  /** A default help message, generated from parameter help strings. */
+  def help(): String = {
     val (named0, positional) = paramInfos.partition(_.isNamed)
     val named = named0.sortBy(_.names.head)
 
@@ -278,6 +266,47 @@ class ArgParser(
     }
 
     b.result()
+  }
+
+  if (enableBashCompletionFlag) {
+    paramDefs += ParamDef(
+      Seq("--bash-completion"),
+      (p, name) => {
+        name match {
+          case None => reportParseError(p, "argument required: name of program to complete")
+          case Some(name) => printBashCompletion(name)
+        }
+        Parser.Abort
+      },
+      missing = () => (),
+      isFlag = false,
+      repeatPositional = false,
+      absorbRemaining = false
+    )
+    paramInfos += ParamInfo(
+      isNamed = true,
+      names = Seq("--bash-completion"),
+      isFlag = true,
+      repeats = false,
+      env = None,
+      description = "generate bash completion for this command",
+      showDefault = None,
+      completer = _ => Seq.empty,
+      bashCompleter = Reader.BashCompleter.Empty
+    )
+  }
+
+  def printBashCompletion(programName: String): Unit = {
+    try {
+      StandaloneBashCompletion.completeAndThrow(
+        stdout,
+        paramInfos.toList,
+        commandInfos.toList,
+        Seq("---nested-completion", programName)
+      )
+    } catch {
+      case _: StandaloneBashCompletion.CompletionReturned =>
+    }
   }
 
   def singleParam[A](

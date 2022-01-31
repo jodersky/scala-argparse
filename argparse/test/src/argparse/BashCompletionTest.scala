@@ -6,7 +6,7 @@ object BashCompletionTest extends TestSuite {
 
   class CompletionParser() {
     val data = new java.io.ByteArrayOutputStream
-    val parser = ArgParser("", new java.io.PrintStream(data), System.err)
+    val parser = ArgParser(stdout = new java.io.PrintStream(data))
     def completions = data.toString("utf-8").split("\n").toList
   }
 
@@ -26,14 +26,14 @@ object BashCompletionTest extends TestSuite {
       val parser = new CompletionParser()
       parser.parser.requiredParam[String]("--a")
       parser.parser.parseResult(Seq(), line("cmd -")) ==> ArgParser.EarlyExit
-      parser.completions ==> List("--help ", "--a ")
+      parser.completions ==> List("--help ", "--bash-completion ", "--a ")
     }
     test("named multiple") {
       val parser = new CompletionParser()
       parser.parser.requiredParam[String]("--a")
       parser.parser.requiredParam[String]("--b")
       parser.parser.parseResult(Seq(), line("cmd -")) ==> ArgParser.EarlyExit
-      parser.completions ==> List("--help ", "--a ", "--b ")
+      parser.completions ==> List("--help ", "--bash-completion ", "--a ", "--b ")
     }
     test("named multiple partial match 1") {
       val parser = new CompletionParser()
