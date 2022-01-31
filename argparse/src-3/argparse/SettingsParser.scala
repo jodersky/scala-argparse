@@ -4,14 +4,14 @@ object SettingsParser {
   import scala.quoted.{Quotes, Type, Expr}
 
   def settingsImpl[A: Type](
-    parser: Expr[ArgParser],
+    parser: Expr[ArgumentParser],
     prefix: Expr[String]
   )(using Quotes): Expr[() => A] = {
     Macros().caseClassParser[A](parser, '{$prefix + "."})
   }
 }
 
-trait SettingsParser { self: ArgParser =>
+trait SettingsParser { self: ArgumentParser =>
 
   /** EXPERIMENTAL
     *
@@ -50,7 +50,7 @@ trait SettingsParser { self: ArgParser =>
     * }
     *
     * def main(args: Array[String]): Unit = {
-    *   val parser = argparse.ArgParser()
+    *   val parser = argparse.ArgumentParser()
     *
     *   val settings = parser.mutableSettings(Settings())
     *

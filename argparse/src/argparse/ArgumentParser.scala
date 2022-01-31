@@ -5,14 +5,14 @@ import scala.collection.mutable
 import Parser.ParamDef
 import os.isFile
 
-object ArgParser {
+object ArgumentParser {
   def apply(
       description: String = "",
       enableHelpFlag: Boolean = true,
       enableBashCompletionFlag: Boolean = true,
       stdout: java.io.PrintStream = System.out,
       stderr: java.io.PrintStream = System.err
-  ) = new ArgParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr)
+  ) = new ArgumentParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr)
 
   /** User-friendly parameter information, used for generating help message */
   case class ParamInfo(
@@ -112,14 +112,14 @@ object ArgParser {
   * messages.
   * @param enableHelpFlag include a `--help` flag which will print a generated help message
   */
-class ArgParser(
+class ArgumentParser(
     val description: String,
     val enableHelpFlag: Boolean,
     val enableBashCompletionFlag: Boolean,
     val stdout: java.io.PrintStream,
     val stderr: java.io.PrintStream
 ) extends SettingsParser { self =>
-  import ArgParser._
+  import ArgumentParser._
 
   private var errors = 0
 
@@ -418,7 +418,7 @@ class ArgParser(
     * @param absorbRemaining Indicates that any arguments encountered after this parameter
     * must be treated as positionals, even if they start with `-`. In other words, a
     * parameter marked with this has the same effect as the `--` separator. It can be
-    * useful for implementing sub-commands. (Note however that this ArgParser has a
+    * useful for implementing sub-commands. (Note however that this ArgumentParser has a
     * dedicated `command` method for such use cases)
     *
     * @param completer A bash snippet that is inserted in bash-completions, responsible for setting

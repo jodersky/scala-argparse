@@ -9,7 +9,7 @@ object CmdTest extends TestSuite {
       val parser = new TestParser
       var extra: Seq[String] = Seq.empty
       parser.command("cmd1", args => extra = args)
-      parser.parseResult(Seq("cmd1", "exra1", "--extra2", "extra3")) ==> ArgParser.Success
+      parser.parseResult(Seq("cmd1", "exra1", "--extra2", "extra3")) ==> ArgumentParser.Success
       extra ==> Seq("exra1", "--extra2", "extra3")
     }
     test("missing") {
@@ -23,7 +23,7 @@ object CmdTest extends TestSuite {
       val global = parser.requiredParam[String]("--global")
       var res: String = ""
       parser.command("cmd1", _ => res = global())
-      parser.parseResult(Seq("--global", "hello, world | a | b", "cmd1")) ==> ArgParser.Success
+      parser.parseResult(Seq("--global", "hello, world | a | b", "cmd1")) ==> ArgumentParser.Success
       res ==> "hello, world | a | b"
     }
     test("global positional") {
@@ -31,7 +31,7 @@ object CmdTest extends TestSuite {
       val global = parser.requiredParam[String]("global")
       var res: String = ""
       parser.command("cmd1", _ => res = global())
-      parser.parseResult(Seq("hello, world | a | b", "cmd1")) ==> ArgParser.Success
+      parser.parseResult(Seq("hello, world | a | b", "cmd1")) ==> ArgumentParser.Success
       res ==> "hello, world | a | b"
     }
   }

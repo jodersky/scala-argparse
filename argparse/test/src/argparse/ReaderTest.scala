@@ -47,19 +47,19 @@ object ReaderTest extends TestSuite {
     test("collection") {
       val parser = new TestParser
       val p = parser.requiredParam[Seq[String]]("-p")
-      parser.parseResult(Seq("-p", "a,b,c", "-p", "c,d,e")) ==> ArgParser.Success
+      parser.parseResult(Seq("-p", "a,b,c", "-p", "c,d,e")) ==> ArgumentParser.Success
       p() ==> Seq("c", "d", "e")
     }
     test("repeated collection") {
       val parser = new TestParser
       val p = parser.repeatedParam[Seq[String]]("-p")
-      parser.parseResult(Seq("-p", "a,b,c", "-p", "c,d,e")) ==> ArgParser.Success
+      parser.parseResult(Seq("-p", "a,b,c", "-p", "c,d,e")) ==> ArgumentParser.Success
       p() ==> List(List("a", "b", "c"), List("c", "d", "e"))
     }
     test("key-value") {
       val parser = new TestParser
       val p = parser.repeatedParam[(String, Int)]("-p")
-      parser.parseResult(Seq("-p=a=1", "-p", "c=2")) ==> ArgParser.Success
+      parser.parseResult(Seq("-p=a=1", "-p", "c=2")) ==> ArgumentParser.Success
       p() ==> List("a" -> 1, "c" -> 2)
     }
     test("input stream") {

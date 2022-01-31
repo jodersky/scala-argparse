@@ -2,7 +2,7 @@ package argparse
 
 import scala.collection.mutable
 
-/** Low-level parsing functionality. See ArgParser for a user-friendly API. */
+/** Low-level parsing functionality. See ArgumentParser for a user-friendly API. */
 object Parser {
 
   /** A parameter definition is the low-level building block to define the

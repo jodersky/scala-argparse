@@ -20,11 +20,11 @@ object MutableSettingsParser {
   def getPdefs[A: Type](using qctx: Quotes)(
     expr: Expr[A],
     reportParseError: Expr[(String, String) => Unit], // (param name, parse error message)
-  ): (List[Expr[Parser.ParamDef]], List[Expr[ArgParser.ParamInfo]]) = {
+  ): (List[Expr[Parser.ParamDef]], List[Expr[ArgumentParser.ParamInfo]]) = {
     import qctx.reflect._
 
     val pdefs = collection.mutable.ListBuffer.empty[Expr[Parser.ParamDef]]
-    val pinfos = collection.mutable.ListBuffer.empty[Expr[ArgParser.ParamInfo]]
+    val pinfos = collection.mutable.ListBuffer.empty[Expr[ArgumentParser.ParamInfo]]
 
     def traverse(instance: Term, tsym: Symbol, prefix: String): Unit = {
       import qctx.reflect._
@@ -81,7 +81,7 @@ object MutableSettingsParser {
           val env = "env:(.*)".r.findFirstMatchIn(comment).map(m => m.group(1).trim)
 
           pinfos += '{
-            ArgParser.ParamInfo(
+            ArgumentParser.ParamInfo(
               isNamed = true, // settings always have params that start with --
               names = Seq(${Expr(name)}),
               isFlag = ${Expr(isFlag)},
@@ -101,7 +101,7 @@ object MutableSettingsParser {
     (pdefs.result(), pinfos.result())
   }
 
-  def impl[A: Type](using qctx: Quotes)(instance: Expr[ArgParser], expr: Expr[A]): Expr[A] = {
+  def impl[A: Type](using qctx: Quotes)(instance: Expr[ArgumentParser], expr: Expr[A]): Expr[A] = {
     val (pdefs, pinfos) = getPdefs(
       expr,
       '{(name: String, message: String) => ${instance}.reportParseError(name, message)}

@@ -24,7 +24,7 @@ object SettingsParserTest extends TestSuite {
           "--endpoints.monitoring.host=localhost",
           "--endpoints.monitoring.port=81",
         )
-      ) ==> ArgParser.Success
+      ) ==> ArgumentParser.Success
       settings().web.host ==> "localhost"
       settings().web.port ==> 80
       settings().monitoring.host ==> "localhost"

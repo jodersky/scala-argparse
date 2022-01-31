@@ -29,12 +29,12 @@ object MutableSettingsParserTest extends TestSuite {
     test("empty") {
       val parser = new TestParser
       val settings = parser.mutableSettings(Settings())
-      parser.parseResult(Nil) ==> ArgParser.Success
+      parser.parseResult(Nil) ==> ArgumentParser.Success
     }
     test("unknown") {
       val parser = new TestParser
       val settings = parser.mutableSettings(Settings())
-      parser.parseResult(Seq("--unknown")) ==> ArgParser.Error
+      parser.parseResult(Seq("--unknown")) ==> ArgumentParser.Error
       parser.unknown ==> 1
     }
     test("valid") {
@@ -48,7 +48,7 @@ object MutableSettingsParserTest extends TestSuite {
         "--extra-opt=ok",
         "--http.port", "8080",
         "--http.nested.a", "42"
-      )) ==> ArgParser.Success
+      )) ==> ArgumentParser.Success
       // format: on
 
       settings.opt1 ==> "world"
@@ -66,7 +66,7 @@ object MutableSettingsParserTest extends TestSuite {
       val param1 = parser.param[String]("--opt3", "a")
       val positional = parser.requiredParam[String]("pos")
 
-      parser.parseResult(Seq("--http.port=8080", "pos", "--opt3", "b")) ==> ArgParser.Success
+      parser.parseResult(Seq("--http.port=8080", "pos", "--opt3", "b")) ==> ArgumentParser.Success
 
       settings.http.port ==> 8080
       param1() ==> "b"
@@ -81,7 +81,7 @@ object MutableSettingsParserTest extends TestSuite {
       }
       val parser = new TestParser
       val settings = parser.mutableSettings(Config())
-      parser.parseResult(Seq("--opt1", "a", "--opt2", "b")) ==> ArgParser.Success
+      parser.parseResult(Seq("--opt1", "a", "--opt2", "b")) ==> ArgumentParser.Success
 
       settings.opt1 ==> "a"
       settings.opt2 ==> "b"

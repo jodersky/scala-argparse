@@ -6,7 +6,7 @@ object NullStream extends java.io.OutputStream {
   override def write(x: Array[Byte], y: Int, z: Int): Unit = ()
 }
 
-class TestParser extends ArgParser(
+class TestParser extends ArgumentParser(
   "",
   true,
   true,

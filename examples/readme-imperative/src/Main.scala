@@ -1,6 +1,6 @@
 object Main {
   def main(args: Array[String]): Unit = {
-    val parser = argparse.ArgParser(
+    val parser = argparse.ArgumentParser(
       "An example application"
     )
 

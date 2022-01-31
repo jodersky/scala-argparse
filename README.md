@@ -23,7 +23,7 @@ Both examples have the same command-line interface.
 ```scala
 object Main {
   def main(args: Array[String]): Unit = {
-    val parser = argparse.ArgParser(
+    val parser = argparse.ArgumentParser(
       "readme",
       "An example application"
     )
@@ -143,8 +143,8 @@ version](https://index.scala-lang.org/jodersky/argparse/argparse/latest.svg)](ht
 
 ## Documentation
 
-Look at [the API docs](https://jodersky.github.io/argparse/argparse/ArgParser.html)
-([defined here](argparse/src/argparse/ArgParser.scala)) for parsing rules and
+Look at [the API docs](https://jodersky.github.io/argparse/argparse/ArgumentParser.html)
+([defined here](argparse/src/argparse/ArgumentParser.scala)) for parsing rules and
 explanations on how it works.
 
 ## Changelog

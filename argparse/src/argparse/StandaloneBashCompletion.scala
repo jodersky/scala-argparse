@@ -1,6 +1,6 @@
 package argparse
 
-import ArgParser._
+import ArgumentParser._
 import java.io.PrintStream
 import java.io.OutputStream
 

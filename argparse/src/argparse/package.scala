@@ -12,9 +12,10 @@ package object argparse {
     */
   val argsv = System.getProperty("sun.java.command").split(" ").tail
 
-  @deprecated("use ArgParser() instead", "0.3.0")
-  type ArgumentParser = ArgParser
-  val ArgumentParser = ArgParser
+  @deprecated("use ArgumentParser() instead", "0.14.0")
+  type ArgParser = ArgumentParser
+  @deprecated("use ArgumentParser() instead", "0.14.0")
+  val ArgParser = ArgumentParser
 
   @deprecated("use userdirs instead", "0.10.3")
   type xdg = userdirs.type

@@ -146,7 +146,7 @@ object userdirs {
   * parameter defaults, for example:
   *
   * ```
-  * val parser = argparse.ArgParser()
+  * val parser = argparse.ArgumentParser()
   * val cache = parser.param[os.Path](
   *   "--cache-dir",
   *   default = argparse.dirs("myapp").cache

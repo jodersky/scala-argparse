@@ -1,3 +1,3 @@
 package argparse
 
-trait SettingsParser { self: ArgParser => }
+trait SettingsParser { self: ArgumentParser => }

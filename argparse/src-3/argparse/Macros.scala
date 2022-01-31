@@ -22,7 +22,7 @@ class Macros(using qctx: Quotes) {
   }
 
   private def methodArgs[R: Type](
-    parser: Expr[ArgParser],
+    parser: Expr[ArgumentParser],
     prefix: Expr[String],
     params: List[Symbol],
     builder: Term
@@ -104,7 +104,7 @@ class Macros(using qctx: Quotes) {
   }
 
   def caseClassParser[A: Type](
-    parser: Expr[ArgParser],
+    parser: Expr[ArgumentParser],
     prefix: Expr[String]
   ): Expr[() => A] = {
     val tsym = TypeRepr.of[A].typeSymbol
@@ -156,7 +156,7 @@ class Macros(using qctx: Quotes) {
 
     '{
       (args: Seq[String]) => {
-        val parser = argparse.ArgParser()
+        val parser = argparse.ArgumentParser()
         val arg = ${
           methodArgs[Any](
             'parser,
@@ -190,7 +190,7 @@ class Macros(using qctx: Quotes) {
 // }
 //
 // def main(args: Array[String]) = {
-//   val parser = argparse.ArgParser()
+//   val parser = argparse.ArgumentParser()
 //   val extra = parser.param[String]("--extra", default = "hello")
 //   parser.command("foo", argparse.mainMacro(foo(extra())(_, _)))
 //   parser.parseOrExit(args)

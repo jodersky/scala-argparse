@@ -35,7 +35,7 @@ object MacroUtil {
   }
 
   def paramParser(using qctx: Quotes)(
-    parser: Expr[ArgParser],
+    parser: Expr[ArgumentParser],
     param: qctx.reflect.Symbol,
     defaults: Map[qctx.reflect.Symbol, Expr[Any]]
   ): Expr[() => _] = {
@@ -195,7 +195,7 @@ object MacroUtil {
     val defaults = getDefaultParams(mainMethod)
 
     '{
-      val parser = argparse.ArgParser()
+      val parser = argparse.ArgumentParser()
       val accessors: Seq[() => Any] = ${Expr.ofSeq(
         for (param <- mainMethod.paramSymss.flatten) yield paramParser(using qctx)('parser, param, defaults)
       )}
