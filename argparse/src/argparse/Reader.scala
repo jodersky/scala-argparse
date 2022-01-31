@@ -123,12 +123,16 @@ object Reader extends LowPrioReaders {
       val completions = collection.mutable.ListBuffer.empty[String]
       val path = Paths.get(prefix)
 
-      def addListing(dir: Path) = Files.list(dir).forEach { path =>
-        if (path.toString.startsWith(prefix)) {
-          if (Files.isDirectory(path)) {
-            completions += s"$path/"
-          } else {
-            completions += s"$path "
+      def addListing(dir: Path) = {
+        val children = Files.list(dir).iterator()
+        while (children.hasNext()) {
+          val path = children.next()
+          if (path.toString.startsWith(prefix)) {
+            if (Files.isDirectory(path)) {
+              completions += s"$path/"
+            } else {
+              completions += s"$path "
+            }
           }
         }
       }

@@ -2,11 +2,15 @@ import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
 val scala213 = "2.13.6"
 val scala3 = "3.0.2"
-val scalaNative = "0.4.0"
+// Note: this is temporary. Once Scala 3.1.2 is released, we fall back to using
+// only the latest Scala 3 version and the -Yrelease flag to target the oldest
+// possible version.
+val scala31 = "3.1.1"
+val scalaNative = "0.4.3"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.10")
+  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.11")
   def testFramework = "utest.runner.Framework"
 }
 
@@ -17,7 +21,7 @@ trait Publish extends PublishModule {
     organization = "io.crashbox",
     url = "https://github.com/jodersky/scala-argparse",
     licenses = Seq(License.MIT),
-    versionControl = VersionControl.github("jodersky", "argparse"),
+    versionControl = VersionControl.github("jodersky", "scala-argparse"),
     developers = Seq(
       Developer("jodersky", "Jakob Odersky", "https://github.com/jodersky")
     )
@@ -32,7 +36,7 @@ object argparse extends Module {
     with Publish {
 
     def scalacOptions = Seq("-deprecation", "-release", "8")
-    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
+    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.8.1")
     def artifactName = "argparse"
   }
 
@@ -51,7 +55,7 @@ object argparse extends Module {
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
     object test extends Tests with Utest
   }
-  object native extends Cross[NativeModule]((scala213, scalaNative))
+  object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
 
 }
 
@@ -63,7 +67,7 @@ object ini extends Module {
     with Publish {
 
     def scalacOptions = Seq("-deprecation", "-release", "8")
-    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.7.8")
+    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.8.1")
     def artifactName = "argparse-ini"
   }
 
@@ -82,7 +86,7 @@ object ini extends Module {
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
     object test extends Tests with Utest
   }
-  object native extends Cross[NativeModule]((scala213, scalaNative))
+  object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
 
 }
 
@@ -95,10 +99,7 @@ object examples extends Module {
       val jar = assembly().path
       os.copy.over(jar, os.pwd / millSourcePath.last)
     }
-    object test extends Tests {
-      def ivyDeps = Agg(ivy"com.lihaoyi::utest:0.7.10")
-      def testFramework = "utest.runner.Framework"
-    }
+    object test extends Tests with Utest
   }
   object `readme-imperative` extends Cross[ExampleApp](scala213, scala3)
   object `readme-declarative` extends Cross[ExampleApp](scala3)
