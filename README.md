@@ -146,6 +146,20 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.15.0
+
+- Add support for Scala Native for Scala 3.
+- Add standalone bash completion. This allows user programs to generate bash
+  scripts for completion, rather than relying on the program itself to generate
+  completions. Although the former is less powerful than the latter, it is
+  suitable for JVM programs, where the startup cost would be prohibitive for
+  interactive completions.
+- Remove the ability for parameters to fall back to values provided in a
+  configuration file. This was experimental, and configuration files are not in
+  scope of this project.
+- Move INI-style configuration parser into separate package.
+- Add toggles for default help and bash-completion parameters.
+
 # 0.14.0
 
 Rename project to scala-argparse.
