@@ -5,7 +5,7 @@ import collection.mutable
 import ArgumentParser.ParamInfo
 import ArgumentParser.CommandInfo
 
-/** Interactive bash completion. (completion logic is handled by this program) */
+/** Interactive bash completion. Completion logic is handled by this program. */
 object BashCompletion {
 
   private val Named = "(--?[^=]+)(?:=(.*))?".r

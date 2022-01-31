@@ -4,8 +4,8 @@ import ArgumentParser._
 import java.io.PrintStream
 import java.io.OutputStream
 
-/** Interactive bash completion. (completion logic is generated in advance;
-  * requires bash-completion package installed) */
+/** Standalone bash completion. Completion logic is generated in advance;
+  * requires bash-completion package installed. */
 object StandaloneBashCompletion {
 
   def header(out: PrintStream): Unit = {
