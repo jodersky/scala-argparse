@@ -1,7 +1,7 @@
 # scala-argparse [![Latest version][scaladex-badge]][scaladex-link] [![Gitter Chat][gitter-badge]][gitter-link]
 
-[scaladex-badge]: https://index.scala-lang.org/jodersky/argparse/argparse/latest-by-scala-version.svg
-[scaladex-link]: https://index.scala-lang.org/jodersky/argparse/argparse
+[scaladex-badge]: https://index.scala-lang.org/jodersky/scala-argparse/argparse/latest-by-scala-version.svg
+[scaladex-link]: https://index.scala-lang.org/jodersky/scala-argparse/argparse
 [gitter-badge]: https://badges.gitter.im/Join%20Chat.svg
 [gitter-link]: https://gitter.im/jodersky/scala-argparse
 
@@ -141,7 +141,7 @@ available on maven central under the coordinates:
 - sbt: `"io.crashbox" %%% "argparse" % "<version>"`
 
 where `<version>` is given by [![Latest
-version](https://index.scala-lang.org/jodersky/argparse/argparse/latest.svg)](https://index.scala-lang.org/jodersky/argparse/argparse)
+version](https://index.scala-lang.org/jodersky/scala-argparse/argparse/latest.svg)](https://index.scala-lang.org/jodersky/scala-argparse/argparse)
 
 ## Documentation
 
