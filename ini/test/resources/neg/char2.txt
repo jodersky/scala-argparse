@@ -1,0 +1,4 @@
+Expected alphanumeric or '_' or '-'. Found '+'.
+char2:1:2
+[+]
+ ^

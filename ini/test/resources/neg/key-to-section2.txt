@@ -1,0 +1,4 @@
+Cannot create a section that is already defined as a key (previous definition at key-to-section2:1:1)
+key-to-section2:2:1
+[a.b]
+^

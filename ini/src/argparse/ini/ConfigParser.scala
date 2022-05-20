@@ -3,10 +3,9 @@ package argparse.ini
 import scala.collection.mutable.LinkedHashMap
 
 /** INI-syle config parser. */
-class ConfigParser(
-  val root: LinkedHashMap[String, Value] = LinkedHashMap.empty,
-) {
+class ConfigParser() {
 
+  val root: LinkedHashMap[String, Value] = LinkedHashMap.empty
   private var input: java.io.InputStream = null
   private var filename: String = "none"
   private var currentSection = root
@@ -40,15 +39,15 @@ class ConfigParser(
     }
 
     val line = lineBuffer.result()
-    val caret = " " * (pos.col - 1) + "^"
-    val pretty = s"$message\n$pos\n$line\n$caret"
-
-    throw new ParseException(pos, pretty, line)
+    throw new ParseException(pos, message, line)
   }
 
-  private def prettyChar(char: Int) = char match {
-    case -1 => "EOF"
-    case c => c.toChar
+  private def prettyChar(char: Int) = {
+    if (char == -1) "EOF"
+    else char.toChar match {
+      case '\n' => "new line"
+      case c => s"'$c'"
+    }
   }
 
   private def expectationError(expected: String*) = {
@@ -61,16 +60,8 @@ class ConfigParser(
     }
   }
 
-  // segment buffer
+  // utility text buffer
   private val buffer = new StringBuilder
-  private def parseText(): String = {
-    buffer.clear()
-    while (char != -1 && char != '\n') {
-      buffer += char.toChar
-      readChar()
-    }
-    buffer.result()
-  }
 
   private def parseSegment(): String = {
     import java.lang.Character
@@ -87,7 +78,7 @@ class ConfigParser(
     }
   }
 
-  private def parseSectionHeading(): List[String] = {
+  private def parseKey(): List[String] = {
     val segs = collection.mutable.ListBuffer.empty[String]
     segs += parseSegment()
     while (char == '.') {
@@ -97,50 +88,67 @@ class ConfigParser(
     segs.toList
   }
 
+  private def makeSection(pos: Position, path: List[String]): Obj = {
+    var section = currentSection
+    val it = path.iterator
+    while (it.hasNext) {
+      val segment = it.next()
+      section.get(segment) match {
+        case None =>
+          val s = Obj().setPos(pos)
+          section += segment -> s
+          section = s.value
+        case Some(s: Obj) =>
+          section = s.value
+        case Some(other) =>
+          errorAt(
+            pos,
+            s"Cannot create a section that is already defined as a key (previous definition at ${other.pos})"
+          )
+      }
+    }
+    Obj(section)
+  }
+
   private def parseSection() = {
     val pos = cpos
 
     if (char != '[') expectationError("'['")
     readChar()
     skipSpace()
-    val sectionPath = parseSectionHeading()
+    val sectionPath = parseKey()
+    currentSection = root
+    currentSection = makeSection(pos, sectionPath).value
     skipSpace()
     if (char != ']')  expectationError("']'")
     readChar()
-
-    currentSection = root
-    for (seg <- sectionPath) {
-      currentSection.get(seg) match {
-        case None =>
-          val s = Section().setPos(pos)
-          currentSection += seg -> s
-          currentSection = s.value
-        case Some(s: Section) =>
-          currentSection = s.value
-        case Some(other) =>
-          errorAt(
-            pos,
-            "Attempting to define a section of the same name as a key already defined at: " + other.pos
-          )
-      }
-    }
   }
 
   private def parseKeyValue() = {
     val pos = cpos
-    val key = parseSegment()
+    val key = parseKey()
+    val section = makeSection(pos, key.init)
+
     skipSpace()
-    if (char != '=') errorAt(cpos, s"Expected '='. Found: '${prettyChar(char)}'")
+    if (char != '=') expectationError("'='")
     readChar()
     skipSpace()
-    val value = parseText()
 
-    currentSection.get(key) match {
-      case Some(other: Section) => errorAt(
-        cpos,
-        "Attempting to define a key of the same name as a section already defined at: " + other.pos
+    // parse rhs as plain text until new line
+    buffer.clear()
+    while (char != -1 && char != '\n') {
+      buffer += char.toChar
+      readChar()
+    }
+    val value = buffer.result()
+
+    section.value.get(key.last) match {
+      case Some(other: Obj) => errorAt(
+        pos,
+        s"Cannot create a key that is already defined as a section (previous definition at ${other.pos})"
       )
-      case _ => currentSection(key) = Str(value).setPos(pos)
+      case _ =>
+        section.value(key.last) = Str(value).setPos(pos)
     }
   }
 
@@ -159,6 +167,9 @@ class ConfigParser(
     }
   }
 
+  val rootSection = Obj(root)
+
+  private var firstPass = true
 
   // This method can be called multiple times. Configuration value  will be
   // overridden as encountered.
@@ -169,6 +180,12 @@ class ConfigParser(
     cline = 1
     ccol = 1
     lineBuffer.clear()
+
+    if (firstPass) {
+      firstPass = false
+      rootSection.setPos(cpos)
+    }
+
     char = input.read()
     while (char != -1) {
       parseNext()
@@ -185,4 +202,10 @@ case class ParseException(
   position: Position,
   message: String,
   line: String
-) extends Exception(message: String)
+) extends Exception(message: String) {
+  def pretty() = {
+    val caret = " " * (position.col - 1) + "^"
+    s"$message\n$position\n$line\n$caret"
+  }
+
+}

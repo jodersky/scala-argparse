@@ -1,0 +1,4 @@
+Expected '='. Found new line.
+novalue:1:2
+a
+ ^

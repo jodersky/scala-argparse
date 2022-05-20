@@ -67,7 +67,10 @@ object ini extends Module {
     with Publish {
 
     def scalacOptions = Seq("-deprecation", "-release", "8")
-    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.8.1")
+    def ivyDeps = Agg(
+      ivy"com.lihaoyi::os-lib::0.8.1",
+      ivy"com.lihaoyi::upickle:1.5.0"
+    )
     def artifactName = "argparse-ini"
   }
 
