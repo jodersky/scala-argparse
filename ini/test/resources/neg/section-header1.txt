@@ -1,0 +1,4 @@
+Expected ']'. Found new line.
+section-header1:1:3
+[a
+  ^

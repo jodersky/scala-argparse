@@ -5,7 +5,7 @@ import scala.collection.mutable.LinkedHashMap
 /** INI-syle config parser. */
 class ConfigParser() {
 
-  val root: LinkedHashMap[String, Value] = LinkedHashMap.empty
+  private val root: LinkedHashMap[String, Value] = LinkedHashMap.empty
   private var input: java.io.InputStream = null
   private var filename: String = "none"
   private var currentSection = root

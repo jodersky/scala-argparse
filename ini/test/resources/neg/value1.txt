@@ -1,0 +1,4 @@
+Expected alphanumeric or '_' or '-'. Found '='.
+value1:1:4
+[a]=a
+   ^

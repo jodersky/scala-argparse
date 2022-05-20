@@ -1,0 +1,4 @@
+Expected alphanumeric or '_' or '-'. Found new line.
+section-header2:1:2
+[
+ ^

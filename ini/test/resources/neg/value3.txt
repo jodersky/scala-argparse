@@ -1,0 +1,4 @@
+Expected alphanumeric or '_' or '-'. Found '['.
+value3:1:2
+[[a]]
+ ^
