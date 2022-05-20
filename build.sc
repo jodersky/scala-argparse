@@ -10,7 +10,10 @@ val scalaNative = "0.4.3"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 trait Utest extends ScalaModule with TestModule {
-  def ivyDeps = Agg(ivy"com.lihaoyi::utest::0.7.11")
+  def ivyDeps = Agg(
+    ivy"com.lihaoyi::utest::0.7.11",
+    ivy"com.lihaoyi::upickle:1.5.0"
+  )
   def testFramework = "utest.runner.Framework"
 }
 
@@ -68,8 +71,7 @@ object ini extends Module {
 
     def scalacOptions = Seq("-deprecation", "-release", "8")
     def ivyDeps = Agg(
-      ivy"com.lihaoyi::os-lib::0.8.1",
-      ivy"com.lihaoyi::upickle:1.5.0"
+      ivy"com.lihaoyi::os-lib::0.8.1"
     )
     def artifactName = "argparse-ini"
   }
@@ -87,7 +89,6 @@ object ini extends Module {
     def scalaNativeVersion = crossScalaNativeVersion
     def millSourcePath = super.millSourcePath / os.up / os.up
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
-    object test extends Tests with Utest
   }
   object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
 

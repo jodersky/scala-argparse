@@ -30,4 +30,14 @@ object OutputCompareTest extends DynamicTestSuite {
     DiffTools.assertNoDiff(outFile, cleaned.mkString("", "\n", "\n"))
   }
 
+  testAll("precedence", filter = p => os.isDir(p)) { dir =>
+    val outFile = dir / os.up / (dir.baseName + ".json")
+
+    val section = ini.read(os.list(dir).sorted: _*)
+
+    val json = jsonify(section).render(2)
+    val cleaned = json.linesIterator.map(_.reverse.dropWhile(_.isSpaceChar).reverse)
+    DiffTools.assertNoDiff(outFile, cleaned.mkString("", "\n", "\n"))
+  }
+
 }

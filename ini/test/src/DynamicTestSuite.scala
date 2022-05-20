@@ -14,15 +14,15 @@ trait DynamicTestSuite extends TestSuite {
     if (ts.isEmpty) {
       Tests.apply(())
     } else {
-      val names = Tree("", ts.map((name, _) => Tree(name)): _*)
-      val thunks = new TestCallTree(Right(ts.map((_, method) => new TestCallTree(Left(method())))))
+      val names = Tree("", ts.map(t => Tree(t._1)): _*)
+      val thunks = new TestCallTree(Right(ts.map( t => new TestCallTree(Left(t._2())))))
       Tests.apply(names, thunks)
     }
   }
 
-  protected def testAll(dirName: String)(action: os.Path => Unit) = {
+  protected def testAll(dirName: String, filter: os.Path => Boolean = _.ext == "ini")(action: os.Path => Unit) = {
     val inputDir = os.pwd / "ini" / "test" / "resources" / dirName
-    for (inFile <- os.list(inputDir) if inFile.ext == "ini") test(inFile.baseName) {
+    for (inFile <- os.list(inputDir) if filter(inFile)) test(inFile.baseName) {
       action(inFile)
     }
   }
