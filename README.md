@@ -151,6 +151,10 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.15.1
+
+- Cleanup INI parser support and add more tests.
+
 # 0.15.0
 
 - Add support for Scala Native for Scala 3.

@@ -18,7 +18,7 @@ trait Utest extends ScalaModule with TestModule {
 }
 
 trait Publish extends PublishModule {
-  def publishVersion = "0.15.0"
+  def publishVersion = "0.15.1"
   def pomSettings = PomSettings(
     description = "argparse",
     organization = "io.crashbox",
