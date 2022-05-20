@@ -3,19 +3,23 @@ package argparse.ini
 import scala.collection.mutable.LinkedHashMap
 
 /** INI-syle config parser. */
-case class ConfigParser() {
+class ConfigParser(
+  val root: LinkedHashMap[String, Value] = LinkedHashMap.empty,
+) {
 
   private var input: java.io.InputStream = null
   private var filename: String = "none"
+  private var currentSection = root
   private var cline = 1
-  private var ccol = 0
+  private var ccol = 1
   private def cpos = Position(filename, cline, ccol)
 
   private var char: Int = -1
 
+  // up to the current character (not included)
   private val lineBuffer = new StringBuilder()
+
   @inline private def readChar(): Unit = {
-    char = input.read()
     char match {
       case '\n' =>
         ccol = 1
@@ -26,12 +30,12 @@ case class ConfigParser() {
         ccol += 1
         lineBuffer += char.toChar
     }
+    char = input.read()
   }
 
-  private def errorHere(message: String): ParseException = {
-    val pos = cpos
+  private def errorAt(pos: Position, message: String): Nothing = {
     // read until end of line
-    while (!(char == -1 || char == '\n')) {
+    while (char != -1 && char != '\n') {
       readChar()
     }
 
@@ -39,12 +43,16 @@ case class ConfigParser() {
     val caret = " " * (pos.col - 1) + "^"
     val pretty = s"$message\n$pos\n$line\n$caret"
 
-    new ParseException(pos, pretty, line)
+    throw new ParseException(pos, pretty, line)
   }
 
   private def prettyChar(char: Int) = char match {
     case -1 => "EOF"
     case c => c.toChar
+  }
+
+  private def expectationError(expected: String*) = {
+    errorAt(cpos, s"Expected ${expected.mkString(" or ")}. Found ${prettyChar(char)}.")
   }
 
   private def skipSpace() = {
@@ -53,10 +61,11 @@ case class ConfigParser() {
     }
   }
 
+  // segment buffer
   private val buffer = new StringBuilder
   private def parseText(): String = {
     buffer.clear()
-    while (!(char == -1 || char == '\n')) {
+    while (char != -1 && char != '\n') {
       buffer += char.toChar
       readChar()
     }
@@ -64,15 +73,17 @@ case class ConfigParser() {
   }
 
   private def parseSegment(): String = {
-    if (java.lang.Character.isAlphabetic(char) || java.lang.Character.isDigit(char) || char == '_' || char == '-') {
+    import java.lang.Character
+
+    if (Character.isAlphabetic(char) || Character.isDigit(char) || char == '_' || char == '-') {
       buffer.clear()
-      while (java.lang.Character.isAlphabetic(char) || java.lang.Character.isDigit(char) || char == '_' || char == '-') {
+      while (Character.isAlphabetic(char) || Character.isDigit(char) || char == '_' || char == '-') {
         buffer += char.toChar
         readChar()
       }
       buffer.result()
     } else {
-      throw errorHere(s"Expected start of key. Found: '${prettyChar(char)}'")
+      expectationError("alphanumeric", "'_'", "'-'")
     }
   }
 
@@ -89,12 +100,12 @@ case class ConfigParser() {
   private def parseSection() = {
     val pos = cpos
 
-    if (char != '[') throw errorHere(s"Expected '['. Found: '${prettyChar(char)}'")
+    if (char != '[') expectationError("'['")
     readChar()
     skipSpace()
     val sectionPath = parseSectionHeading()
     skipSpace()
-    if (char != ']') throw errorHere(s"Expected ']'. Found: '${prettyChar(char)}'")
+    if (char != ']')  expectationError("']'")
     readChar()
 
     currentSection = root
@@ -107,7 +118,8 @@ case class ConfigParser() {
         case Some(s: Section) =>
           currentSection = s.value
         case Some(other) =>
-          throw errorHere(
+          errorAt(
+            pos,
             "Attempting to define a section of the same name as a key already defined at: " + other.pos
           )
       }
@@ -118,21 +130,19 @@ case class ConfigParser() {
     val pos = cpos
     val key = parseSegment()
     skipSpace()
-    if (char != '=') throw errorHere(s"Expected '='. Found: '${prettyChar(char)}'")
+    if (char != '=') errorAt(cpos, s"Expected '='. Found: '${prettyChar(char)}'")
     readChar()
     skipSpace()
     val value = parseText()
 
     currentSection.get(key) match {
-      case Some(other: Section) => throw errorHere(
+      case Some(other: Section) => errorAt(
+        cpos,
         "Attempting to define a key of the same name as a section already defined at: " + other.pos
       )
       case _ => currentSection(key) = Str(value).setPos(pos)
     }
   }
-
-  val root = LinkedHashMap.empty[String, Value]
-  private var currentSection = root
 
   private def parseNext() = {
     while (char == ' ' || char == '\t' || char == '\n') {
@@ -142,21 +152,24 @@ case class ConfigParser() {
       case -1 =>
       case '[' => parseSection()
       case ';' | '#' =>
-        while (!(char == -1 || char == '\n')) {
+        while (char != -1 && char != '\n') {
           readChar()
         }
       case s => parseKeyValue()
     }
   }
 
+
+  // This method can be called multiple times. Configuration value  will be
+  // overridden as encountered.
   def parse(input: java.io.InputStream, filename: String): Unit = {
     this.input = input
     this.filename = filename
     currentSection = root
     cline = 1
-    ccol = 0
+    ccol = 1
     lineBuffer.clear()
-    readChar()
+    char = input.read()
     while (char != -1) {
       parseNext()
     }

@@ -45,8 +45,11 @@ package object ini {
     * looked up, the entry first encountered in this list will be used.
     */
   def read(inputs: Parseable*): Section = {
-    val parser = ConfigParser()
-    for (input <- inputs.reverse) parser.parse(input.readable, input.filename)
+    val parser = new ConfigParser()
+    for (input <- inputs.reverse) {
+      parser.parse(input.readable, input.filename)
+    }
+    //parser.parse(input.readable, input.filename)
     Section(parser.root)
   }
 
