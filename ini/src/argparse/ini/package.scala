@@ -9,6 +9,8 @@ package object ini {
     implicit def FileIsParseable(path: os.ReadablePath): Parseable = Parseable(os.read.stream(path), path.toString)
     implicit def ReadableIsParseable(readable: geny.Readable): Parseable = Parseable(readable, "<virtual>")
     implicit def ReadableIsParseable[T](t: T)(implicit mkReadable: T => geny.Readable): Parseable = Parseable(mkReadable(t), "<virtual>")
+
+    implicit def Tuple[T](named: (T, String))(implicit f: T => Parseable): Parseable = Parseable(f(named._1).readable, named._2)
   }
 
 

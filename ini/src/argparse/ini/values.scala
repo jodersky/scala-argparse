@@ -14,25 +14,55 @@ sealed trait Value {
     this
   }
 
-  // def str = this match {
-  //   case Str(value) => value
-  //   case _ => throw Value.InvalidData("Expected string. Found")
-  // }
+  def str = this match {
+    case Str(value) => value
+    case other => throw Value.InvalidData(this, s"Expected ini.Str but found ${other.getClass().getName}")
+  }
 
-  // def obj = this match {
-  //   case Obj(value) => value
-  //   case _ => throw Value.InvalidData()
-  // }
+  def obj = this match {
+    case Obj(value) => value
+    case other => throw Value.InvalidData(this, s"Expected ini.Obj but found ${other.getClass().getName}")
+  }
 
 }
 
 object Value {
   case class InvalidData(data: Value, msg: String)
-    extends Exception(s"$msg (data: $data)")
+    extends Exception(msg)
+
+  // case class LookupException(root: Obj, msg: String)
+  //   extends Exception(msg)
 }
 
 case class Str(value: String) extends Value
-case class Obj(value: mutable.LinkedHashMap[String, Value]) extends Value
+case class Obj(value: mutable.LinkedHashMap[String, Value]) extends Value {
+
+  def lookup(segments: Seq[String]): Option[Value] = {
+    var section = this
+    val it = segments.init.iterator
+    val processed = mutable.ListBuffer.empty[String]
+    while (it.hasNext) {
+      val segment = it.next()
+      section.value.get(segment) match {
+        case None => return None
+        case Some(s: Obj) =>
+          section = s
+          processed += segment
+        case Some(other) =>
+          // throw Value.LookupException(
+          //   this,
+          //   s"conflict: expected a section at ${processed.mkString(".")} but " +
+          //   s"found a ${other.getClass().toString()} (defined at ${other.pos})"
+          // )
+          return None
+      }
+    }
+    section.value.get(segments.last)
+  }
+
+  def lookup(path: String): Option[Value] = lookup(path.split('.').toSeq)
+
+}
 object Obj {
   import scala.language.implicitConversions
   implicit def from(items: IterableOnce[(String, Value)]): Obj = {

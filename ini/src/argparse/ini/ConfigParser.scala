@@ -207,5 +207,5 @@ case class ParseException(
     val caret = " " * (position.col - 1) + "^"
     s"$message\n$position\n$line\n$caret"
   }
-
+  override def toString(): String = pretty()
 }
