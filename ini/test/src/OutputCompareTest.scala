@@ -40,4 +40,11 @@ object OutputCompareTest extends DynamicTestSuite {
     DiffTools.assertNoDiff(outFile, cleaned.mkString("", "\n", "\n"))
   }
 
+  testAll("prints") { inFile =>
+    val outFile = inFile / os.up / (inFile.baseName + ".out")
+    val section = ini.read(inFile)
+
+    DiffTools.assertNoDiff(outFile, ini.write(section))
+  }
+
 }

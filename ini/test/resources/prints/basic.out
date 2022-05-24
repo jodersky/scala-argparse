@@ -1,0 +1,6 @@
+
+[section1]
+  foo=bar
+
+[section1.a]
+  b=c

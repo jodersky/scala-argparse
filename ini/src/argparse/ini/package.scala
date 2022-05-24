@@ -25,4 +25,11 @@ package object ini {
     parser.rootSection
   }
 
+  def write(value: Value, indentation: Int = 2): String = {
+    val baos = new java.io.ByteArrayOutputStream()
+    val printer = new FlatPrinter(baos, indentation)
+    printer.print(value)
+    baos.toString("utf-8")
+  }
+
 }
