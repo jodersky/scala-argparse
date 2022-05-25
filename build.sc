@@ -9,6 +9,10 @@ val scala31 = "3.1.1"
 val scalaNative = "0.4.3"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
+def gitVersion = T.input {
+  os.proc("git", "describe", "--dirty=-SNAPSHOT").call(check = false).out.string.trim
+}
+
 trait Utest extends ScalaModule with TestModule {
   def ivyDeps = Agg(
     ivy"com.lihaoyi::utest::0.7.11",
@@ -18,7 +22,7 @@ trait Utest extends ScalaModule with TestModule {
 }
 
 trait Publish extends PublishModule {
-  def publishVersion = "0.15.1"
+  def publishVersion = gitVersion()
   def pomSettings = PomSettings(
     description = "argparse",
     organization = "io.crashbox",
