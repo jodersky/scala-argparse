@@ -8,11 +8,12 @@ class ParamInfo[A](
   var default: Option[() => A] = None,
   var isFlag: Boolean = false,
   var absorbRemaining: Boolean = false,
-  var repeats: Boolean = false
+  var repeats: Boolean = false,
+  var mapFn: A => Any
 ) {
 
   var isSet: Boolean = false
-  val values = collection.mutable.ListBuffer.empty[A]
+  val values = collection.mutable.ListBuffer.empty[Any]
 
   def paramDef(
     reportParseError: (String, String) => Unit,
@@ -34,7 +35,7 @@ class ParamInfo[A](
         case Reader.Error(message) => reportParseError(name, message)
         case Reader.Success(value) =>
           values.clear()
-          values += value
+          values += mapFn(value)
           isSet = true
       }
     }
@@ -57,7 +58,7 @@ class ParamInfo[A](
           case Some(str) => parseAndSet(s"from env ${env.get}", Some(str))
           case None if default.isDefined =>
             values.clear()
-            values += default.get()
+            values += mapFn(default.get())
             isSet = true
           case None => reportMissing(name)
         }
@@ -79,7 +80,7 @@ class ParamInfo[A](
       reader.read(strValue) match {
         case Reader.Error(message) => reportParseError(name, message)
         case Reader.Success(value) =>
-          values += value
+          values += mapFn(value)
       }
     }
 
@@ -118,11 +119,6 @@ trait BaseArg[A] {
     this
   }
 
-  def default(value: => A): this.type= {
-    info.default = Some(() => value)
-    this
-  }
-
   def flag(): this.type = {
     info.isFlag = true
     this
@@ -133,6 +129,11 @@ trait BaseArg[A] {
     new RepeatedArg[A](info)
   }
 
+  def default(value: => A): this.type= {
+    info.default = Some(() => value)
+    this
+  }
+
 }
 
 class Arg[A](protected val info: ParamInfo[A]) extends BaseArg[A] {
@@ -141,15 +142,35 @@ class Arg[A](protected val info: ParamInfo[A]) extends BaseArg[A] {
     this
   }
 
-  def value: A = if (info.isSet) info.values.head else
+  def value: A = if (info.isSet) info.values.head.asInstanceOf[A] else
     throw new NoSuchElementException(
       s"This argument '${info.name}' is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
     )
+
+  def map[B](fn: A => B) = {
+    val oldFn = info.mapFn.asInstanceOf[Any => A]
+    info.mapFn = (a: A) => fn(oldFn(a))
+    new MappedArg[B](info)
+  }
+}
+
+class MappedArg[A](protected val info: ParamInfo[_]) extends {
+  def value: A = if (info.isSet) info.values.head.asInstanceOf[A] else
+    throw new NoSuchElementException(
+      s"This argument '${info.name}' is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
+    )
+
+  def map[B](fn: A => B) = {
+    val i2 = info.asInstanceOf[ParamInfo[Any]]
+    val oldFn = i2.mapFn.asInstanceOf[Any => A]
+    i2.mapFn = (a: Any) => fn(oldFn(a))
+    new MappedArg[B](i2)
+  }
 }
 
 class RepeatedArg[A](protected val info: ParamInfo[A]) extends BaseArg[A] {
 
-  def value: Seq[A] = if (info.isSet) info.values.toSeq else
+  def value: Seq[A] = if (info.isSet) info.values.toSeq.map(_.asInstanceOf[A]) else
     throw new NoSuchElementException(
       s"This argument '${info.name}' is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
     )
@@ -178,7 +199,7 @@ class CliBuilder(stderr: java.io.PrintStream = System.err, env: Map[String, Stri
   private val infos = collection.mutable.ListBuffer.empty[ParamInfo[_]]
 
   def param[A](name: String)(implicit reader: Reader[A]): Arg[A] = {
-    val p = new ParamInfo[A](reader, name)
+    val p = new ParamInfo[A](reader, name, mapFn = a => a)
     infos += p
     new Arg(p)
   }
@@ -199,18 +220,17 @@ object Main {
 
     val pwd = parser
       .param[os.Path]("-C")
-      .alias("-a", "-b")
       .default(os.pwd)
 
     val f = parser
       .param[os.FilePath]("-f")
       .default(pwd.value / "foo")
-      // .map{
-      //   case abs: os.Path => abs
-      //   case rel => pwd.value / rel
-      // }
+      .map(p => os.Path(p, pwd.value))
+      .map(p => p.last)
 
     parser.parseOrExit(args)
+
+
 
     println(f.value)
   }
