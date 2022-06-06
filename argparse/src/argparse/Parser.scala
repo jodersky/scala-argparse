@@ -95,7 +95,7 @@ object Parser {
     * @return true if no Abort was encountered. Note that this does not necessarily imply failure or success. false otherwise
     */
   def parse(
-      params: Seq[ParamDef],
+      params: Iterable[ParamDef],
       args: Iterable[String],
       reportUnknown: String => Unit
   ): Boolean = {
