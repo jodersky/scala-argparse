@@ -151,6 +151,11 @@ explanations on how it works.
 
 ## Changelog
 
+# 0.15.2
+
+- Add an INI printer
+- Derive publish version from Git
+
 # 0.15.1
 
 - Cleanup INI parser support and add more tests.
