@@ -21,11 +21,6 @@ trait Reader[A] {
     */
   def read(a: String): Reader.Result[A]
 
-  /** Show a given value as a string. This is used in help dialogs to display
-    * default values.
-    */
-  def show(a: A): String
-
   /** Compute available shell completions starting with a given string. This is
     * used by embedded bash completion, where the user program is responsible
     * for generating completions.
@@ -62,7 +57,6 @@ trait LowPrioReaders {
           Success(elems.map(_.asInstanceOf[Success[Elem]].value).to(factory))
       }
     }
-    def show(a: Col[Elem]): String = a.map(elementReader.show(_)).mkString(",")
   }
 }
 
@@ -81,7 +75,6 @@ object Reader extends LowPrioReaders {
 
   implicit object StringReader extends Reader[String] {
     def read(a: String) = Success(a)
-    def show(a: String): String = a
   }
 
   implicit def IntegralReader[N](implicit numeric: Integral[N]): Reader[N] =
@@ -93,7 +86,6 @@ object Reader extends LowPrioReaders {
           case _: NumberFormatException =>
             Error(s"'$a' is not an integral number")
         }
-      def show(a: N): String = a.toString
     }
 
   implicit object FloatReader extends Reader[Float] {
@@ -103,7 +95,6 @@ object Reader extends LowPrioReaders {
       } catch {
         case _: NumberFormatException => Error(s"'$a' is not a number")
       }
-    def show(a: Float): String = a.toString
   }
 
   implicit object DoubleReader extends Reader[Double] {
@@ -113,7 +104,6 @@ object Reader extends LowPrioReaders {
       } catch {
         case _: NumberFormatException => Error(s"'$a' is not a number")
       }
-    def show(a: Double): String = a.toString
   }
 
   val pathCompleter: String => Seq[String] = (prefix: String) => {
@@ -165,7 +155,6 @@ object Reader extends LowPrioReaders {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a valid path")
       }
-    def show(a: os.FilePath): String = a.toString
   }
   implicit object PathReader extends FsPathReader[os.Path] {
     def read(a: String) =
@@ -175,7 +164,6 @@ object Reader extends LowPrioReaders {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a valid path")
       }
-    def show(a: os.Path): String = a.toString
   }
   implicit object SubPathReader extends FsPathReader[os.SubPath] {
     def read(a: String) =
@@ -185,7 +173,6 @@ object Reader extends LowPrioReaders {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a relative child path")
       }
-    def show(a: os.SubPath): String = a.toString
   }
   implicit object RelPathReader extends FsPathReader[os.RelPath] {
     def read(a: String) =
@@ -195,7 +182,6 @@ object Reader extends LowPrioReaders {
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a relative path")
       }
-    def show(a: os.RelPath): String = a.toString
   }
   implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
@@ -204,7 +190,6 @@ object Reader extends LowPrioReaders {
       } catch {
         case _: InvalidPathException => Error(s"'$a' is not a path")
       }
-    def show(a: java.nio.file.Path): String = a.toString
   }
   implicit object JavaFileReader extends FsPathReader[java.io.File] {
     def read(a: String) =
@@ -213,7 +198,6 @@ object Reader extends LowPrioReaders {
       } catch {
         case _: Exception => Error(s"'$a' is not a path")
       }
-    def show(a: java.io.File): String = a.toString
   }
   implicit object BooleanReader extends Reader[Boolean] {
     def read(a: String): Result[Boolean] = a match {
@@ -221,7 +205,6 @@ object Reader extends LowPrioReaders {
       case "false" => Success(false)
       case _       => Error(s"'$a' is not either 'true' or 'false'")
     }
-    def show(a: Boolean): String = a.toString
     override def completer =
       prefix => Seq("true", "false").filter(_.startsWith(prefix))
   }
@@ -240,7 +223,6 @@ object Reader extends LowPrioReaders {
           Success(elems.map(_.asInstanceOf[Success[E]].value).to(factory))
       }
     }
-    def show(a: Col): String = a.map(elementReader.show(_)).mkString(":")
   }
 
   implicit def FilePathCollectionReader[Col <: Iterable[os.FilePath]]
@@ -280,7 +262,6 @@ object Reader extends LowPrioReaders {
         case _        => Error(s"expected key=value pair")
       }
     }
-    def show(a: (K, V)): String = kr.show(a._1) + "=" + vr.show(a._2)
   }
   implicit def OptionReader[A](
       implicit elementReader: Reader[A]
@@ -290,10 +271,6 @@ object Reader extends LowPrioReaders {
         case Error(message) => Error(message)
         case Success(value) => Success(Some(value))
       }
-    }
-    def show(a: Option[A]): String = a match {
-      case None => "<none>"
-      case Some(value) => elementReader.show(value)
     }
     override def completer = elementReader.completer
   }
@@ -307,7 +284,6 @@ object Reader extends LowPrioReaders {
         case e: Exception => Error(e.getMessage())
       }
     }
-    def show(a: () => InputStream): String = ""
   }
   implicit object OutputStreamReader extends Reader[() => java.io.OutputStream] {
     override val completer = pathCompleter
@@ -319,7 +295,6 @@ object Reader extends LowPrioReaders {
         case e: Exception => Error(e.getMessage())
       }
     }
-    def show(a: () => OutputStream): String = ""
   }
   implicit object ReadableReader extends Reader[geny.Readable] {
     override val completer = pathCompleter
@@ -335,7 +310,6 @@ object Reader extends LowPrioReaders {
         )
       case Error(msg) => Error(msg)
     }
-    def show(a: geny.Readable): String = ""
   }
   implicit object DurationReader extends Reader[scala.concurrent.duration.Duration] {
     def read(a: String) = try {
@@ -343,7 +317,6 @@ object Reader extends LowPrioReaders {
     } catch {
       case _: NumberFormatException => Error(s"'$a' is not a valid duration")
     }
-    def show(a: scala.concurrent.duration.Duration): String = a.toString
   }
   implicit object FiniteDurationReader extends Reader[scala.concurrent.duration.FiniteDuration] {
     def read(a: String) = DurationReader.read(a) match {
@@ -352,7 +325,6 @@ object Reader extends LowPrioReaders {
         Error(s"expected a finite duration, but '$a' is infinite")
       case Error(msg) => Error(msg)
     }
-    def show(a: scala.concurrent.duration.FiniteDuration): String = DurationReader.show(a)
   }
   implicit object InstantReader extends Reader[java.time.Instant] {
     def read(a: String) = try {
@@ -361,7 +333,6 @@ object Reader extends LowPrioReaders {
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as an instant in time. The format must follow 'YYYY-MM-DDThh:mm:ss[.S]Z'. Note that the 'T' is literal and the time zone Z must be given.")
     }
-    def show(a: java.time.Instant) = a.toString()
   }
   implicit object ZonedDateTimeReader extends Reader[java.time.ZonedDateTime] {
     def read(a: String) = try {
@@ -370,7 +341,6 @@ object Reader extends LowPrioReaders {
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a zoned date and time")
     }
-    def show(a: java.time.ZonedDateTime) = a.toString()
   }
   implicit object LocalDateTimeReader extends Reader[java.time.LocalDateTime] {
     def read(a: String) = try {
@@ -379,7 +349,6 @@ object Reader extends LowPrioReaders {
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a local date and time")
     }
-    def show(a: java.time.LocalDateTime) = a.toString()
   }
   implicit object LocalDateReader extends Reader[java.time.LocalDate] {
     def read(a: String) = try {
@@ -388,7 +357,6 @@ object Reader extends LowPrioReaders {
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a local date")
     }
-    def show(a: java.time.LocalDate) = a.toString()
   }
   implicit object LocalTime extends Reader[java.time.LocalTime] {
     def read(a: String) = try {
@@ -397,7 +365,6 @@ object Reader extends LowPrioReaders {
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a local time")
     }
-    def show(a: java.time.LocalTime) = a.toString()
   }
   implicit object RangeReader extends Reader[Range] {
     def read(str: String) = str.split("\\.\\.") match {
@@ -409,6 +376,5 @@ object Reader extends LowPrioReaders {
         }
       case _ => argparse.Reader.Error(s"expected 'from..to', found: $str")
     }
-    def show(r: Range) = s"${r.start}..${r.end}"
   }
 }

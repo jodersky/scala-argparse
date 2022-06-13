@@ -22,7 +22,6 @@ object ArgumentParser {
       repeats: Boolean,
       env: Option[String],
       description: String,
-      showDefault: Option[() => String],
       completer: String => Seq[String],
       bashCompleter: Reader.BashCompleter
   )
@@ -187,7 +186,6 @@ class ArgumentParser(
       repeats = false,
       env = None,
       description = "show this message and exit",
-      showDefault = None,
       completer = _ => Seq.empty,
       bashCompleter = Reader.BashCompleter.Empty
     )
@@ -250,9 +248,6 @@ class ArgumentParser(
         param.names.map(_ + "=").mkString(", ")
       }
       b ++= s"  $names\n        "
-      param.showDefault.foreach{ default =>
-        b ++= s"(default: ${default()})\n        "
-      }
       wrap(param.description, b, width, "\n        ")
       b ++= "\n"
     }
@@ -290,7 +285,6 @@ class ArgumentParser(
       repeats = false,
       env = None,
       description = "generate bash completion for this command",
-      showDefault = None,
       completer = _ => Seq.empty,
       bashCompleter = Reader.BashCompleter.Empty
     )
@@ -363,7 +357,6 @@ class ArgumentParser(
       false,
       env,
       help,
-      default.map(d => () => reader.show(d())),
       completer.getOrElse(reader.completer),
       bashCompleter.getOrElse(reader.bashCompleter)
     )
@@ -551,7 +544,6 @@ class ArgumentParser(
       true,
       None,
       help,
-      None,
       Option(completer).getOrElse(reader.completer),
       Option(bashCompleter).getOrElse(reader.bashCompleter)
     )

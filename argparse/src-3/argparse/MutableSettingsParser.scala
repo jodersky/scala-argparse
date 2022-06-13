@@ -88,7 +88,6 @@ object MutableSettingsParser {
               repeats = false,
               env = ${Expr(env)},
               description = ${Expr(help)},
-              showDefault = Some(() => ${reader}.show(${instance.select(sym).asExpr})),
               completer = _ => Seq.empty,
               bashCompleter = Reader.BashCompleter.Empty
             )
