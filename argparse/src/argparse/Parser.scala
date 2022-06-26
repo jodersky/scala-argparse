@@ -70,14 +70,16 @@ object Parser {
   // extractor for named arguments
   private val Named = "(--?[^=]+)(?:=(.*))?".r
 
-  /** Parse command line arguments according to some given parameter definition.
+  /** Parse command line arguments according to some parameter definitions.
     *
     * The parser works in two passes.
+    *
     * 1. the first pass goes over all actual arguments and groups them into
     *    positional and named ones (and also detects any unkown arguments)
+    *
     * 2. the second pass then iterates over all parameter definitions, looks up
     *    the corresponding value from the previous pass, and calls the relevant
-    *    functions of the parameter defintion
+    *    functions of the parameter definition
     *
     * Delegating parameter invocation to a second pass allows for them to be
     * evaluated in order of defnition, rather than order of appearance on the

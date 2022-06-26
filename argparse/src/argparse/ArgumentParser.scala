@@ -3,7 +3,6 @@ package argparse
 import scala.collection.mutable
 
 import Parser.ParamDef
-import os.isFile
 
 object ArgumentParser {
   def apply(

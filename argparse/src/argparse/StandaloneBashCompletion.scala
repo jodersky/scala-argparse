@@ -16,7 +16,7 @@ object StandaloneBashCompletion {
          |#
          |# Rules:
          |#
-         |# - Completion functions for commands must named by concatenating all commands.
+         |# - Completion functions for commands must be named by concatenating all commands.
          |#   E.g. if `foo bar baz` represents 3 nested commands, then the completion
          |#   function should be called `_foo_bar_baz`
          |#
@@ -45,7 +45,7 @@ object StandaloneBashCompletion {
          |#   parameter.
          |#
          |#   - The completion function for a named parameter must be named
-         |#     `_<command>_<name>_`, where <name> includes any dashed. E.g.
+         |#     `_<command>_<name>_`, where <name> includes any dashes. E.g.
          |#     `_foo_bar_baz_--option_`.
          |#   - The completion function for a positional parameter must be named
          |#     `_<command>_<position>_`. E.g. `_foo_bar_baz_0_` for the first positional
@@ -302,9 +302,9 @@ object StandaloneBashCompletion {
   ): Unit = {
     // Since argparse supports independent nested commands, we must have a way
     // to recursively request completion from nested commands. We use the
-    // 'magic' parameter "---nested-completion" to achieve this. If that
-    // argument is encountered, then it is assumed that we are generating a
-    // completion script.
+    // 'magic' parameter "---nested-completion" to achieve this, and throw a
+    // special exception to return control. If that argument is encountered,
+    // then it is assumed that we are generating a completion script.
     if (!args.isEmpty && args.head == "---nested-completion") {
       all(out, args.tail.head, paramInfos, commandInfos)
       throw CompletionReturned()
