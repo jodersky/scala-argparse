@@ -20,7 +20,7 @@ object BashCompletionTest extends TestSuite {
     test("basic") {
       val parser = new CompletionParser()
       parser.parser.parseResult(Seq(), line("cmd")) ==> ArgumentParser.EarlyExit
-      parser.completions.isEmpty
+      parser.completions ==> List("")
     }
     test("named single") {
       val parser = new CompletionParser()

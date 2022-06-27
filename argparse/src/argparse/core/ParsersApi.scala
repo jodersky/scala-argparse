@@ -665,12 +665,6 @@ trait ParsersApi { readers: TypesApi =>
         stderr.println("run with '--help' for more information")
         sys.exit(2)
     }
-
-    @deprecated("use parseOrExit instead", "0.7.2")
-    def parse(args: Iterable[String]): Unit = parseOrExit(args)
-    @deprecated("use parseOrExit instead", "0.7.2")
-    def parse(args: Array[String]): Unit = parseOrExit(args)
-
   }
 
 }

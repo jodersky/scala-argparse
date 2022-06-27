@@ -48,7 +48,7 @@ trait TypesApi {
     case class Error(message: String) extends Result[Nothing]
   }
 
-  implicit val StringReader = new Reader[String] {
+  implicit val StringReader: Reader[String] = new Reader[String] {
     def read(a: String) = Reader.Success(a)
   }
 
