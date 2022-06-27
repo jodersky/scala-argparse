@@ -1,8 +1,6 @@
-package argparse
+package argparse.core
 
-case class main(
-    doc: String = ""
-) extends annotation.StaticAnnotation
+case class main() extends annotation.StaticAnnotation
 
 case class arg(
     aliases: Seq[String] = Seq(),
