@@ -6,7 +6,7 @@ val scala3 = "3.0.2"
 // only the latest Scala 3 version and the -Yrelease flag to target the oldest
 // possible version.
 val scala31 = "3.1.1"
-val scalaNative = "0.4.3"
+val scalaNative = "0.4.4"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 def gitVersion = T.input {
