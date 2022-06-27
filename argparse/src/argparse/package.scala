@@ -1,1 +1,3 @@
-package object argparse extends argparse.core.Api
+package argparse
+
+object default extends argparse.core.Api

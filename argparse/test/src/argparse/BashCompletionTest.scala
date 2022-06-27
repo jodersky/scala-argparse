@@ -1,8 +1,7 @@
-package argparse
-
 import utest._
 
 object BashCompletionTest extends TestSuite {
+  import argparse.default.ArgumentParser
 
   class CompletionParser() {
     val data = new java.io.ByteArrayOutputStream

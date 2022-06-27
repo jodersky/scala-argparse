@@ -1,8 +1,7 @@
-package argparse
-
 import utest._
 
 object CmdTest extends TestSuite {
+  import argparse.default.ArgumentParser
 
   val tests = Tests {
     test("basic") {

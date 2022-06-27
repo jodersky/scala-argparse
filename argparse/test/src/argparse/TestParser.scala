@@ -1,12 +1,10 @@
-package argparse
-
 object NullStream extends java.io.OutputStream {
   override def write(x: Int): Unit = ()
   override def write(x: Array[Byte]): Unit = ()
   override def write(x: Array[Byte], y: Int, z: Int): Unit = ()
 }
 
-class TestParser extends ArgumentParser(
+class TestParser extends argparse.default.ArgumentParser(
   "",
   true,
   true,
@@ -28,7 +26,7 @@ class TestParser extends ArgumentParser(
   ): Unit = unknownCmds += 1
 
   var parseErrors = 0
-  override protected[argparse] def reportParseError(name: String, message: String): Unit =
+  override def reportParseError(name: String, message: String): Unit =
     parseErrors += 1
 
   override def hasErrors =

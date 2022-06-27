@@ -1,5 +1,3 @@
-package argparse
-
 import utest._
 
 object ArgParserTest extends TestSuite {
@@ -287,7 +285,7 @@ object ArgParserTest extends TestSuite {
         // the --help flag has top priority; it can appear anywhere on the command line
         parser.parseResult(
           List("a", "b", "c", "--name", "--help", "foo", "--bar")
-        ) ==> ArgumentParser.EarlyExit
+        ) ==> argparse.default.ArgumentParser.EarlyExit
       }
     }
   }

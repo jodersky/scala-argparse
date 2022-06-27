@@ -134,7 +134,7 @@ trait ParsersApi { readers: TypesApi =>
       errors += 1
     }
 
-    protected[argparse] def reportParseError(name: String, message: String): Unit = {
+    protected def reportParseError(name: String, message: String): Unit = {
       stderr.println(s"error processing argument $name: $message")
       errors += 1
     }
