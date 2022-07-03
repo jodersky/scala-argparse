@@ -18,7 +18,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       def typeName: String = "int"
     }
 
-  implicit val FloatReader: Reader[Float] = new Reader[Float] {
+  implicit object FloatReader extends Reader[Float] {
     def read(a: String) =
       try {
         Success(a.toFloat)
@@ -28,7 +28,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     def typeName: String = "float"
   }
 
-  implicit val DoubleReader: Reader[Double] = new Reader[Double] {
+  implicit object DoubleReader extends Reader[Double] {
     def read(a: String) =
       try {
         Success(a.toDouble)
@@ -80,7 +80,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     def typeName: String = "path"
   }
 
-  implicit val FilePathReader: FsPathReader[os.FilePath] = new FsPathReader[os.FilePath] {
+  implicit object FilePathReader extends FsPathReader[os.FilePath] {
     def read(a: String) =
       try {
         Success(os.FilePath(a))
@@ -89,7 +89,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
           Error(s"'$a' is not a valid path")
       }
   }
-  implicit val PathReader: FsPathReader[os.Path] = new FsPathReader[os.Path] {
+  implicit object PathReader extends FsPathReader[os.Path] {
     def read(a: String) =
       try {
         Success(os.Path(a, os.pwd))
@@ -98,7 +98,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
           Error(s"'$a' is not a valid path")
       }
   }
-  implicit val SubPathReader: FsPathReader[os.SubPath] = new FsPathReader[os.SubPath] {
+  implicit object SubPathReader extends FsPathReader[os.SubPath] {
     def read(a: String) =
       try {
         Success(os.SubPath(a))
@@ -108,7 +108,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       }
     override def typeName: String = "subpath"
   }
-  implicit val RelPathReader: FsPathReader[os.RelPath] = new FsPathReader[os.RelPath] {
+  implicit object RelPathReader extends FsPathReader[os.RelPath] {
     def read(a: String) =
       try {
         Success(os.RelPath(a))
@@ -118,7 +118,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       }
     override def typeName: String = "relpath"
   }
-  implicit val JavaPathReader: FsPathReader[java.nio.file.Path] = new FsPathReader[java.nio.file.Path] {
+  implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
       try {
         Success(java.nio.file.Paths.get(a))
@@ -126,7 +126,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case _: java.nio.file.InvalidPathException => Error(s"'$a' is not a path")
       }
   }
-  implicit val JavaFileReader: FsPathReader[java.io.File] = new FsPathReader[java.io.File] {
+  implicit object JavaFileReader extends FsPathReader[java.io.File] {
     def read(a: String) =
       try {
         Success(new java.io.File(a))
@@ -134,7 +134,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case _: Exception => Error(s"'$a' is not a path")
       }
   }
-  implicit val BooleanReader: Reader[Boolean] = new Reader[Boolean] {
+  implicit object BooleanReader extends Reader[Boolean] {
     def read(a: String): Result[Boolean] = a match {
       case "true"  => Success(true)
       case "false" => Success(false)
@@ -214,7 +214,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     override def interactiveCompleter = elementReader.interactiveCompleter
     def typeName = elementReader.typeName
   }
-  implicit val InputStreamReader: Reader[() => java.io.InputStream] = new Reader[() => java.io.InputStream] {
+  implicit object InputStreamReader extends Reader[() => java.io.InputStream] {
     override val interactiveCompleter = pathCompleter
     def read(a: String): Result[() => java.io.InputStream] = {
       if (a == "-") Success(() => System.in)
@@ -226,7 +226,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "file|-"
   }
-  implicit val OutputStreamReader: Reader[() => java.io.OutputStream] = new Reader[() => java.io.OutputStream] {
+  implicit object OutputStreamReader extends Reader[() => java.io.OutputStream] {
     override val interactiveCompleter = pathCompleter
     def read(a: String): Result[() => java.io.OutputStream] = {
       if (a == "-") Success(() => System.out)
@@ -238,7 +238,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "file|-"
   }
-  implicit val ReadableReader: Reader[geny.Readable] = new Reader[geny.Readable] {
+  implicit object ReadableReader extends Reader[geny.Readable] {
     override val interactiveCompleter = pathCompleter
     def read(a: String): Result[geny.Readable] = InputStreamReader.read(a) match {
       case Success(open) =>
@@ -254,7 +254,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "file|-"
   }
-  implicit val DurationReader: Reader[scala.concurrent.duration.Duration] = new Reader[scala.concurrent.duration.Duration] {
+  implicit object DurationReader extends Reader[scala.concurrent.duration.Duration] {
     def read(a: String) = try {
       Success(scala.concurrent.duration.Duration.create(a))
     } catch {
@@ -262,7 +262,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "duration"
   }
-  implicit val FiniteDurationReader: Reader[scala.concurrent.duration.FiniteDuration] = new Reader[scala.concurrent.duration.FiniteDuration] {
+  implicit object FiniteDurationReader extends Reader[scala.concurrent.duration.FiniteDuration] {
     def read(a: String) = DurationReader.read(a) match {
       case Success(f: scala.concurrent.duration.FiniteDuration) => Success(f)
       case Success(f: scala.concurrent.duration.Duration) =>
@@ -271,7 +271,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "duration"
   }
-  implicit val InstantReader: Reader[java.time.Instant] = new Reader[java.time.Instant] {
+  implicit object InstantReader extends Reader[java.time.Instant] {
     def read(a: String) = try {
       Success(java.time.Instant.parse(a))
     } catch {
@@ -280,7 +280,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "timestamp"
   }
-  implicit val ZonedDateTimeReader: Reader[java.time.ZonedDateTime] = new Reader[java.time.ZonedDateTime] {
+  implicit object ZonedDateTimeReader extends Reader[java.time.ZonedDateTime] {
     def read(a: String) = try {
       Success(java.time.ZonedDateTime.parse(a))
     } catch {
@@ -289,7 +289,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "timestamp"
   }
-  implicit val LocalDateTimeReader: Reader[java.time.LocalDateTime] = new Reader[java.time.LocalDateTime] {
+  implicit object LocalDateTimeReader extends Reader[java.time.LocalDateTime] {
     def read(a: String) = try {
       Success(java.time.LocalDateTime.parse(a))
     } catch {
@@ -298,7 +298,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "local timestamp"
   }
-  implicit val LocalDateReader: Reader[java.time.LocalDate] = new Reader[java.time.LocalDate] {
+  implicit object LocalDateReader extends Reader[java.time.LocalDate] {
     def read(a: String) = try {
       Success(java.time.LocalDate.parse(a))
     } catch {
@@ -307,7 +307,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "local date"
   }
-  implicit val LocalTime: Reader[java.time.LocalTime] = new Reader[java.time.LocalTime] {
+  implicit object LocalTime extends Reader[java.time.LocalTime] {
     def read(a: String) = try {
       Success(java.time.LocalTime.parse(a))
     } catch {
@@ -316,7 +316,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     def typeName = "local time"
   }
-  implicit val RangeReader: Reader[Range] = new Reader[Range] {
+  implicit object RangeReader extends Reader[Range] {
     def read(str: String) = str.split("\\.\\.") match {
       case Array(from, to) =>
         try {
