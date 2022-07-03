@@ -74,8 +74,8 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
   }
 
   trait FsPathReader[A] extends Reader[A] {
-    override val completer = pathCompleter
-    override val bashCompleter = BashCompleter.Default
+    override val interactiveCompleter = pathCompleter
+    override val standaloneCompleter = BashCompleter.Default
     def typeName: String = "path"
   }
 
@@ -139,8 +139,9 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       case "false" => Success(false)
       case _       => Error(s"'$a' is not either 'true' or 'false'")
     }
-    override def completer =
+    override def interactiveCompleter =
       prefix => Seq("true", "false").filter(_.startsWith(prefix))
+    override def standaloneCompleter = BashCompleter.Fixed(Set("true", "false"))
     override def typeName: String = "true|false"
   }
 
@@ -209,11 +210,11 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case Success(value) => Success(Some(value))
       }
     }
-    override def completer = elementReader.completer
+    override def interactiveCompleter = elementReader.interactiveCompleter
     def typeName = elementReader.typeName
   }
   implicit object InputStreamReader extends Reader[() => java.io.InputStream] {
-    override val completer = pathCompleter
+    override val interactiveCompleter = pathCompleter
     def read(a: String): Result[() => java.io.InputStream] = {
       if (a == "-") Success(() => System.in)
       else try {
@@ -225,7 +226,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     def typeName = "file|-"
   }
   implicit object OutputStreamReader extends Reader[() => java.io.OutputStream] {
-    override val completer = pathCompleter
+    override val interactiveCompleter = pathCompleter
     def read(a: String): Result[() => java.io.OutputStream] = {
       if (a == "-") Success(() => System.out)
       else try {
@@ -237,7 +238,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     def typeName = "file|-"
   }
   implicit object ReadableReader extends Reader[geny.Readable] {
-    override val completer = pathCompleter
+    override val interactiveCompleter = pathCompleter
     def read(a: String): Result[geny.Readable] = InputStreamReader.read(a) match {
       case Success(open) =>
         Success(

@@ -72,7 +72,7 @@ object BashCompletionTest extends TestSuite {
       parser.parser.requiredParam[String]("--opt")
       parser.parser.requiredParam[String](
         "--optimize",
-        completer =
+        interactiveCompleter =
           prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix))
       )
       parser.parser.parseResult(Seq(), line("cmd --optimize ")) ==> ArgumentParser.EarlyExit
@@ -84,7 +84,7 @@ object BashCompletionTest extends TestSuite {
       parser.parser.requiredParam[String]("--opt")
       parser.parser.requiredParam[String](
         "--optimize",
-        completer =
+        interactiveCompleter =
           prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix))
       )
       parser.parser.parseResult(Seq(), line("cmd --optimize L1")) ==> ArgumentParser.EarlyExit
@@ -96,7 +96,7 @@ object BashCompletionTest extends TestSuite {
       parser.parser.requiredParam[String]("--opt")
       parser.parser.requiredParam[String](
         "--optimize",
-        completer =
+        interactiveCompleter =
           prefix => Seq("L1 ", "L2 ", "L11 ").filter(_.startsWith(prefix))
       )
       parser.parser.parseResult(Seq(), line("cmd --optimize=L1")) ==> ArgumentParser.EarlyExit

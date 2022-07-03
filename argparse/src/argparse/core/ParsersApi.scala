@@ -11,8 +11,8 @@ case class ParamInfo(
     repeats: Boolean,
     env: Option[String],
     description: String,
-    completer: String => Seq[String],
-    bashCompleter: BashCompleter
+    interactiveCompleter: String => Seq[String],
+    standaloneCompleter: BashCompleter
 ) {
   def isFlag = isNamed && argName == None
 }
@@ -245,8 +245,8 @@ trait ParsersApi { api: TypesApi =>
         repeats = false,
         env = None,
         description = "show this message and exit",
-        completer = _ => Seq.empty,
-        bashCompleter = BashCompleter.Empty
+        interactiveCompleter = _ => Seq.empty,
+        standaloneCompleter = BashCompleter.Empty
       )
     }
 
@@ -275,8 +275,8 @@ trait ParsersApi { api: TypesApi =>
         repeats = false,
         env = None,
         description = "generate bash completion for this command",
-        completer = _ => Seq.empty,
-        bashCompleter = BashCompleter.Empty
+        interactiveCompleter = _ => Seq.empty,
+        standaloneCompleter = BashCompleter.Empty
       )
     }
 
@@ -301,8 +301,8 @@ trait ParsersApi { api: TypesApi =>
         help: String,
         flag: Boolean,
         endOfNamed: Boolean,
-        completer: Option[String => Seq[String]],
-        bashCompleter: Option[BashCompleter],
+        interactiveCompleter: Option[String => Seq[String]],
+        standaloneCompleter: Option[BashCompleter],
         argName: Option[String]
     )(implicit reader: Reader[A]): argparse.Argument[A] = {
       val arg = new argparse.Argument[A](name)
@@ -348,8 +348,8 @@ trait ParsersApi { api: TypesApi =>
         repeats = false,
         env = env,
         description = help,
-        completer = completer.getOrElse(reader.completer),
-        bashCompleter = bashCompleter.getOrElse(reader.bashCompleter)
+        interactiveCompleter = interactiveCompleter.getOrElse(reader.interactiveCompleter),
+        standaloneCompleter = standaloneCompleter.getOrElse(reader.standaloneCompleter)
       )
 
       arg
@@ -400,8 +400,8 @@ trait ParsersApi { api: TypesApi =>
       * useful for implementing sub-commands. (Note however that this ArgumentParser has a
       * dedicated `command` method for such use cases)
       *
-      * @param completer A bash snippet that is inserted in bash-completions, responsible for setting
-      * completion options for this param. If omitted, the parameter type's (A) default completer
+      * @param interactiveCompleter A bash snippet that is inserted in bash-completions, responsible for setting
+      * completion options for this param. If omitted, the parameter type's (A) default interactiveCompleter
       * will be used. If present, this must be valid bash and should set COMPREPLY. The bash variable
       * "$cur" may be used in the snippet, and will contain the current word being completed for this
       * parameter.
@@ -420,8 +420,8 @@ trait ParsersApi { api: TypesApi =>
         help: String = "",
         flag: Boolean = false,
         endOfNamed: Boolean = false,
-        completer: String => Seq[String] = null,
-        bashCompleter: BashCompleter = null,
+        interactiveCompleter: String => Seq[String] = null,
+        standaloneCompleter: BashCompleter = null,
         argName: String = null
     )(
         implicit reader: Reader[A]
@@ -434,8 +434,8 @@ trait ParsersApi { api: TypesApi =>
         help,
         flag,
         endOfNamed,
-        Option(completer),
-        Option(bashCompleter),
+        Option(interactiveCompleter),
+        Option(standaloneCompleter),
         Option(argName)
       )
 
@@ -457,8 +457,8 @@ trait ParsersApi { api: TypesApi =>
         help: String = "",
         flag: Boolean = false,
         endOfNamed: Boolean = false,
-        completer: String => Seq[String] = null,
-        bashCompleter: BashCompleter = null,
+        interactiveCompleter: String => Seq[String] = null,
+        standaloneCompleter: BashCompleter = null,
         argName: String = null
     )(
         implicit reader: Reader[A]
@@ -471,8 +471,8 @@ trait ParsersApi { api: TypesApi =>
         help,
         flag,
         endOfNamed,
-        Option(completer),
-        Option(bashCompleter),
+        Option(interactiveCompleter),
+        Option(standaloneCompleter),
         Option(argName)
       )(reader)
 
@@ -499,8 +499,8 @@ trait ParsersApi { api: TypesApi =>
         aliases: Seq[String] = Seq.empty,
         help: String = "",
         flag: Boolean = false,
-        completer: String => Seq[String] = null,
-        bashCompleter: BashCompleter = null,
+        interactiveCompleter: String => Seq[String] = null,
+        standaloneCompleter: BashCompleter = null,
         argName: String = null
     )(implicit reader: Reader[A]): argparse.Argument[Seq[A]] = {
       val arg = new argparse.Argument[Seq[A]](name)
@@ -540,8 +540,8 @@ trait ParsersApi { api: TypesApi =>
         repeats = true,
         env = None,
         description = help,
-        completer = Option(completer).getOrElse(reader.completer),
-        bashCompleter = Option(bashCompleter).getOrElse(reader.bashCompleter)
+        interactiveCompleter = Option(interactiveCompleter).getOrElse(reader.interactiveCompleter),
+        standaloneCompleter = Option(standaloneCompleter).getOrElse(reader.standaloneCompleter)
       )
 
       arg
@@ -585,15 +585,15 @@ trait ParsersApi { api: TypesApi =>
         _command = requiredParam[String](
           "command",
           endOfNamed = true,
-          completer = prefix => commands.filter(_.startsWith(prefix)).toList,
-          bashCompleter = BashCompleter.Fixed(commands.toSet)
+          interactiveCompleter = prefix => commands.filter(_.startsWith(prefix)).toList,
+          standaloneCompleter = BashCompleter.Fixed(commands.toSet)
         )
         _commandArgs = repeatedParam[String](
           "args"
         )
       }
 
-      if (BashCompletion.completeOrFalse(
+      if (InteractiveBashCompletion.completeOrFalse(
             paramInfos.toList,
             commandInfos.toList,
             env,

@@ -28,21 +28,21 @@ trait TypesApi {
     /** The human-friendly name of this reader's argument type. */
     def typeName: String
 
-    /** Compute available shell completions starting with a given string. This is
-      * used by embedded bash completion, where the user program is responsible
-      * for generating completions.
+    /** Compute available shell completions starting with a given string. This
+      * is used by interactive bash completion, where the user program is
+      * responsible for generating completions.
       */
-    def completer: String => Seq[String] = _ => Seq.empty
+    def interactiveCompleter: String => Seq[String] = _ => Seq.empty
 
-    /** A completer for bash. This is used by standalone bash completion, where a
-      * bash script generates completion, without the involvement of the the user
-      * program.
+    /** A completer for bash. This is used by standalone bash completion, where
+      * a bash script generates completion, without the involvement of the the
+      * user program.
       *
-      * If your program is implemented with Scala on the JVM, the startup time is
-      * considerable and hence standalone completion should be preferred for a
-      * snappy user experience.
+      * If your program is implemented with Scala on the JVM, the startup time
+      * is considerable and hence standalone completion should be preferred for
+      * a snappy user experience.
       */
-    def bashCompleter: BashCompleter = BashCompleter.Empty
+    def standaloneCompleter: BashCompleter = BashCompleter.Empty
   }
 
   object Reader {

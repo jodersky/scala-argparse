@@ -2,8 +2,8 @@ package argparse.core
 
 import collection.mutable
 
-/** Interactive bash completion. Completion logic is handled by this program. */
-object BashCompletion {
+/** Completion logic that is handled by this, scala, program. */
+object InteractiveBashCompletion {
 
   private val Named = "(--?[^=]+)(?:=(.*))?".r
 
@@ -76,7 +76,7 @@ object BashCompletion {
     readArg()
 
     val positionalCompleters: Iterator[String => Seq[String]] =
-      positionals.map(_.completer).iterator
+      positionals.map(_.interactiveCompleter).iterator
 
     var completer: String => Seq[String] = _ => Seq.empty
     var prefix: String = ""
@@ -95,7 +95,7 @@ object BashCompletion {
           readArg()
 
           if (embedded != null) {
-            completer = param.completer
+            completer = param.interactiveCompleter
             prefix = embedded
           } else if (param.isFlag) {
             // no special completion for flags
@@ -103,7 +103,7 @@ object BashCompletion {
             // at the end there is nothing to do
           } else {
             // not at the end
-            completer = param.completer
+            completer = param.interactiveCompleter
             prefix = arg
             readArg()
           }

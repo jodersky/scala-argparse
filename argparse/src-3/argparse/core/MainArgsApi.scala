@@ -256,8 +256,8 @@ object EntrypointsMetadata {
             help = $annot.doc,
             flag = ${Expr(TypeRepr.of(using tpe) =:= TypeRepr.of[Boolean])},
             endOfNamed = false,
-            completer = None,
-            bashCompleter = None,
+            interactiveCompleter = None,
+            standaloneCompleter = None,
             argName = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
         }
@@ -289,8 +289,8 @@ object EntrypointsMetadata {
             help = $annot.doc,
             flag = false,
             endOfNamed = false,
-            completer = None,
-            bashCompleter = None,
+            interactiveCompleter = None,
+            standaloneCompleter = None,
             argName = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
         }
