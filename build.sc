@@ -99,17 +99,49 @@ object ini extends Module {
 }
 
 object examples extends Module {
-  class ExampleApp(val crossScalaVersion: String) extends CrossScalaModule {
-    def scalaVersion = argparse.jvm(crossScalaVersion).scalaVersion
-    def scalacOptions = argparse.jvm(crossScalaVersion).scalacOptions
-    def moduleDeps = Seq(argparse.jvm(crossScalaVersion))
-    def dist = T {
-      val jar = assembly().path
-      os.copy.over(jar, os.pwd / millSourcePath.last)
-    }
+  trait ExampleApp extends ScalaModule {
+    def scalaVersion = scala3
+    def scalacOptions = argparse.jvm(scala3).scalacOptions
+    def moduleDeps = Seq(argparse.jvm(scala3))
     object test extends Tests with Utest
   }
-  object `readme-imperative` extends Cross[ExampleApp](scala213, scala3)
-  object `readme-declarative` extends Cross[ExampleApp](scala3)
-  object commands extends Cross[ExampleApp](scala213, scala3)
+  object readme extends ExampleApp {
+    def extractExamples(path: os.Path): Map[String, String] = {
+      val lines = os.read.lines(path).iterator
+
+      val examples = collection.mutable.Map.empty[String, String]
+      var currName: String = null
+      val currLines = new StringBuilder()
+
+      while (lines.hasNext) {
+        val line = lines.next()
+        if (line.startsWith("<!--example")) {
+          currName = line.drop(12).takeWhile(_ != '-')
+        } else if (line.startsWith("<!--/example")) {
+          examples += currName -> currLines.result()
+          currName = null
+          currLines.clear()
+        } else if (line.startsWith("```")) {
+          // do nothing
+        } else if (currName != null) {
+          currLines ++= line
+          currLines += '\n'
+        }
+      }
+      examples.toMap
+    }
+
+    def src = T.source(os.pwd / "README.md")
+    def extractedExamples = T {
+      for ((name, source) <- extractExamples(src().path)) yield {
+        os.write(T.dest / s"$name.scala", source)
+        name -> PathRef(T.dest / s"$name.scala")
+      }
+    }
+
+    def generatedSources = T {
+      super.generatedSources() ++ Seq(extractedExamples().apply("1"))
+    }
+
+  }
 }

@@ -21,38 +21,92 @@ Pragmatic command line parsing for Scala applications.
 
 ## Example
 
-Both examples have the same command-line interface.
-
-### 1. Imperative Style
-
+<!--example 1-->
 ```scala
-object Main {
-  def main(args: Array[String]): Unit = {
-    val parser = argparse.ArgumentParser("An example application")
+package example
 
-    val host = parser.param[String](
-      "--host",
-      default = "localhost",
-      help = "network host"
-    )
+def main(args: Array[String]): Unit = {
+  val parser = argparse.default.ArgumentParser(description = "an example application")
 
-    val port = parser.param[Int](
-      "--port",
-      default = 8080,
-      aliases = Seq("-p"),
-      env = "PORT",
-      help = "some port"
-    )
+  // a named parameter
+  val host = parser.param[String](
+    name = "--host",
+    default = "localhost",
+    help = "the name of the host"
+  )
 
-    val path = parser.requiredParam[java.nio.file.Path](
-      "path",
-      help = "the path to use"
-    )
+  // a named parameter which accepts only integers
+  val port = parser.param[Int](
+    name = "--port",
+    default = 8080,
+    aliases = Seq("-p"),
+    env = "PORT",
+    help = "some port"
+  )
 
-    parser.parseOrExit(args)
-    println(s"${host()}:${port()}${path()}")
-  }
+  // a named parameter which does not take an argument, aka a "flag"
+  val secure = parser.param[Boolean](
+    name = "--secure",
+    default = false,
+    flag = true
+  )
+
+  // a positional parameter which accepts only paths
+  val path = parser.requiredParam[java.nio.file.Path](
+    "path",
+    help = "the path to use"
+  )
+
+  parser.parseOrExit(args)
+
+  val scheme = if (secure.value) "https" else "http"
+  val url = s"$scheme://${host.value}:${port.value}/${path.value}"
+  println(url)
 }
+```
+<!--/example-->
+
+Run it:
+
+```
+$ ./mill examples.readme
+missing argument: path
+run with '--help' for more information
+```
+
+```
+$ ./mill examples.readme a
+http://localhost:80/a
+```
+
+```
+$ ./mill examples.readme a/b/c --host 1.1.1.1 -p 10 --secure
+https://1.1.1.1:10/a/b/c
+```
+
+```
+$ PORT=80 ./mill examples.readme a
+http://localhost:80/a
+```
+
+```
+$ ./mill examples.readme --help
+usage: [options] <path>
+
+an example application
+
+positional arguments:
+  path
+        the path to use
+named arguments:
+  --host=<string>
+        the name of the host
+  --port=, -p=<int>
+        some port
+  --secure
+
+environment variables:
+  PORT                           sets --port
 ```
 
 ### 2. Declarative Style

@@ -25,6 +25,10 @@ final class Argument[A](name: String) extends (() => A) {
     )
   }
 
+  override def toString() = {
+    if (_isSet) s"Argument(${_value})" else "Argument(Unset)"
+  }
+
   @deprecated("use .value instead", "0.15.2")
   def apply() = value
 

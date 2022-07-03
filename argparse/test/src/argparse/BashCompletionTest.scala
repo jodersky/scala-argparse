@@ -25,14 +25,14 @@ object BashCompletionTest extends TestSuite {
       val parser = new CompletionParser(line("cmd -"))
       parser.parser.requiredParam[String]("--a")
       parser.parser.parseResult(Seq()) ==> ArgumentParser.EarlyExit
-      parser.completions ==> List("--help ", "--bash-completion ", "--a ")
+      parser.completions ==> List("--a ")
     }
     test("named multiple") {
       val parser = new CompletionParser(line("cmd -"))
       parser.parser.requiredParam[String]("--a")
       parser.parser.requiredParam[String]("--b")
       parser.parser.parseResult(Seq()) ==> ArgumentParser.EarlyExit
-      parser.completions ==> List("--help ", "--bash-completion ", "--a ", "--b ")
+      parser.completions ==> List("--a ", "--b ")
     }
     test("named multiple partial match 1") {
       val parser = new CompletionParser(line("cmd --opt"))
