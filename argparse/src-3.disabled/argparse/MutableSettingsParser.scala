@@ -72,7 +72,7 @@ object MutableSettingsParser {
               missing = () => (), // do nothing, all variables have a default value
               isFlag = ${Expr(isFlag)},
               repeatPositional = false,
-              absorbRemaining = false
+              endOfNamed = false
             )
           }
 

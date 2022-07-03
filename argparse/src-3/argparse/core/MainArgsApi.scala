@@ -255,7 +255,7 @@ object EntrypointsMetadata {
             aliases = $annot.aliases,
             help = $annot.doc,
             flag = ${Expr(TypeRepr.of(using tpe) =:= TypeRepr.of[Boolean])},
-            absorbRemaining = false,
+            endOfNamed = false,
             completer = None,
             bashCompleter = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
@@ -287,7 +287,7 @@ object EntrypointsMetadata {
             aliases = $annot.aliases,
             help = $annot.doc,
             flag = false,
-            absorbRemaining = false,
+            endOfNamed = false,
             completer = None,
             bashCompleter = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
@@ -345,7 +345,7 @@ object EntrypointsMetadata {
   //           aliases = $annot.aliases,
   //           help = $annot.doc,
   //           flag = ${Expr(TypeRepr.of[tpe.Underlying] <:< TypeRepr.of[Boolean])},
-  //           absorbRemaining = false,
+  //           endOfNamed = false,
   //           completer = None,
   //           bashCompleter = None
   //         )(using ${summonReader(paramTpe)}.asInstanceOf[Reader[tpe.Underlying]])
@@ -375,7 +375,7 @@ object EntrypointsMetadata {
   //           aliases = $annot.aliases,
   //           help = $annot.doc,
   //           flag = false,
-  //           absorbRemaining = false,
+  //           endOfNamed = false,
   //           completer = None,
   //           bashCompleter = None
   //         )(using ${summonReader(paramTpe)}.asInstanceOf[Reader[tpe.Underlying]])

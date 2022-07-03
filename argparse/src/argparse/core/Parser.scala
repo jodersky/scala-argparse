@@ -9,7 +9,7 @@ object Parser {
     * grammar of a command-line, and its functionality.
     *
     * ParamDefs associate parameter names to actions that are invoked by
-    * Parser.parse() in certain situations.
+    * Parser.parse().
     *
     * @param names All names that may be used by this parameter. If a name
     * starts with `-`, it is considered a "named" parameter, otherwise it is
@@ -20,10 +20,16 @@ object Parser {
     * Positional parameters are given arguments in the order they appear in.
     *
     * @param parseAndSet A function that is invoked anytime this parameter is
-    * encountered on the command line. In case of a named param, the first
-    * element is the actual name used, and the second element is the argument or
-    * None if no argument followed. In case of a position param, the parameter's
-    * first name is given and the argument value is always defined.
+    * encountered on the command line.
+    *
+    * In case of a named param, the first element is the actual name used, and
+    * the second element is the argument or None if no argument followed. In
+    * case of a positional param, the parameter's first name is given and the
+    * argument value is always defined.
+    *
+    * This function must return either a `Continue` or `Stop`. The former will
+    * instruct the parser to continue parsing, whereas the latter will prevent
+    * any further argument parsing.
     *
     * @param missing A function that is invoked if this parameter has not been
     * encountered at all.
@@ -32,10 +38,10 @@ object Parser {
     * never accepts an argument. In case its name is encountered, its value is
     * set to "true". Has no effect on positional parameters.
     *
-    * @param repeatPositional If this is a positional parameter, it will be the
-    * parser will repeat it indefinitely.
+    * @param repeatPositional If this is a positional parameter, the parser will
+    * repeat it indefinitely.
     *
-    * @param absorbRemaining Treat all subsequent parameters as positionals,
+    * @param endOfNamed Treat all subsequent parameters as positionals,
     *  regardless of their name. This can be useful for constructing nested
     *  commands.
     */
@@ -45,7 +51,7 @@ object Parser {
       missing: () => Unit,
       isFlag: Boolean,
       repeatPositional: Boolean,
-      absorbRemaining: Boolean
+      endOfNamed: Boolean
   ) {
     require(names.size > 0, "a parameter must have at least one name")
     require(
@@ -61,11 +67,13 @@ object Parser {
     def isNamed = names.head.startsWith("-")
   }
 
-  sealed trait ParamResult {
-    def isAbort = this == Abort
-  }
+  sealed trait ParamResult
+
+  /** Continue parsing of the next argument. */
   case object Continue extends ParamResult
-  case object Abort extends ParamResult // abort parsing, this stops parsing in its track. Other arguments will not be parsed
+
+  /** Stops parsing in its track. No further arguments will not be parsed. */
+  case object Stop extends ParamResult
 
   // extractor for named arguments
   private val Named = "(--?[^=]+)(?:=(.*))?".r
@@ -82,7 +90,7 @@ object Parser {
     *    functions of the parameter definition
     *
     * Delegating parameter invocation to a second pass allows for them to be
-    * evaluated in order of defnition, rather than order of appearance on the
+    * evaluated in order of definition, rather than order of appearance on the
     * command line. This is important to allow "breaking" parameters such as
     * `--help` to be on a command line with other "side-effecting" params, but
     * yet avoid executing part of the command line (of course this example
@@ -94,7 +102,9 @@ object Parser {
     * encountered. An extranous argument can be either an unknown named
     * argument, or a superfluous positional argument
     *
-    * @return true if no Abort was encountered. Note that this does not necessarily imply failure or success. false otherwise
+    * @return `true` if all arguments were parsed, `false` otherwise. In other
+    * words, returns `true` if no `Stop` was encountered while calling
+    * parameters' `parseAndSet` functions.
     */
   def parse(
       params: Seq[ParamDef],
@@ -133,7 +143,7 @@ object Parser {
       if (pos < positional.length) {
         val param = positional(pos)
         positionalArgs += arg
-        if (param.absorbRemaining) onlyPositionals = true
+        if (param.endOfNamed) onlyPositionals = true
         if (!param.repeatPositional) pos += 1
       } else {
         reportUnknown(arg)
@@ -162,7 +172,7 @@ object Parser {
               namedArgs(param) += (name -> Some(arg))
               readArg()
             }
-            if (param.absorbRemaining) onlyPositionals = true
+            if (param.endOfNamed) onlyPositionals = true
           case Named(name, _) =>
             reportUnknown(name)
             readArg()
@@ -181,16 +191,16 @@ object Parser {
           param.missing() // this shouldn't ever happen, but let's be defensive
         case Some(list) =>
           for ((nameUsed, valueOpt) <- list)
-            if (param.parseAndSet(nameUsed, valueOpt).isAbort) return false
+            if (param.parseAndSet(nameUsed, valueOpt) == Stop) return false
       }
     }
 
     for (i <- 0 until pos) {
-      if (positional(i).parseAndSet(positional(i).names.head, Some(positionalArgs(i))).isAbort)
+      if (positional(i).parseAndSet(positional(i).names.head, Some(positionalArgs(i))) == Stop)
         return false
     }
     for (i <- pos until positionalArgs.length) {
-      if (positional(pos).parseAndSet(positional(pos).names.head, Some(positionalArgs(i))).isAbort) return false
+      if (positional(pos).parseAndSet(positional(pos).names.head, Some(positionalArgs(i))) == Stop) return false
     }
     for (i <- pos until positional.length) {
       positional(i).missing()

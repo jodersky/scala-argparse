@@ -124,10 +124,11 @@ trait ParsersApi { api: TypesApi =>
     case object Error extends Result
 
     /** Parsing signalled an early exit. This means that there wasn't an error,
-      * but that not all agruments were parsed, as one of them requested an early
-      * exit (for example --help). Arguments are not available. */
+      * but that not all arguments were parsed. This occurs if one of the
+      * arguments requested an early exit after some side-effect (for example,
+      * `--help` will print a help message and then signal an early exit).
+      * Arguments are not available. */
     case object EarlyExit extends Result
-
 
   }
 
@@ -202,36 +203,36 @@ trait ParsersApi { api: TypesApi =>
     protected def hasErrors = errors > 0 // TODO: make public?
 
     private val paramDefs = mutable.ListBuffer.empty[ParamDef]
-    val paramInfos = mutable.ListBuffer.empty[ParamInfo]
-    var commandInfos = mutable.ListBuffer.empty[CommandInfo]
+    private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
+    private val commandInfos = mutable.ListBuffer.empty[CommandInfo]
 
     private var env: Map[String, String] = Map.empty
 
-    /** Low-level escape hatch for manually adding parameter definitions.
-      *
-      * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
-      * high-level API.
-      */
-    def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
+    // /** Low-level escape hatch for manually adding parameter definitions.
+    //   *
+    //   * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+    //   * high-level API.
+    //   */
+    // def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
 
-    /** Low-level escape hatch for manually adding parameter information.
-      *
-      * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
-      * high-level API.
-      */
-    def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
+    // /** Low-level escape hatch for manually adding parameter information.
+    //   *
+    //   * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+    //   * high-level API.
+    //   */
+    // def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
 
     if (enableHelpFlag) {
       paramDefs += ParamDef(
         Seq("--help"),
         (_, _) => {
           stdout.println(help())
-          Parser.Abort
+          Parser.Stop
         },
         missing = () => (),
         isFlag = true,
         repeatPositional = false,
-        absorbRemaining = false
+        endOfNamed = false
       )
       paramInfos += ParamInfo(
         isNamed = true,
@@ -256,12 +257,12 @@ trait ParsersApi { api: TypesApi =>
             case None => reportParseError(p, "argument required: name of program to complete")
             case Some(name) => printBashCompletion(name)
           }
-          Parser.Abort
+          Parser.Stop
         },
         missing = () => (),
         isFlag = false,
         repeatPositional = false,
-        absorbRemaining = false
+        endOfNamed = false
       )
       paramInfos += ParamInfo(
         isNamed = true,
@@ -295,7 +296,7 @@ trait ParsersApi { api: TypesApi =>
         aliases: Seq[String],
         help: String,
         flag: Boolean,
-        absorbRemaining: Boolean,
+        endOfNamed: Boolean,
         completer: Option[String => Seq[String]],
         bashCompleter: Option[BashCompleter]
     )(implicit reader: Reader[A]): argparse.Argument[A] = {
@@ -331,7 +332,7 @@ trait ParsersApi { api: TypesApi =>
         },
         isFlag = flag,
         repeatPositional = false,
-        absorbRemaining = absorbRemaining
+        endOfNamed = endOfNamed
       )
       paramDefs += pdef
 
@@ -388,7 +389,7 @@ trait ParsersApi { api: TypesApi =>
       * quite rare that they are useful for non-boolean params.
       * The flag field has no effect on positional parameters.
       *
-      * @param absorbRemaining Indicates that any arguments encountered after this parameter
+      * @param endOfNamed Indicates that any arguments encountered after this parameter
       * must be treated as positionals, even if they start with `-`. In other words, a
       * parameter marked with this has the same effect as the `--` separator. It can be
       * useful for implementing sub-commands. (Note however that this ArgumentParser has a
@@ -409,7 +410,7 @@ trait ParsersApi { api: TypesApi =>
         aliases: Seq[String] = Seq.empty,
         help: String = "",
         flag: Boolean = false,
-        absorbRemaining: Boolean = false,
+        endOfNamed: Boolean = false,
         completer: String => Seq[String] = null,
         bashCompleter: BashCompleter = null
     )(
@@ -422,7 +423,7 @@ trait ParsersApi { api: TypesApi =>
         aliases,
         help,
         flag,
-        absorbRemaining,
+        endOfNamed,
         Option(completer),
         Option(bashCompleter)
       )
@@ -444,7 +445,7 @@ trait ParsersApi { api: TypesApi =>
         aliases: Seq[String] = Seq.empty,
         help: String = "",
         flag: Boolean = false,
-        absorbRemaining: Boolean = false,
+        endOfNamed: Boolean = false,
         completer: String => Seq[String] = null,
         bashCompleter: BashCompleter = null,
     )(
@@ -457,7 +458,7 @@ trait ParsersApi { api: TypesApi =>
         aliases,
         help,
         flag,
-        absorbRemaining,
+        endOfNamed,
         Option(completer),
         Option(bashCompleter)
       )(reader)
@@ -514,7 +515,7 @@ trait ParsersApi { api: TypesApi =>
         missing = () => (),
         flag,
         repeatPositional = true,
-        absorbRemaining = false
+        endOfNamed = false
       )
       paramDefs += pdef
 
@@ -569,7 +570,7 @@ trait ParsersApi { api: TypesApi =>
         val commands = commandInfos.map(_.name)
         _command = requiredParam[String](
           "command",
-          absorbRemaining = true,
+          endOfNamed = true,
           completer = prefix => commands.filter(_.startsWith(prefix)).toList,
           bashCompleter = BashCompleter.Fixed(commands.toSet)
         )
