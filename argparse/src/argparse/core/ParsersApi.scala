@@ -20,7 +20,92 @@ case class CommandInfo(
     description: String
 )
 
-trait ParsersApi { readers: TypesApi =>
+trait ParsersApi { api: TypesApi =>
+
+  /** Generate a help message from parameters. This message will be used by
+    * ArgumentParsers. Overriding this allows you to customize the help message
+    * of all ArgumentParsers.
+    */
+  def help(
+    description: String,
+    params: Seq[ParamInfo],
+    commands: Seq[CommandInfo]
+  ): String = {
+    val (named0, positional) = params.partition(_.isNamed)
+    val named = named0.sortBy(_.names.head)
+
+    val width = math.max(argparse.term.cols - 20, 20)
+
+    val b = new StringBuilder
+    b ++= s"usage: "
+    if (!named.isEmpty) {
+      b ++= "[options] "
+    }
+    for (param <- positional) {
+      b ++= s"<${param.names.head}>"
+      if (param.repeats) b ++= "..."
+      b ++= " "
+    }
+    b ++= "\n"
+
+    if (!description.isEmpty()) {
+      b ++= "\n"
+      b ++= description
+      b ++= "\n\n"
+    }
+
+    if (!commands.isEmpty) {
+      b ++= "commands:\n"
+      for (cmd <- commands) {
+        b ++= f"  ${cmd.name}%-20s"
+        TextUtils.wrap(cmd.description, b, width, "\n                     ")
+        b ++= "\n"
+      }
+    }
+
+    val describedPos = positional.filter(!_.description.isEmpty)
+    if (!describedPos.isEmpty && commands.isEmpty) {
+      b ++= "positional arguments:\n"
+      for (param <- positional) {
+        b ++= s"  ${param.names.head}\n        "
+        TextUtils.wrap(param.description, b, width, "\n        ")
+        b ++= "\n"
+      }
+    }
+
+    // Note that not necessarily all named parameters must be optional. However
+    // since that is usually the case, this is what the default help message
+    // assumes.
+    if (!named.isEmpty) {
+      b ++= "named arguments:\n"
+    }
+    for (param <- named) {
+      val names = if (param.isFlag) {
+        param.names.mkString(", ")
+      } else {
+        param.names.map(_ + "=").mkString(", ")
+      }
+      b ++= s"  $names\n        "
+      TextUtils.wrap(param.description, b, width, "\n        ")
+      b ++= "\n"
+    }
+
+    val envVars = named.filter(_.env.isDefined)
+    if (!envVars.isEmpty) {
+      b ++= "environment variables:\n"
+      for (param <- envVars) {
+        b ++= f"  ${param.env.get}%-30s sets ${param.names.head}%s%n"
+      }
+    }
+
+    b.result()
+  }
+
+  /** The name of the flag to use for generating standalone bash-completion.
+    *
+    * Set this to the empty string to disable bash-completion entirely.
+    */
+  def bashCompletionFlag = "--bash-completion"
 
   object ArgumentParser {
     def apply(
@@ -43,38 +128,7 @@ trait ParsersApi { readers: TypesApi =>
       * exit (for example --help). Arguments are not available. */
     case object EarlyExit extends Result
 
-    def wrap(in: String, out: StringBuilder, width: Int, newLine: String): Unit = {
-      if (in.length < width) {
-        out ++= in
-        return
-      }
 
-      var offset = 0
-      var segStart = 0
-      var wordStart = 0
-      var col = 0
-
-      while (offset < in.length) {
-        segStart = offset
-        while(offset < in.length && in.charAt(offset).isWhitespace) {
-          offset += 1
-          col += 1
-        }
-        wordStart = offset
-        while(offset < in.length && !in.charAt(offset).isWhitespace) {
-          offset += 1
-          col += 1
-        }
-
-        if (col >= width) {
-          out ++= newLine
-          out ++= in.substring(wordStart, offset)
-          col = offset - wordStart
-        } else {
-          out ++= in.substring(segStart, offset)
-        }
-      }
-    }
   }
 
   /** A simple command line argument parser.
@@ -192,80 +246,11 @@ trait ParsersApi { readers: TypesApi =>
     }
 
     /** A default help message, generated from parameter help strings. */
-    def help(): String = {
-      val (named0, positional) = paramInfos.partition(_.isNamed)
-      val named = named0.sortBy(_.names.head)
+    def help(): String = api.help(description, paramInfos.toSeq, commandInfos.toSeq)
 
-      val width = argparse.term.cols - 20
-
-      val b = new StringBuilder
-      b ++= s"usage: "
-      if (!named.isEmpty) {
-        b ++= "[options] "
-      }
-      for (param <- positional) {
-        b ++= s"<${param.names.head}>"
-        if (param.repeats) b ++= "..."
-        b ++= " "
-      }
-      b ++= "\n"
-
-      if (!description.isEmpty()) {
-        b ++= "\n"
-        b ++= description
-        b ++= "\n\n"
-      }
-
-      if (!commandInfos.isEmpty) {
-        b ++= "commands:\n"
-        for (cmd <- commandInfos) {
-          b ++= f"  ${cmd.name}%-20s"
-          wrap(cmd.description, b, width, "\n                     ")
-          b ++= "\n"
-        }
-      }
-
-      val describedPos = positional.filter(!_.description.isEmpty)
-      if (!describedPos.isEmpty && commandInfos.isEmpty) {
-        b ++= "positional arguments:\n"
-        for (param <- positional) {
-          b ++= s"  ${param.names.head}\n        "
-          wrap(param.description, b, width, "\n        ")
-          b ++= "\n"
-        }
-      }
-
-      // Note that not necessarily all named parameters must be optional. However
-      // since that is usually the case, this is what the default help message
-      // assumes.
-      if (!named.isEmpty) {
-        b ++= "named arguments:\n"
-      }
-      for (param <- named) {
-        val names = if (param.isFlag) {
-          param.names.mkString(", ")
-        } else {
-          param.names.map(_ + "=").mkString(", ")
-        }
-        b ++= s"  $names\n        "
-        wrap(param.description, b, width, "\n        ")
-        b ++= "\n"
-      }
-
-      val envVars = named.filter(_.env.isDefined)
-      if (!envVars.isEmpty) {
-        b ++= "environment variables:\n"
-        for (param <- envVars) {
-          b ++= f"  ${param.env.get}%-30s sets ${param.names.head}%s%n"
-        }
-      }
-
-      b.result()
-    }
-
-    if (enableBashCompletionFlag) {
+    if (enableBashCompletionFlag && bashCompletionFlag != "") {
       paramDefs += ParamDef(
-        Seq("--bash-completion"),
+        Seq(bashCompletionFlag),
         (p, name) => {
           name match {
             case None => reportParseError(p, "argument required: name of program to complete")
@@ -280,7 +265,7 @@ trait ParsersApi { readers: TypesApi =>
       )
       paramInfos += ParamInfo(
         isNamed = true,
-        names = Seq("--bash-completion"),
+        names = Seq(bashCompletionFlag),
         isFlag = true,
         repeats = false,
         env = None,
