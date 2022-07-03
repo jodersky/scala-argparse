@@ -257,7 +257,8 @@ object EntrypointsMetadata {
             flag = ${Expr(TypeRepr.of(using tpe) =:= TypeRepr.of[Boolean])},
             endOfNamed = false,
             completer = None,
-            bashCompleter = None
+            bashCompleter = None,
+            argName = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
         }
 
@@ -289,7 +290,8 @@ object EntrypointsMetadata {
             flag = false,
             endOfNamed = false,
             completer = None,
-            bashCompleter = None
+            bashCompleter = None,
+            argName = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
         }
     }

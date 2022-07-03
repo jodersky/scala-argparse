@@ -14,6 +14,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
           case _: NumberFormatException =>
             Error(s"'$a' is not an integral number")
         }
+      def typeName: String = "int"
     }
 
   implicit object FloatReader extends Reader[Float] {
@@ -23,6 +24,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       } catch {
         case _: NumberFormatException => Error(s"'$a' is not a number")
       }
+    def typeName: String = "float"
   }
 
   implicit object DoubleReader extends Reader[Double] {
@@ -32,6 +34,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       } catch {
         case _: NumberFormatException => Error(s"'$a' is not a number")
       }
+    def typeName: String = "float"
   }
 
   val pathCompleter: String => Seq[String] = (prefix: String) => {
@@ -73,6 +76,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
   trait FsPathReader[A] extends Reader[A] {
     override val completer = pathCompleter
     override val bashCompleter = BashCompleter.Default
+    def typeName: String = "path"
   }
 
   implicit object FilePathReader extends FsPathReader[os.FilePath] {
@@ -101,6 +105,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a relative child path")
       }
+    override def typeName: String = "subpath"
   }
   implicit object RelPathReader extends FsPathReader[os.RelPath] {
     def read(a: String) =
@@ -110,6 +115,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case _: IllegalArgumentException =>
           Error(s"'$a' is not a relative path")
       }
+    override def typeName: String = "relpath"
   }
   implicit object JavaPathReader extends FsPathReader[java.nio.file.Path] {
     def read(a: String) =
@@ -135,6 +141,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     }
     override def completer =
       prefix => Seq("true", "false").filter(_.startsWith(prefix))
+    override def typeName: String = "true|false"
   }
 
   private def colonSeparatedReader[E, Col <: Iterable[E]](
@@ -151,6 +158,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
           Success(elems.map(_.asInstanceOf[Success[E]].value).to(factory))
       }
     }
+    override def typeName: String = s"list of ${elementReader.typeName}s separated by ':'"
   }
 
   implicit def FilePathCollectionReader[Col <: Iterable[os.FilePath]]
@@ -190,6 +198,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case _        => Error(s"expected key=value pair")
       }
     }
+    def typeName = s"${kr.typeName}=${vr.typeName}"
   }
   implicit def OptionReader[A](
       implicit elementReader: Reader[A]
@@ -201,6 +210,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       }
     }
     override def completer = elementReader.completer
+    def typeName = elementReader.typeName
   }
   implicit object InputStreamReader extends Reader[() => java.io.InputStream] {
     override val completer = pathCompleter
@@ -212,6 +222,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case e: Exception => Error(e.getMessage())
       }
     }
+    def typeName = "file|-"
   }
   implicit object OutputStreamReader extends Reader[() => java.io.OutputStream] {
     override val completer = pathCompleter
@@ -223,6 +234,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         case e: Exception => Error(e.getMessage())
       }
     }
+    def typeName = "file|-"
   }
   implicit object ReadableReader extends Reader[geny.Readable] {
     override val completer = pathCompleter
@@ -238,6 +250,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         )
       case Error(msg) => Error(msg)
     }
+    def typeName = "file|-"
   }
   implicit object DurationReader extends Reader[scala.concurrent.duration.Duration] {
     def read(a: String) = try {
@@ -245,6 +258,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     } catch {
       case _: NumberFormatException => Error(s"'$a' is not a valid duration")
     }
+    def typeName = "duration"
   }
   implicit object FiniteDurationReader extends Reader[scala.concurrent.duration.FiniteDuration] {
     def read(a: String) = DurationReader.read(a) match {
@@ -253,6 +267,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         Error(s"expected a finite duration, but '$a' is infinite")
       case Error(msg) => Error(msg)
     }
+    def typeName = "duration"
   }
   implicit object InstantReader extends Reader[java.time.Instant] {
     def read(a: String) = try {
@@ -261,6 +276,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as an instant in time. The format must follow 'YYYY-MM-DDThh:mm:ss[.S]Z'. Note that the 'T' is literal and the time zone Z must be given.")
     }
+    def typeName = "timestamp"
   }
   implicit object ZonedDateTimeReader extends Reader[java.time.ZonedDateTime] {
     def read(a: String) = try {
@@ -269,6 +285,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a zoned date and time")
     }
+    def typeName = "timestamp"
   }
   implicit object LocalDateTimeReader extends Reader[java.time.LocalDateTime] {
     def read(a: String) = try {
@@ -277,6 +294,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a local date and time")
     }
+    def typeName = "local timestamp"
   }
   implicit object LocalDateReader extends Reader[java.time.LocalDate] {
     def read(a: String) = try {
@@ -285,6 +303,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a local date")
     }
+    def typeName = "local date"
   }
   implicit object LocalTime extends Reader[java.time.LocalTime] {
     def read(a: String) = try {
@@ -293,6 +312,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
       case ex: java.time.format.DateTimeParseException =>
         Error(s"can not parse $a as a local time")
     }
+    def typeName = "local time"
   }
   implicit object RangeReader extends Reader[Range] {
     def read(str: String) = str.split("\\.\\.") match {
@@ -304,6 +324,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
         }
       case _ => Reader.Error(s"expected 'from..to', found: $str")
     }
+    def typeName = "from..to"
   }
 }
 
@@ -327,5 +348,6 @@ trait LowPrioReaders { self: TypesApi =>
           Success(elems.map(_.asInstanceOf[Success[Elem]].value).to(factory))
       }
     }
+    def typeName = s"list of ${elementReader.typeName}s separated by ','"
   }
 }

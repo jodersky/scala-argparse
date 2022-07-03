@@ -7,13 +7,15 @@ import Parser.ParamDef
 case class ParamInfo(
     isNamed: Boolean,
     names: Seq[String],
-    isFlag: Boolean,
+    argName: Option[String], // if this is a named param, what should the argument be called in help messages
     repeats: Boolean,
     env: Option[String],
     description: String,
     completer: String => Seq[String],
     bashCompleter: BashCompleter
-)
+) {
+  def isFlag = isNamed && argName == None
+}
 case class CommandInfo(
     name: String,
     action: Seq[String] => Unit,
@@ -85,7 +87,9 @@ trait ParsersApi { api: TypesApi =>
       } else {
         param.names.map(_ + "=").mkString(", ")
       }
-      b ++= s"  $names\n        "
+      b ++= s"  $names"
+      param.argName.foreach(n => b ++= s"<$n>")
+      b ++= "\n        "
       TextUtils.wrap(param.description, b, width, "\n        ")
       b ++= "\n"
     }
@@ -237,7 +241,7 @@ trait ParsersApi { api: TypesApi =>
       paramInfos += ParamInfo(
         isNamed = true,
         names = Seq("--help"),
-        isFlag = true,
+        argName = None,
         repeats = false,
         env = None,
         description = "show this message and exit",
@@ -267,7 +271,7 @@ trait ParsersApi { api: TypesApi =>
       paramInfos += ParamInfo(
         isNamed = true,
         names = Seq(bashCompletionFlag),
-        isFlag = true,
+        argName = None,
         repeats = false,
         env = None,
         description = "generate bash completion for this command",
@@ -298,7 +302,8 @@ trait ParsersApi { api: TypesApi =>
         flag: Boolean,
         endOfNamed: Boolean,
         completer: Option[String => Seq[String]],
-        bashCompleter: Option[BashCompleter]
+        bashCompleter: Option[BashCompleter],
+        argName: Option[String]
     )(implicit reader: Reader[A]): argparse.Argument[A] = {
       val arg = new argparse.Argument[A](name)
 
@@ -337,14 +342,14 @@ trait ParsersApi { api: TypesApi =>
       paramDefs += pdef
 
       paramInfos += ParamInfo(
-        pdef.isNamed,
-        pdef.names,
-        flag,
-        false,
-        env,
-        help,
-        completer.getOrElse(reader.completer),
-        bashCompleter.getOrElse(reader.bashCompleter)
+        isNamed = pdef.isNamed,
+        names = pdef.names,
+        argName = if (flag) None else argName.orElse(Some(reader.typeName)),
+        repeats = false,
+        env = env,
+        description = help,
+        completer = completer.getOrElse(reader.completer),
+        bashCompleter = bashCompleter.getOrElse(reader.bashCompleter)
       )
 
       arg
@@ -401,6 +406,10 @@ trait ParsersApi { api: TypesApi =>
       * "$cur" may be used in the snippet, and will contain the current word being completed for this
       * parameter.
       *
+      * @param argName The name to use in help messages for this parameter's argument.
+      * This only has an effect on named parameters which take an argument. By default,
+      * the name of the type of the argument will be used.
+      *
       * @return A handle to the parameter's future value, available once `parse(args)` has been called.
       */
     def param[A](
@@ -412,7 +421,8 @@ trait ParsersApi { api: TypesApi =>
         flag: Boolean = false,
         endOfNamed: Boolean = false,
         completer: String => Seq[String] = null,
-        bashCompleter: BashCompleter = null
+        bashCompleter: BashCompleter = null,
+        argName: String = null
     )(
         implicit reader: Reader[A]
     ): argparse.Argument[A] =
@@ -425,7 +435,8 @@ trait ParsersApi { api: TypesApi =>
         flag,
         endOfNamed,
         Option(completer),
-        Option(bashCompleter)
+        Option(bashCompleter),
+        Option(argName)
       )
 
     /** Define a required parameter.
@@ -448,6 +459,7 @@ trait ParsersApi { api: TypesApi =>
         endOfNamed: Boolean = false,
         completer: String => Seq[String] = null,
         bashCompleter: BashCompleter = null,
+        argName: String = null
     )(
         implicit reader: Reader[A]
     ): argparse.Argument[A] =
@@ -460,7 +472,8 @@ trait ParsersApi { api: TypesApi =>
         flag,
         endOfNamed,
         Option(completer),
-        Option(bashCompleter)
+        Option(bashCompleter),
+        Option(argName)
       )(reader)
 
     /** Define a parameter that may be repeated.
@@ -487,7 +500,8 @@ trait ParsersApi { api: TypesApi =>
         help: String = "",
         flag: Boolean = false,
         completer: String => Seq[String] = null,
-        bashCompleter: BashCompleter = null
+        bashCompleter: BashCompleter = null,
+        argName: String = null
     )(implicit reader: Reader[A]): argparse.Argument[Seq[A]] = {
       val arg = new argparse.Argument[Seq[A]](name)
       var values = mutable.ListBuffer.empty[A]
@@ -520,14 +534,14 @@ trait ParsersApi { api: TypesApi =>
       paramDefs += pdef
 
       paramInfos += ParamInfo(
-        pdef.isNamed,
-        pdef.names,
-        flag,
-        true,
-        None,
-        help,
-        Option(completer).getOrElse(reader.completer),
-        Option(bashCompleter).getOrElse(reader.bashCompleter)
+        isNamed = pdef.isNamed,
+        names = pdef.names,
+        argName = if (flag) None else if (argName == null) Some(reader.typeName) else None,
+        repeats = true,
+        env = None,
+        description = help,
+        completer = Option(completer).getOrElse(reader.completer),
+        bashCompleter = Option(bashCompleter).getOrElse(reader.bashCompleter)
       )
 
       arg

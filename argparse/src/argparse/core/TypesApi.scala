@@ -14,7 +14,7 @@ trait TypesApi {
     */
   @annotation.implicitNotFound(
     "No argparse.Reader[${A}] found. A reader is required to parse a command line argument from a string to a ${A}. " +
-    "Please define a given argparse.Reader[$A]."
+    "Please define an argparse.Reader[${A}]."
   )
   trait Reader[A] {
 
@@ -24,6 +24,9 @@ trait TypesApi {
       * to crash, leading to a horrible user experience.
       */
     def read(a: String): Reader.Result[A]
+
+    /** The human-friendly name of this reader's argument type. */
+    def typeName: String
 
     /** Compute available shell completions starting with a given string. This is
       * used by embedded bash completion, where the user program is responsible
@@ -50,6 +53,7 @@ trait TypesApi {
 
   implicit val StringReader: Reader[String] = new Reader[String] {
     def read(a: String) = Reader.Success(a)
+    def typeName: String = "string"
   }
 
 }
