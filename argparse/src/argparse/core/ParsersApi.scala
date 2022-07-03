@@ -7,9 +7,10 @@ import Parser.ParamDef
 
 trait ParsersApi { api: TypesApi =>
 
-  /** Generate a help message from parameters. This message will be used by
-    * ArgumentParsers. Overriding this allows you to customize the help message
-    * of all ArgumentParsers.
+  /** Generate a help message from parameters.
+    *
+    * This message will be used by ArgumentParsers. Overriding this allows you
+    * to customize the help message of all ArgumentParsers.
     */
   def help(
     description: String,
@@ -100,8 +101,9 @@ trait ParsersApi { api: TypesApi =>
         enableHelpFlag: Boolean = true,
         enableBashCompletionFlag: Boolean = true,
         stdout: java.io.PrintStream = System.out,
-        stderr: java.io.PrintStream = System.err
-    ) = new ArgumentParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr)
+        stderr: java.io.PrintStream = System.err,
+        env: Map[String, String] = sys.env
+    ) = new ArgumentParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr, env)
 
     sealed trait Result
     /** Parsing succeeded. Arguments are available. */
@@ -158,7 +160,8 @@ trait ParsersApi { api: TypesApi =>
       val enableHelpFlag: Boolean,
       val enableBashCompletionFlag: Boolean,
       val stdout: java.io.PrintStream,
-      val stderr: java.io.PrintStream
+      val stderr: java.io.PrintStream,
+      val env: Map[String, String]
   ) { self =>
     import ArgumentParser._
 
@@ -192,8 +195,6 @@ trait ParsersApi { api: TypesApi =>
     private val paramDefs = mutable.ListBuffer.empty[ParamDef]
     private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
     private val commandInfos = mutable.ListBuffer.empty[CommandInfo]
-
-    private var env: Map[String, String] = Map.empty
 
     // /** Low-level escape hatch for manually adding parameter definitions.
     //   *
@@ -557,8 +558,7 @@ trait ParsersApi { api: TypesApi =>
     /** Parse the given arguments with respect to the parameters defined by
       * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
       */
-    def parseResult(args: Iterable[String], env: Map[String, String] = sys.env): Result = {
-      self.env = env
+    def parseResult(args: Iterable[String]): Result = {
 
       var _command: () => String = null
       var _commandArgs: () => Seq[String] = null
