@@ -1,9 +1,9 @@
 
 class Foo
 
-object api extends argparse.core.Api with argparse.core.MainArgsApi
+// object api extends argparse.core.Api with argparse.core.MainArgsApi
 
-val entrypoints = api.initialize()
+val entrypoints = argparse.default.initialize()
 
 @argparse.main()
 def foo(value: Int = 2) = {
