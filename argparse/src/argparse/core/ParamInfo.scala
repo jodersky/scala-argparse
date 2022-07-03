@@ -1,4 +1,4 @@
-package argparse
+package argparse.core
 
 /** User-friendly parameter information, used for generating help message */
 case class ParamInfo(
@@ -9,7 +9,7 @@ case class ParamInfo(
     env: Option[String],
     description: String,
     interactiveCompleter: String => Seq[String],
-    standaloneCompleter: BashCompleter
+    standaloneCompleter: argparse.BashCompleter
 ) {
   def isFlag = isNamed && argName == None
 }

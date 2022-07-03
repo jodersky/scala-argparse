@@ -1,5 +1,6 @@
-package argparse
+package argparse.core
 
+import argparse.BashCompleter
 import java.io.PrintStream
 import java.io.OutputStream
 
