@@ -29,6 +29,7 @@ object EntrypointsMetadata {
 
   def initializeThis[Api <: TypesApi with ParsersApi: Type](using qctx: Quotes) = {
     import qctx.reflect._
+    //report.error(Symbol.spliceOwner.owner.owner.toString)
     initializeContainer[Api](Symbol.spliceOwner.owner.owner)
   }
 
@@ -37,7 +38,7 @@ object EntrypointsMetadata {
 
     val mainMethods: List[Symbol] = container.declaredMethods.filter{ m =>
       // try {
-        m.hasAnnotation(TypeRepr.of[main].typeSymbol)
+        m.hasAnnotation(TypeRepr.of[argparse.main].typeSymbol)
       // } catch {
       //   case _: Exception =>
       //     // Hack Alert: if this macro is expanded as a method in the container
@@ -50,6 +51,8 @@ object EntrypointsMetadata {
       //     false
       // }
     }
+
+    //report.error(mainMethods.mkString("[", " ", "]"))
 
     /*
     val tpe = Applied(
@@ -66,12 +69,12 @@ object EntrypointsMetadata {
     val entrypoints = for method <- mainMethods yield {
       val defaultParamValues = getDefaultParamValues(method)
       val invoke = '{
-        val p = $prefix
+        //val p = $prefix
         val parser = $prefix.ArgumentParser()
         val accessors: Seq[argparse.Argument[_]] = ${
           Expr.ofSeq(
             for param <- method.paramSymss.flatten yield
-              paramAccessor(using qctx)(param, defaultParamValues, 'p, 'parser)
+              paramAccessor(using qctx)(param, defaultParamValues, prefix, 'parser)
           )
         }
 

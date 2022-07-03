@@ -6,7 +6,7 @@ class Foo
 val entrypoints = argparse.default.initialize()
 
 @argparse.main()
-def foo(value: Int = 2, paths: List[os.Path] = Nil, data: (String, os.Path) = ("", os.Path("."))) = {
+def foo(value: Int = 2, paths: List[os.Path] = Nil) = {
   println(value)
   println(paths)
 }
