@@ -32,7 +32,7 @@ object ReaderTest extends TestSuite {
       val p = parser.requiredParam[Option[Int]]("p1")
       parser.parseResult(Seq("1"))
       parser.parseErrors ==> 0
-      p() ==> Some(1)
+      p.value ==> Some(1)
     }
     test("missing option") {
       val parser = new TestParser
@@ -46,19 +46,19 @@ object ReaderTest extends TestSuite {
       val parser = new TestParser
       val p = parser.requiredParam[Seq[String]]("-p")
       parser.parseResult(Seq("-p", "a,b,c", "-p", "c,d,e")) ==> argparse.default.ArgumentParser.Success
-      p() ==> Seq("c", "d", "e")
+      p.value ==> Seq("c", "d", "e")
     }
     test("repeated collection") {
       val parser = new TestParser
       val p = parser.repeatedParam[Seq[String]]("-p")
       parser.parseResult(Seq("-p", "a,b,c", "-p", "c,d,e")) ==> argparse.default.ArgumentParser.Success
-      p() ==> List(List("a", "b", "c"), List("c", "d", "e"))
+      p.value ==> List(List("a", "b", "c"), List("c", "d", "e"))
     }
     test("key-value") {
       val parser = new TestParser
       val p = parser.repeatedParam[(String, Int)]("-p")
       parser.parseResult(Seq("-p=a=1", "-p", "c=2")) ==> argparse.default.ArgumentParser.Success
-      p() ==> List("a" -> 1, "c" -> 2)
+      p.value ==> List("a" -> 1, "c" -> 2)
     }
     test("input stream") {
       val parser = new TestParser
@@ -66,7 +66,7 @@ object ReaderTest extends TestSuite {
       parser.parseResult(Seq("build.sc"))
       parser.parseErrors ==> 0
       val expected = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("build.sc")))
-      val stream = param()()
+      val stream = param.value()
       try {
         scala.io.Source.fromInputStream(stream).mkString ==> expected
       } finally stream.close()
@@ -77,7 +77,7 @@ object ReaderTest extends TestSuite {
       parser.parseResult(Seq("build.sc"))
       parser.parseErrors ==> 0
       val expected = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("build.sc")))
-      param().readBytesThrough{ stream =>
+      param.value.readBytesThrough{ stream =>
         scala.io.Source.fromInputStream(stream).mkString ==> expected
       }
     }
@@ -95,7 +95,7 @@ object ReaderTest extends TestSuite {
       val savedOut = System.out
       try {
         System.setOut(byteStream)
-        val stream = param()()
+        val stream = param.value()
         try {
           stream.write(testData.getBytes())
           stream.flush()
@@ -114,15 +114,15 @@ object ReaderTest extends TestSuite {
       val param = parser.requiredParam[Iterable[os.FilePath]]("p1")
       parser.parseResult(Seq("/a:./b:../c:d"))
       parser.parseErrors ==> 0
-      param() ==> Seq(os.FilePath("/a"), os.FilePath("./b"), os.FilePath("../c"), os.FilePath("d"))
+      param.value ==> Seq(os.FilePath("/a"), os.FilePath("./b"), os.FilePath("../c"), os.FilePath("d"))
     }
     test("pathseq") {
       val parser = new TestParser
       val param = parser.requiredParam[Seq[os.Path]]("p1")
       parser.parseResult(Seq("/a:./b:../c:d"))
       parser.parseErrors ==> 0
-      //param().map(_.isInstanceOf[os.Path]).foreach(println)
-      param() ==> Seq(os.Path("/a"), os.pwd / "b", os.pwd / os.up / "c", os.pwd / "d")
+      //param.value.map(_.isInstanceOf[os.Path]).foreach(println)
+      param.value ==> Seq(os.Path("/a"), os.pwd / "b", os.pwd / os.up / "c", os.pwd / "d")
     }
     test("subpathseq") {
       val parser = new TestParser
@@ -139,7 +139,7 @@ object ReaderTest extends TestSuite {
       test("valid") {
         parser.parseResult(Seq("a:./a:a/../b"))
         parser.parseErrors ==> 0
-        param() ==> Seq(os.SubPath("a"), os.SubPath("a"), os.SubPath("b"))
+        param.value ==> Seq(os.SubPath("a"), os.SubPath("a"), os.SubPath("b"))
       }
     }
   }

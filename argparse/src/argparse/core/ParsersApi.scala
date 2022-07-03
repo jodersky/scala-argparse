@@ -298,13 +298,13 @@ trait ParsersApi { api: TypesApi =>
         absorbRemaining: Boolean,
         completer: Option[String => Seq[String]],
         bashCompleter: Option[BashCompleter]
-    )(implicit reader: Reader[A]): () => A = {
-      var setValue: Option[A] = None
+    )(implicit reader: Reader[A]): argparse.Argument[A] = {
+      val arg = new argparse.Argument[A](name)
 
       def read(name: String, strValue: String): Unit = {
         reader.read(strValue) match {
           case Reader.Error(message) => reportParseError(name, message)
-          case Reader.Success(value) => setValue = Some(value)
+          case Reader.Success(value) => arg.set(value)
         }
       }
 
@@ -325,7 +325,7 @@ trait ParsersApi { api: TypesApi =>
           fromEnv match {
             case Some(str) => parseAndSet(s"from env ${env.get}", Some(str))
             case None if default.isDefined =>
-              setValue = Some(default.get())
+              arg.set(default.get())
             case None => reportMissing(name)
           }
         },
@@ -346,12 +346,7 @@ trait ParsersApi { api: TypesApi =>
         bashCompleter.getOrElse(reader.bashCompleter)
       )
 
-      () =>
-        setValue.getOrElse(
-          throw new NoSuchElementException(
-            s"This argument '$name' is not yet available. ArgumentParser#parse(args) must be called before accessing this value."
-          )
-        )
+      arg
     }
 
     /** Define an optional parameter, using the given default value if it is not
@@ -419,7 +414,7 @@ trait ParsersApi { api: TypesApi =>
         bashCompleter: BashCompleter = null
     )(
         implicit reader: Reader[A]
-    ): () => A =
+    ): argparse.Argument[A] =
       singleParam(
         name,
         Some(() => default),
@@ -454,7 +449,7 @@ trait ParsersApi { api: TypesApi =>
         bashCompleter: BashCompleter = null,
     )(
         implicit reader: Reader[A]
-    ): () => A =
+    ): argparse.Argument[A] =
       singleParam(
         name,
         None,
@@ -492,16 +487,17 @@ trait ParsersApi { api: TypesApi =>
         flag: Boolean = false,
         completer: String => Seq[String] = null,
         bashCompleter: BashCompleter = null
-    )(implicit reader: Reader[A]): () => Seq[A] = {
-      var values = mutable.ArrayBuffer.empty[A]
-      var isSet = false
+    )(implicit reader: Reader[A]): argparse.Argument[Seq[A]] = {
+      val arg = new argparse.Argument[Seq[A]](name)
+      var values = mutable.ListBuffer.empty[A]
+      arg.set(values.toList)
 
       def read(name: String, strValue: String): Unit = {
         reader.read(strValue) match {
           case Reader.Error(message) => reportParseError(name, message)
           case Reader.Success(value) =>
             values += value
-            isSet = true
+            arg.set(values.toList)
         }
       }
 
@@ -533,7 +529,7 @@ trait ParsersApi { api: TypesApi =>
         Option(bashCompleter).getOrElse(reader.bashCompleter)
       )
 
-      () => values.toList
+      arg
     }
 
     /** Utility to define a sub command.

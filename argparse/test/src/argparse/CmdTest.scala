@@ -21,7 +21,7 @@ object CmdTest extends TestSuite {
       val parser = new TestParser
       val global = parser.requiredParam[String]("--global")
       var res: String = ""
-      parser.command("cmd1", _ => res = global())
+      parser.command("cmd1", _ => res = global.value)
       parser.parseResult(Seq("--global", "hello, world | a | b", "cmd1")) ==> ArgumentParser.Success
       res ==> "hello, world | a | b"
     }
@@ -29,7 +29,7 @@ object CmdTest extends TestSuite {
       val parser = new TestParser
       val global = parser.requiredParam[String]("global")
       var res: String = ""
-      parser.command("cmd1", _ => res = global())
+      parser.command("cmd1", _ => res = global.value)
       parser.parseResult(Seq("hello, world | a | b", "cmd1")) ==> ArgumentParser.Success
       res ==> "hello, world | a | b"
     }

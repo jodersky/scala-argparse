@@ -68,7 +68,7 @@ object EntrypointsMetadata {
       val invoke = '{
         val p = $prefix
         val parser = $prefix.ArgumentParser()
-        val accessors: Seq[() => Any] = ${
+        val accessors: Seq[argparse.Argument[_]] = ${
           Expr.ofSeq(
             for param <- method.paramSymss.flatten yield
               paramAccessor(using qctx)(param, defaultParamValues, 'p, 'parser)
@@ -77,7 +77,7 @@ object EntrypointsMetadata {
 
         (args: Iterable[String]) => {
           parser.parseOrExit(args)
-          val results = accessors.map(_())
+          val results = accessors.map(_.value)
           ${callFun(using qctx)(method, 'results)}
           ()
         }
@@ -201,7 +201,7 @@ object EntrypointsMetadata {
     defaults: Map[qctx.reflect.Symbol, Expr[Any]],
     prefix: Expr[Api],
     parser: Expr[_] // == prefix.ArgumentParser
-  ): Expr[() => _] = {
+  ): Expr[argparse.Argument[_]] = {
     import qctx.reflect._
 
     val annot: Expr[argparse.core.arg] = param.getAnnotation(TypeRepr.of[argparse.core.arg].typeSymbol) match {

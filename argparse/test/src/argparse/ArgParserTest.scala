@@ -83,11 +83,11 @@ object ArgParserTest extends TestSuite {
       val n3 = parser.requiredParam[String]("--n3")
       parser.parseResult("--n2=a" :: "b" :: "--n3=c" :: "d" :: "--n1=e" :: Nil)
 
-      n1() ==> "e"
-      n2() ==> "a"
-      n3() ==> "c"
-      p1() ==> "b"
-      p2() ==> "d"
+      n1.value ==> "e"
+      n2.value ==> "a"
+      n3.value ==> "c"
+      p1.value ==> "b"
+      p2.value ==> "d"
       parser.missing ==> 0
       parser.unknown ==> 0
     }
@@ -98,8 +98,8 @@ object ArgParserTest extends TestSuite {
       val p2 = parser.requiredParam[String]("p2")
       parser.parseResult("a" :: "--" :: "--n3=c" :: Nil)
 
-      p1() ==> "a"
-      p2() ==> "--n3=c"
+      p1.value ==> "a"
+      p2.value ==> "--n3=c"
       parser.missing ==> 1
       parser.unknown ==> 0
     }
@@ -111,7 +111,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> 2
+      n1.value ==> 2
     }
     test("typed error") {
       val parser = new TestParser
@@ -130,7 +130,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> List(2, 3)
+      n1.value ==> List(2, 3)
     }
     test("repeated named") {
       val parser = new TestParser
@@ -140,7 +140,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> List("a", "b", "c")
+      n1.value ==> List("a", "b", "c")
     }
     test("repeated positional") {
       val parser = new TestParser
@@ -152,9 +152,9 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> List("c")
-      p1() ==> "a"
-      r1() ==> List("b", "d", "e")
+      n1.value ==> List("c")
+      p1.value ==> "a"
+      r1.value ==> List("b", "d", "e")
     }
     test("repeated mix") {
       val parser = new TestParser
@@ -180,10 +180,10 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> List("a", "e")
-      n2() ==> "f"
-      p1() ==> "b"
-      r1() ==> List("c", "g", "h", "--n2=i")
+      n1.value ==> List("a", "e")
+      n2.value ==> "f"
+      p1.value ==> "b"
+      r1.value ==> List("c", "g", "h", "--n2=i")
     }
     test("missing argument's argument") {
       val parser = new TestParser
@@ -202,7 +202,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> "true"
+      n1.value ==> "true"
     }
     test("flag override with embedded") {
       val parser = new TestParser
@@ -212,7 +212,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> "yesss!"
+      n1.value ==> "yesss!"
     }
     test("flag absent without default value") {
       val parser = new TestParser
@@ -231,7 +231,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> "false"
+      n1.value ==> "false"
     }
     test("named, not embedded") {
       val parser = new TestParser
@@ -245,9 +245,9 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> "b"
-      n2() ==> "d"
-      p1() ==> "c"
+      n1.value ==> "b"
+      n2.value ==> "d"
+      p1.value ==> "c"
     }
     test("alias short") {
       val parser = new TestParser
@@ -257,7 +257,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> "a"
+      n1.value ==> "a"
     }
     test("alias long") {
       val parser = new TestParser
@@ -267,7 +267,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> "a"
+      n1.value ==> "a"
     }
     test("alias and original") {
       val parser = new TestParser
@@ -277,7 +277,7 @@ object ArgParserTest extends TestSuite {
       parser.missing ==> 0
       parser.unknown ==> 0
       parser.parseErrors ==> 0
-      n1() ==> List("a", "b", "c")
+      n1.value ==> List("a", "b", "c")
     }
     test("special flags") {
       test("help") {
