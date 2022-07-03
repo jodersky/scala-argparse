@@ -196,7 +196,7 @@ trait ParsersApi { readers: TypesApi =>
       val (named0, positional) = paramInfos.partition(_.isNamed)
       val named = named0.sortBy(_.names.head)
 
-      val width = argparse.term.cols.getOrElse(80) - 20
+      val width = argparse.term.cols - 20
 
       val b = new StringBuilder
       b ++= s"usage: "
