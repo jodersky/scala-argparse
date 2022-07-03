@@ -1,26 +1,9 @@
-package argparse.core
+package argparse
+package core
 
 import scala.collection.mutable
 import Parser.ParamDef
 
-/** User-friendly parameter information, used for generating help message */
-case class ParamInfo(
-    isNamed: Boolean,
-    names: Seq[String],
-    argName: Option[String], // if this is a named param, what should the argument be called in help messages
-    repeats: Boolean,
-    env: Option[String],
-    description: String,
-    interactiveCompleter: String => Seq[String],
-    standaloneCompleter: BashCompleter
-) {
-  def isFlag = isNamed && argName == None
-}
-case class CommandInfo(
-    name: String,
-    action: Seq[String] => Unit,
-    description: String
-)
 
 trait ParsersApi { api: TypesApi =>
 

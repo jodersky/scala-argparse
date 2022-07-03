@@ -1,4 +1,4 @@
-package argparse.core
+package argparse
 
 import collection.mutable
 

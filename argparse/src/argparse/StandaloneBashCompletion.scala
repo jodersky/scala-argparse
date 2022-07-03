@@ -1,4 +1,4 @@
-package argparse.core
+package argparse
 
 import java.io.PrintStream
 import java.io.OutputStream

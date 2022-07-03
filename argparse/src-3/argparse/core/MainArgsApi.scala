@@ -204,9 +204,9 @@ object EntrypointsMetadata {
   ): Expr[argparse.Argument[_]] = {
     import qctx.reflect._
 
-    val annot: Expr[argparse.core.arg] = param.getAnnotation(TypeRepr.of[argparse.core.arg].typeSymbol) match {
-      case Some(a) => a.asExprOf[argparse.core.arg]
-      case None => '{argparse.core.arg()} // use default arg() values
+    val annot: Expr[argparse.arg] = param.getAnnotation(TypeRepr.of[argparse.arg].typeSymbol) match {
+      case Some(a) => a.asExprOf[argparse.arg]
+      case None => '{argparse.arg()} // use default arg() values
     }
 
     val paramTpt = param.tree.asInstanceOf[ValDef].tpt

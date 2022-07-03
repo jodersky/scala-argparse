@@ -1,4 +1,4 @@
-package argparse.core
+package argparse
 
 case class main() extends annotation.StaticAnnotation
 

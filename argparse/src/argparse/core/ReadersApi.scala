@@ -1,4 +1,5 @@
-package argparse.core
+package argparse
+package core
 
 trait ReadersApi extends LowPrioReaders { types: TypesApi =>
   import types.Reader.Result
