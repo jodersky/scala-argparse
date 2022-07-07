@@ -99,49 +99,34 @@ object ini extends Module {
 }
 
 object examples extends Module {
-  trait ExampleApp extends ScalaModule {
-    def scalaVersion = scala3
-    def scalacOptions = argparse.jvm(scala3).scalacOptions
-    def moduleDeps = Seq(argparse.jvm(scala3))
+  trait ExampleApp extends ScalaNativeModule {
+    def scalaVersion = scala31
+    def scalaNativeVersion = scalaNative
+    def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
+    def moduleDeps = Seq(argparse.native(scala31, scalaNative))
     object test extends Tests with Utest
   }
-  object readme extends ExampleApp {
-    def extractExamples(path: os.Path): Map[String, String] = {
-      val lines = os.read.lines(path).iterator
 
-      val examples = collection.mutable.Map.empty[String, String]
-      var currName: String = null
-      val currLines = new StringBuilder()
+  object basic extends ExampleApp
+  object completion1 extends ExampleApp
+  object completion2 extends ExampleApp
+  object help extends ExampleApp
+  object paramdep extends ExampleApp
+  object paramenv extends ExampleApp
+  object paramflag extends ExampleApp
+  object paramnamed extends ExampleApp
+  object paramopt extends ExampleApp
+  object paramrep extends ExampleApp
+  object paramreq extends ExampleApp
+  object paramshort extends ExampleApp
+  object reader extends ExampleApp
+  object readme extends ExampleApp
 
-      while (lines.hasNext) {
-        val line = lines.next()
-        if (line.startsWith("<!--example")) {
-          currName = line.drop(12).takeWhile(_ != '-')
-        } else if (line.startsWith("<!--/example")) {
-          examples += currName -> currLines.result()
-          currName = null
-          currLines.clear()
-        } else if (line.startsWith("```")) {
-          // do nothing
-        } else if (currName != null) {
-          currLines ++= line
-          currLines += '\n'
-        }
-      }
-      examples.toMap
-    }
+  def allExamples = Seq(basic, paramreq)
 
-    def src = T.source(os.pwd / "README.md")
-    def extractedExamples = T {
-      for ((name, source) <- extractExamples(src().path)) yield {
-        os.write(T.dest / s"$name.scala", source)
-        name -> PathRef(T.dest / s"$name.scala")
-      }
-    }
-
-    def generatedSources = T {
-      super.generatedSources() ++ Seq(extractedExamples().apply("1"))
-    }
-
+  def linkAll = T {
+    T.traverse(allExamples){ example =>
+      example.nativeLink
+    }()
   }
 }
