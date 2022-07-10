@@ -8,7 +8,7 @@ trait DocsModule extends mill.Module {
 
   def sidebar: T[PathRef] = T.source(millSourcePath / "_Sidebar.md")
   def repoUrl = T{"https://github.com/jodersky/scala-argparse"}
-  def editRootUrl = T{"https://github.com/jodersky/scala-argparse/blob/master"}
+  def editRootUrl = T{"https://github.com/jodersky/scala-argparse/blob/master/docs"}
 
   def docSourceFiles: T[Seq[(os.SubPath, PathRef)]] = T {
     for {
