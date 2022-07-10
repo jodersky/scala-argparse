@@ -6,7 +6,7 @@ import scala.collection.mutable
 object Parser {
 
   /** A parameter definition is the low-level building block to define the
-    * grammar of a command-line, and its functionality.
+    * grammar of a command-line and its functionality.
     *
     * ParamDefs associate parameter names to actions that are invoked by
     * Parser.parse().
@@ -83,7 +83,7 @@ object Parser {
     * The parser works in two passes.
     *
     * 1. the first pass goes over all actual arguments and groups them into
-    *    positional and named ones (and also detects any unkown arguments)
+    *    positional and named ones (and also detects any unknown arguments)
     *
     * 2. the second pass then iterates over all parameter definitions, looks up
     *    the corresponding value from the previous pass, and calls the relevant

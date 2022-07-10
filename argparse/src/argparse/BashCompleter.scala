@@ -2,7 +2,10 @@ package argparse
 
 sealed trait BashCompleter
 object BashCompleter {
-  case object Empty extends BashCompleter // no completion
-  case class Fixed(alternatives: Set[String]) extends BashCompleter // completion picked from a fixed set of words
-  case object Default extends BashCompleter // default bash completion (uses paths)
+  /** No completion */
+  case object Empty extends BashCompleter
+  /** Completion picked from a fixed set of words */
+  case class Fixed(alternatives: Set[String]) extends BashCompleter
+  /** Default bash completion (uses paths) */
+  case object Default extends BashCompleter
 }

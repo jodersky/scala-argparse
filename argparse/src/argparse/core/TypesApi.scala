@@ -3,19 +3,19 @@ package core
 
 trait TypesApi {
 
-  /** A typeclass that defines how to convert a string from a single command line
-    * argument to a given type.
+  /** A typeclass that defines how to convert a string from a single command
+    * line argument to a given type.
     */
   @annotation.implicitNotFound(
-    "No argparse.Reader[${A}] found. A reader is required to parse a command line argument from a string to a ${A}. " +
-    "Please define an argparse.Reader[${A}]."
+    "No Reader[${A}] found. A reader is required to parse a command line argument from a string to a ${A}. " +
+    "Please define a Reader[${A}]."
   )
   trait Reader[A] {
 
     /** Either convert the string to A or return a failure message.
       *
-      * Note that throwing an exception from a reader will cause the parser
-      * to crash, leading to a horrible user experience.
+      * Do not throw from a reader, as it will cause the argument parser to
+      * crash, leading to a horrible user experience.
       */
     def read(a: String): Reader.Result[A]
 

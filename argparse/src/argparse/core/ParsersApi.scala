@@ -4,13 +4,12 @@ package core
 import scala.collection.mutable
 import Parser.ParamDef
 
-
 trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
 
   /** Generate a help message from parameters.
     *
-    * This message will be used by ArgumentParsers. Overriding this allows you
-    * to customize the help message of all ArgumentParsers.
+    * This message will be used by `ArgumentParser`s. Overriding this allows you
+    * to customize the help message of all `ArgumentParser`s.
     */
   def help(
     description: String,
@@ -172,25 +171,30 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     *     defined in step 1.
     *
     *    If parsing fails, error descriptions are printed and the program exits
-    *    with 2. (This behaviour may be changed by subclassing and redefining the
-    *    `check()` method).
+    *    with 2.
     *
-    * Example
+    * Example:
     *
-    * ```
+    * ```scala
     * val parser = argparse.ArgumentParser("0.1.0")
     *
     * val p1 = parser.param[String]("--this-is-a-named-param", default = "default value")
     * val p2 = parser.param[Int]("positional-param", default = 2)
     *
-    * parser.parse(Seq("--this-is-a-named-param=other", 5)) println(p1())
-    *
-    * println(p2())
+    * parser.parse(Seq("--this-is-a-named-param=other", 5))
+    * println(p1.value)
+    * println(p2.value)
     * ```
     *
-    * @param description a short description of this command. Used in help
+    * @param description A short description of this command. Used in help
     * messages.
-    * @param enableHelpFlag include a `--help` flag which will print a generated help message
+    * @param enableHelpFlag Include a `--help` flag which will print a generated
+    * help message.
+    * @param enableBashCompletionFlag Include a `--bash-completion` flag which
+    * generate a bash completion script.
+    * @param stdout The standard output stream.
+    * @param stdout The standard error stream.
+    * @param env The environment.
     */
   class ArgumentParser(
       val description: String,
@@ -227,7 +231,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       errors += 1
     }
 
-    protected def hasErrors = errors > 0 // TODO: make public?
+    protected def hasErrors = errors > 0
 
     private val paramDefs = mutable.ListBuffer.empty[ParamDef]
     private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
@@ -379,59 +383,75 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     /** Define an optional parameter, using the given default value if it is not
       * supplied on the command line or by an environment variable.
       *
-      * *ErgoTip: always give named parameters a default value.*
+      * **ErgoTip: always give named parameters a default value.**
       *
-      * ''Internal design note: [[param]] and [[requiredParam]] differ only in the
-      * presence of the 'default' parameter. Ideally, they would be merged into one
-      * single method, giving the 'default' parameter a default null value (as is
-      * done for the other optional parameters, such as 'env' and 'help'). Unfortunately,
-      * since 'default' is of type A where A may be a primitive type, it cannot
-      * be assigned null. The usual solution would be to wrap it in an Option type,
-      * but that leads to an ugly API. Hence the method is split into two.
-      * See addParam() for the common denominator.''
+      * *Internal design note: [[param]] and [[requiredParam]] differ only in
+      * the presence of the 'default' parameter. Ideally, they would be merged
+      * into one single method, giving the 'default' parameter a default null
+      * value (as is done for the other optional parameters, such as 'env' and
+      * 'help'). Unfortunately, since 'default' is call-by-name, there is no way
+      * to check if it has been set to null without evaluating it. See
+      * [[singleParam]] for the common denominator.*
       *
       * @tparam A The type to which an argument shall be converted.
       *
-      * @param name The name of the parameter. A name starting with `-` indicates
-      * a named parameter, whereas any other name indicates a positional parameter.
-      * Prefer double-dash named params. I.e. prefer "--foo" over "-foo".
+      * @param name The name of the parameter. A name starting with `-`
+      * indicates a named parameter, whereas any other name indicates a
+      * positional parameter. Prefer double-dash named params. I.e. prefer
+      * "--foo" over "-foo".
       *
-      * @param default The default value to use in case no matching argument is provided.
+      * @param default The default value to use in case no matching argument is
+      * provided.
       *
-      * @param env The name of an environment variable from which to read the argument
-      * in case it is not supplied on the command line. Set to 'null' to ignore.
+      * @param env The name of an environment variable from which to read the
+      * argument in case it is not supplied on the command line. Set to 'null'
+      * to ignore.
       *
-      * @param aliases Other names that may be used for this parameter. This is a
-      * good place to define single-character aliases for frequently used
-      * named parameters. Note that this has no effect for positional parameters.
+      * @param aliases Other names that may be used for this parameter. This is
+      * a good place to define single-character aliases for frequently used
+      * named parameters. Note that this has no effect for positional
+      * parameters.
       *
-      * @param help A help message to display when the user types `--help`
+      * @param help A help message to display when the user types `--help`.
       *
-      * @param flag Set to true if the parameter should be treated as a flag. Flags
-      * are named parameters that are treated specially by the parser:
-      * - they never take arguments, unless the argument is embedded in the flag itself
-      * - they are always assigned the string value "true" if found on the command line
-      * Note that flags are intended to make it easy to pass boolean parameters; it is
-      * quite rare that they are useful for non-boolean params.
-      * The flag field has no effect on positional parameters.
+      * @param flag Set to true if the parameter should be treated as a flag.
       *
-      * @param endOfNamed Indicates that any arguments encountered after this parameter
-      * must be treated as positionals, even if they start with `-`. In other words, a
-      * parameter marked with this has the same effect as the `--` separator. It can be
-      * useful for implementing sub-commands. (Note however that this ArgumentParser has a
-      * dedicated `command` method for such use cases)
+      * Flags are named parameters that are treated specially by the parser:
       *
-      * @param interactiveCompleter A bash snippet that is inserted in bash-completions, responsible for setting
-      * completion options for this param. If omitted, the parameter type's (A) default interactiveCompleter
-      * will be used. If present, this must be valid bash and should set COMPREPLY. The bash variable
-      * "$cur" may be used in the snippet, and will contain the current word being completed for this
-      * parameter.
+      * - they never take arguments, unless the argument is embedded in the flag
+      *   itself
+      * - they are always assigned the string value "true" if found on the
+      *   command line.
       *
-      * @param argName The name to use in help messages for this parameter's argument.
-      * This only has an effect on named parameters which take an argument. By default,
-      * the name of the type of the argument will be used.
+      * Note that flags are intended to make it easy to pass boolean parameters;
+      * it is quite rare that they are useful for non-boolean params. The flag
+      * field has no effect on positional parameters.
       *
-      * @return A handle to the parameter's future value, available once `parse(args)` has been called.
+      * @param endOfNamed Indicates that any arguments encountered after this
+      * parameter must be treated as positionals, even if they start with `-`.
+      * In other words, a parameter marked with this has the same effect as the
+      * `--` separator. It can be useful for implementing sub-commands. (Note
+      * however that this ArgumentParser has a dedicated `command` method for
+      * such use cases)
+      *
+      * @param interactiveCompleter Compute available shell completions starting
+      * with a given string. This is used by interactive bash completion, where
+      * the user program is responsible for generating completions.
+      *
+      * @param standaloneBashComplete A completer for bash. This is used by
+      * standalone bash completion, where a bash script generates completion,
+      * without the involvement of the the user program.
+      *
+      * If your program is implemented with Scala on the JVM, the startup time
+      * is considerable and hence standalone completion should be preferred for
+      * a snappy user experience.
+      *
+      * @param argName The name to use in help messages for this parameter's
+      * argument. This only has an effect on named parameters which take an
+      * argument. By default, the name of the type of the argument will be used.
+      *
+      * @return A handle to the parameter's future value, available once
+      * `parse(args)` has been called.
       */
     def param[A](
         name: String,
@@ -499,12 +519,12 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
 
     /** Define a parameter that may be repeated.
       *
-      * Note that all named parameters may always be repeated, regardless if they
-      * are defined as repeated or not. The difference is that for
+      * *Note that all named parameters may always be repeated, regardless if
+      * they are defined as repeated or not. The difference is that for
       * non-repeat-defined parameters the last value is used, whereas
-      * repeat-defined parameters accumulate values. (This is why
+      * repeat-defined parameters accumulate values. This is why
       * [[repeatedParam]] takes an `A` but gives back a `Seq[A]`, while other
-      * params take `A` and give back `A`).
+      * params take `A` and give back `A`.*
       *
       * E.g. consider the command line `--foo=1 --foo=2 --foo=3`
       *
@@ -568,21 +588,22 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       arg
     }
 
-    /** Utility to define a sub command.
+    /** Utility to define a subcommand.
       *
       * Many modern command line apps actually consist of multiple nested
       * commands, each corresponding to the verb of an action, such as 'run' or
-      * 'clone'. Typically, each sub command also has its own dedicated parameters
-      * list.
+      * 'clone'. Typically, each sub command also has its own dedicated
+      * parameter list.
       *
-      * In argparse, subcommands can easily be modelled by a positional parameter that
-      * represents the command, followed by a repeated, all-absorbing parameter
-      * which represents the command's arguments. However, since this pattern is
-      * fairly common, this method is provided as a shortcut.
+      * In argparse, subcommands can easily be modelled by a positional
+      * parameter that represents the command, followed by a repeated,
+      * all-absorbing parameter which represents the command's arguments.
+      * However, since this pattern is fairly common, this method is provided as
+      * a shortcut.
       *
-      * @param name the name of the command
-      * @param action a function called with the remaining arguments after this
-      * command. Note that you may reference an Arg's value in the action.
+      * @param name The name of the command.
+      * @param action A function called with the remaining arguments after this
+      * command. Note that you may reference an argument's value in the action.
       */
     def command(
         name: String,
@@ -658,20 +679,21 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     /** Parse the given arguments with respect to the parameters defined by
       * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
       *
-      * In case no errors are encountered, the arguments will be populated in the
-      * functions returned by the parameter definitions.
+      * In case no errors are encountered, the arguments will be populated in
+      * the functions returned by the parameter definitions.
       *
       * In case errors are encountered, the default behaviour is to exit the
       * program.
       *
-      * The classes of errors are:
+      * The types of errors are:
       *
       * 1. An unknown argument is encountered. This can either be an unspecified
       *    named argument or an extranous positional argument.
       *
       * 2. A required argument is missing.
       *
-      * 3. An argument cannot be parsed from its string value to its desired type.
+      * 3. An argument cannot be parsed from its string value to its desired
+      *    type.
       *
       * @see parseResult for a version of this function which does not exit
       */
