@@ -1,3 +1,9 @@
 package argparse.core
 
-trait VersionSpecificApi
+trait VersionSpecificParsersApi {
+
+  trait ParserExtra {
+
+  }
+
+}

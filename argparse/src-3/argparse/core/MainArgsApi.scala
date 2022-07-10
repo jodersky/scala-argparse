@@ -2,31 +2,12 @@ package argparse.core
 
 trait MainArgsApi { types: TypesApi with ParsersApi =>
 
-  // case class Entrypoint(
-  //   name: String,
-  //   route: main,
-  //   build: ArgumentParser => Unit,
-  //   invoke0: () => Unit
-  // )
-
-  // inline def initialize(): EntrypointsMetadata = ${
-  //   EntrypointsMetadata.initializeThis[this.type]
-  // }
-
-  inline def initialize[A]: EntrypointsMetadata[A] = ${
+  inline def findMains[A]: List[Entrypoint[A]] = ${
     EntrypointsMetadata.initialize[this.type, A]
   }
 
-}
-
-class EntrypointsMetadata[A](
-  val entrypoints: Seq[Entrypoint[A]]
-) {
-
-  def addToParser[Parser <: ParsersApi#ArgumentParser](parser: Parser, mka: => A) = {
-    entrypoints.foreach{ ep =>
-      parser.command(ep.name, a => ep.invoke(mka)(a))
-    }
+  inline def main[A](container: => A, args: Array[String]): Unit = ${
+    EntrypointsMetadata.mainImpl[this.type, A]('container, 'args)
   }
 
 }
@@ -57,7 +38,12 @@ object EntrypointsMetadata {
     initializeContainer[Api, A](TypeRepr.of[A].typeSymbol)
   }
 
-  def initializeContainer[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: qctx.reflect.Symbol) = {
+  def initializeContainer[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: qctx.reflect.Symbol): Expr[List[Entrypoint[A]]] = {
+    val e = Expr.ofList(findMainsImpl[Api, A](container))
+    //System.err.println(e.show)
+    e
+  }
+  def findMainsImpl[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: qctx.reflect.Symbol): List[Expr[Entrypoint[A]]] = {
     import qctx.reflect._
 
     val mainMethods: List[Symbol] = container.declaredMethods.filter{ m =>
@@ -78,7 +64,7 @@ object EntrypointsMetadata {
 
     val prefix: Expr[Api] = Ref(TypeRepr.of[Api].typeSymbol.companionModule).asExprOf[Api]
 
-    val entrypoints = for method <- mainMethods yield {
+    for method <- mainMethods yield {
 
       val invoke = '{
 
@@ -104,14 +90,6 @@ object EntrypointsMetadata {
         )
       }
     }
-
-    val e = '{
-      EntrypointsMetadata(
-        ${Expr.ofList(entrypoints)}
-      )
-    }
-    //System.err.println(e.show)
-    e
   }
 
   // call a function with given arguments
@@ -269,6 +247,22 @@ object EntrypointsMetadata {
             argName = None
           )(using ${summonReader(paramTpe)}.asInstanceOf[p.Reader[tpe.Underlying]])
         }
+    }
+  }
+
+  def mainImpl[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: Expr[A], args: Expr[Array[String]]) = {
+    import qctx.reflect._
+    findMainsImpl[Api, A](TypeRepr.of[A].typeSymbol) match {
+      case Nil =>
+        report.error(s"No main method found in ${TypeRepr.of[A].show}. The container object must contain exactly one method annotated with @argparse.main")
+        '{???}
+      case head :: Nil =>
+        '{
+          $head.invoke($container)($args.toIterable)
+        }
+      case list =>
+        report.error(s"Too many main methods found in ${TypeRepr.of[A].show}. The container object must contain exactly one method annotated with @argparse.main")
+        '{???}
     }
   }
 }

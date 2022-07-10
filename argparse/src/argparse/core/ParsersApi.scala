@@ -5,7 +5,7 @@ import scala.collection.mutable
 import Parser.ParamDef
 
 
-trait ParsersApi { api: TypesApi =>
+trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
 
   /** Generate a help message from parameters.
     *
@@ -197,7 +197,7 @@ trait ParsersApi { api: TypesApi =>
       val stdout: java.io.PrintStream,
       val stderr: java.io.PrintStream,
       val env: Map[String, String]
-  ) { self =>
+  ) extends ParserExtra { self =>
     import ArgumentParser._
 
     private var errors = 0
