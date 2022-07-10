@@ -39,6 +39,8 @@ def foo(value: Int = 3, paths: List[os.Path] = Nil) = {
 }
 
 // val x = this
+
+// this should become obsolete once macro annotations are available
 def main(args: Array[String]) = argparse.default.main(this, args)
 
 // val entrypoints = argparse.default.initialize[yo]

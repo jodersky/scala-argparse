@@ -130,6 +130,8 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     }
   }
 
+  protected def exit(code: Int): Nothing = sys.exit(code)
+
   object ArgumentParser {
     def apply(
         description: String = "",
@@ -675,10 +677,10 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       */
     def parseOrExit(args: Iterable[String]): Unit = parseResult(args) match {
       case Success   => ()
-      case EarlyExit => sys.exit(0)
+      case EarlyExit => exit(0)
       case Error =>
         stderr.println("run with '--help' for more information")
-        sys.exit(2)
+        exit(2)
     }
   }
 

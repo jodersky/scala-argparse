@@ -50,7 +50,9 @@ object argparse extends Module {
   class JvmModule(val crossScalaVersion: String) extends ArgParseModule {
     def millSourcePath = super.millSourcePath / os.up
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-jvm")))
-    object test extends Tests with Utest
+    object test extends Tests with Utest {
+      def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / s"src-${crossScalaVersion.head}")))
+    }
   }
   object jvm extends Cross[JvmModule]((Seq(scala213, scala3) ++ dottyCustomVersion):_*)
 
@@ -60,7 +62,9 @@ object argparse extends Module {
     def scalaNativeVersion = crossScalaNativeVersion
     def millSourcePath = super.millSourcePath / os.up / os.up
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
-    object test extends Tests with Utest
+    object test extends Tests with Utest {
+      def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / s"src-${crossScalaVersion.head}")))
+    }
   }
   object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
 
@@ -93,6 +97,7 @@ object ini extends Module {
     def scalaNativeVersion = crossScalaNativeVersion
     def millSourcePath = super.millSourcePath / os.up / os.up
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
+    object test extends Tests with Utest
   }
   object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
 
