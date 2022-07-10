@@ -2,9 +2,9 @@
 
 set -o errexit
 
-./mill -i argparse.jvm[3.0.2].docJar
+./mill -i docs.html
 
-docdir=out/argparse/jvm/3.0.2/docJar.dest/javadoc
+docdir=out/docs/html.dest
 git -C "$docdir" init
 git -C "$docdir" config user.name "Joe Doc Champion"
 git -C "$docdir" config user.email "champ@crashbox.io"
