@@ -33,4 +33,18 @@ object TextUtils {
       }
     }
   }
+
+  /** `thisIsKebabCase => this-is-kebab-case` */
+  def kebabify(camelCase: String): String = {
+    val kebab = new StringBuilder
+    var prevIsLower = false
+    for (c <- camelCase) {
+      if (prevIsLower && c.isUpper) {
+        kebab += '-'
+      }
+      kebab += c.toLower
+      prevIsLower = c.isLower
+    }
+    kebab.result()
+  }
 }

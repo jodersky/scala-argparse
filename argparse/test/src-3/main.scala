@@ -20,5 +20,10 @@ def main(args: Array[String]) = {
   //println(entrypoints.te)
   //println(entrypoints.methods)
 
-  entrypoints.methods.head.run(args)
+  val parser = argparse.default.ArgumentParser()
+
+  parser.param("--fooBar", "")
+  parser.parseOrExit(args)
+
+  //entrypoints.methods.head.run(args)
 }
