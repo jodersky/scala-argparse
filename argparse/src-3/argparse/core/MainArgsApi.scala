@@ -2,10 +2,30 @@ package argparse.core
 
 trait MainArgsApi { types: TypesApi with ParsersApi =>
 
+  /** Find all methods annotated with `@argparse.main` declared in the container
+    * `A`.
+    *
+    * ```
+    * class Container() {
+    *   @argparse.main()
+    *   def command1() = ...
+    *
+    *  @argparse.main()
+    *   def command2() = ...
+    * }
+    *
+    * argparse.default.findMains[Container] = Seq(command1, command2)
+    * ```
+    */
   inline def findMains[A]: List[Entrypoint[A]] = ${
-    EntrypointsMetadata.initialize[this.type, A]
+    EntrypointsMetadata.findMainsImpl[this.type, A]
   }
 
+  /** Generate a main method for a single entry point.
+    *
+    * Once annotation macros become available in scala 3, and when `container`
+    * is static, this method should become obsolete.
+    */
   inline def main[A](container: => A, args: Array[String]): Unit = ${
     EntrypointsMetadata.mainImpl[this.type, A]('container, 'args)
   }
@@ -32,19 +52,15 @@ object EntrypointsMetadata {
   import scala.quoted.Type
   import TextUtils.kebabify
 
-  def initialize[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes) = {
-    import qctx.reflect._
-    //report.error(Symbol.spliceOwner.owner.owner.toString)
-    initializeContainer[Api, A](TypeRepr.of[A].typeSymbol)
-  }
-
-  def initializeContainer[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: qctx.reflect.Symbol): Expr[List[Entrypoint[A]]] = {
-    val e = Expr.ofList(findMainsImpl[Api, A](container))
+  def findMainsImpl[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes): Expr[List[Entrypoint[A]]] = {
+    val e = Expr.ofList(findAllMainsImpl[Api, A])
     //System.err.println(e.show)
     e
   }
-  def findMainsImpl[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: qctx.reflect.Symbol): List[Expr[Entrypoint[A]]] = {
+  def findAllMainsImpl[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes): List[Expr[Entrypoint[A]]] = {
     import qctx.reflect._
+
+    val container = TypeRepr.of[A].typeSymbol
 
     val mainMethods: List[Symbol] = container.declaredMethods.filter{ m =>
       // try {
@@ -252,7 +268,7 @@ object EntrypointsMetadata {
 
   def mainImpl[Api <: TypesApi with ParsersApi: Type, A: Type](using qctx: Quotes)(container: Expr[A], args: Expr[Array[String]]) = {
     import qctx.reflect._
-    findMainsImpl[Api, A](TypeRepr.of[A].typeSymbol) match {
+    findAllMainsImpl[Api, A] match {
       case Nil =>
         report.error(s"No main method found in ${TypeRepr.of[A].show}. The container object must contain exactly one method annotated with @argparse.main")
         '{???}
