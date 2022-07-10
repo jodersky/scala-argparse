@@ -1,5 +1,29 @@
 ## Changelog
 
+### 0.16.0
+
+The major change in this release is the migration to a mixin-based API. The
+`ArgumentParser` trait as well as all readers have been moved to traits in
+`argparse.core._`, and the new top-level object for users is `argparse.default`.
+Thus, any references to `argparse.ArgumentParser` need to updated to
+`argparse.default.ArgumentParser`.
+
+Other breaking changes:
+
+- Disable most experimental macro-based parser. This includes `settings` and
+  `mutableSetting`. A new macro-based parser is in the works.
+- Remove `show()` function from `Reader`.
+- Add a `typeName` function to `Reader`.
+- Rename `BashCompletion` to `InteractiveBashCompletion`.
+- Make argument a top-level class, instead of `() => A`.
+- Remove deprecated features.
+
+Other changes:
+
+- Implement terminal properties for Native (the code between Native and JVM is
+  now shared).
+- Upgrade to Scala Native 0.4.4
+
 ### 0.15.2
 
 - Add an INI printer
