@@ -3,7 +3,7 @@ def main(args: Array[String]): Unit =
   val answer = parser.param[Int](
     "answer",
     default = 42,
-    help="display the answer to the universe"
+    help = "display the answer to the universe"
   )
   parser.parseOrExit(args)
-  print(answer.value)
+  println(answer.value)

@@ -1,0 +1,9 @@
+$ app -v
+true
+$ app --help
+usage: [options]
+named arguments:
+  --help
+        show this message and exit
+  --verbose, -v, --talkative
+        use verbose output

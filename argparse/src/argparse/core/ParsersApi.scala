@@ -214,7 +214,7 @@ trait ParsersApi { api: TypesApi =>
       paramDefs += ParamDef(
         Seq("--help"),
         (_, _) => {
-          stdout.println(help())
+          stdout.print(help())
           Parser.Stop
         },
         missing = () => (),
@@ -222,16 +222,16 @@ trait ParsersApi { api: TypesApi =>
         repeatPositional = false,
         endOfNamed = false
       )
-      // paramInfos += ParamInfo(
-      //   isNamed = true,
-      //   names = Seq("--help"),
-      //   argName = None,
-      //   repeats = false,
-      //   env = None,
-      //   description = "show this message and exit",
-      //   interactiveCompleter = _ => Seq.empty,
-      //   standaloneCompleter = BashCompleter.Empty
-      // )
+      paramInfos += ParamInfo(
+        isNamed = true,
+        names = Seq("--help"),
+        argName = None,
+        repeats = false,
+        env = None,
+        description = "show this message and exit",
+        interactiveCompleter = _ => Seq.empty,
+        standaloneCompleter = BashCompleter.Empty
+      )
     }
 
     /** A default help message, generated from parameter help strings. */

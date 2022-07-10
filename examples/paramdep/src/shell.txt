@@ -1,0 +1,6 @@
+$ app
+/file
+$ app -C /foo
+/foo/file
+$ app --file /bar
+/bar

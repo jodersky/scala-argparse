@@ -7,12 +7,10 @@ def main(args: Array[String]): Unit =
   )
   val files = parser.repeatedParam[java.nio.file.Path](
     "files",
-    help="remove these files"
+    help = "remove these files"
   )
   parser.parseOrExit(args)
+  println(s"verbosity: ${verbosity.value}")
   for (file <- files.value) {
-    if (verbosity.value > 0) {
-      println(s"deleting $file")
-    }
     println(s"if this were a real program, we would delete $file")
   }

@@ -5,7 +5,7 @@ def main(args: Array[String]): Unit =
     default = false,
     aliases = Seq("-v", "--talkative"),
     flag = true,
-    help="use verbose output"
+    help = "use verbose output"
   )
   parser.parseOrExit(args)
   println(verbose.value)

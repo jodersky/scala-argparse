@@ -1,0 +1,6 @@
+$ APP_CREDENTIALS_FILE=/etc/foo app
+/etc/foo
+$ APP_CREDENTIALS_FILE=/etc/foo2 app --credentials-file=/etc/foo1
+/etc/foo1
+$ app
+/etc/creds

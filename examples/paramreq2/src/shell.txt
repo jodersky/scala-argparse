@@ -1,0 +1,8 @@
+$ app --help
+usage: [options] <echo>
+positional arguments:
+  echo
+        echo the string you use here
+named arguments:
+  --help
+        show this message and exit

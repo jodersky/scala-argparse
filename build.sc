@@ -98,17 +98,17 @@ object ini extends Module {
 
 }
 
-object examples extends Module {
+object testutil extends ScalaNativeModule {
+  def scalaVersion = scala31
+  def scalaNativeVersion = scalaNative
+  def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
+  def ivyDeps = Agg(
+    ivy"com.lihaoyi::utest::0.7.11",
+    ivy"com.lihaoyi::os-lib::0.8.1"
+  )
+}
 
-  object testutil extends ScalaNativeModule {
-    def scalaVersion = scala31
-    def scalaNativeVersion = scalaNative
-    def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
-    def ivyDeps = Agg(
-      ivy"com.lihaoyi::utest::0.7.11",
-      ivy"com.lihaoyi::os-lib::0.8.1"
-    )
-  }
+object examples extends Module {
 
   trait ExampleApp extends ScalaNativeModule { self =>
     def scalaVersion = scala31
@@ -120,7 +120,7 @@ object examples extends Module {
       def forkEnv = T {
         Map(
           "SNIPPET_FILE" -> (self.millSourcePath / "src" / "shell.txt").toString,
-          "PATH" -> (self.nativeLink() / os.up).toString
+          "PATH" -> s"${self.nativeLink() / os.up}:${sys.env("PATH")}"
         )
       }
     }
@@ -141,15 +141,15 @@ object examples extends Module {
   object paramopt extends ExampleApp
   object paramrep extends ExampleApp
   object paramreq extends ExampleApp
+  object paramreq2 extends ExampleApp
+  object paramreq3 extends ExampleApp
   object paramshort extends ExampleApp
   object reader extends ExampleApp
   object readme extends ExampleApp
 
-  // def allExamples = Seq(basic, paramreq)
+}
 
-  // def linkAll = T {
-  //   T.traverse(allExamples){ example =>
-  //     example.nativeLink
-  //   }()
-  // }
+import $file.doctool.doctool
+object docs extends doctool.DocsModule {
+  def docVersion = gitVersion()
 }

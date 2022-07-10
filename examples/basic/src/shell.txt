@@ -1,7 +1,9 @@
 $ app
 $ app --help
-usage:
-
+usage: [options]
+named arguments:
+  --help
+        show this message and exit
 $ app --verbose
 unknown argument: --verbose
 run with '--help' for more information

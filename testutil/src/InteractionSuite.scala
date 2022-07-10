@@ -19,9 +19,9 @@ trait InteractionSuite extends TestSuite {
     }
   }
 
-  def exec(commands: Seq[String]) = {
+  def exec(commands: Seq[String]): String = {
     val builder = new ProcessBuilder(commands: _*)
-      .redirectError(ProcessBuilder.Redirect.INHERIT)
+      //.redirectError(ProcessBuilder.Redirect.INHERIT)
       .redirectErrorStream(true)
 
     // builder.environment.clear()
@@ -37,7 +37,7 @@ trait InteractionSuite extends TestSuite {
         l = reader.read(buffer)
         l != -1
       do
-        out.write(buffer)
+        out.write(buffer, 0, l)
 
       process.waitFor()
       out.toString()
@@ -48,18 +48,26 @@ trait InteractionSuite extends TestSuite {
     }
   }
 
+  private def assertNoDiff(expected: String, actual: String): Unit =
+    if (expected != actual) {
+      val diff = exec(
+        Seq("diff", "--context", os.temp(expected, deleteOnExit = false).toString, os.temp(actual, deleteOnExit = false).toString)
+      )
+      throw new java.lang.AssertionError(diff)
+    }
+
   val snippetFile = os.Path(sys.env("SNIPPET_FILE"), os.pwd)
   val snippetText = if (os.exists(snippetFile)) os.read(snippetFile) else "$"
   val snippets: Array[String] = snippetText.split("""\$\s+""").tail
 
   snippets.foreach { invocation =>
-    val parts = invocation.split('\n')
-    val command = parts.head
+    val lines = invocation.linesIterator
+    val command = lines.next()
+    val expected = lines.toList.map(_.trim).mkString("\n")
 
     test(command) {
-      val expected = parts.tail.mkString("\n")
-      val actual = exec(command.split("""\s+""")).trim
-      assert(expected == actual)
+      val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.map(_.trim).mkString("\n")
+      assertNoDiff(expected, actual)
     }
   }
 

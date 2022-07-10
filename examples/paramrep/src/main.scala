@@ -1,8 +1,8 @@
 def main(args: Array[String]): Unit =
   val parser = argparse.default.ArgumentParser()
-  val files = parser.repeatedParam[java.nio.file.Path](
+  val files = parser.repeatedParam[os.FilePath](
     "files",
-    help="remove these files"
+    help = "remove these files"
   )
   parser.parseOrExit(args)
   for (file <- files.value) {

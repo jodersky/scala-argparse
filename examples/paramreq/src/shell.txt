@@ -1,0 +1,10 @@
+$ app
+missing argument: echo
+run with '--help' for more information
+$ app --help
+usage: [options] <echo>
+named arguments:
+  --help
+        show this message and exit
+$ app foo
+foo
