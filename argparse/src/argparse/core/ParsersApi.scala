@@ -540,9 +540,10 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         aliases: Seq[String] = Seq.empty,
         help: String = "",
         flag: Boolean = false,
+        endOfNamed: Boolean = false,
         interactiveCompleter: String => Seq[String] = null,
         standaloneCompleter: BashCompleter = null,
-        argName: String = null
+        argName: String = null,
     )(implicit reader: Reader[A]): argparse.Argument[Seq[A]] = {
       val arg = new argparse.Argument[Seq[A]](name)
       var values = mutable.ListBuffer.empty[A]
@@ -570,7 +571,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         missing = () => (),
         flag,
         repeatPositional = true,
-        endOfNamed = false
+        endOfNamed = endOfNamed
       )
       paramDefs += pdef
 

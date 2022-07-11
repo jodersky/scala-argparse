@@ -81,9 +81,8 @@ object EntrypointsMetadata {
     val prefix: Expr[Api] = Ref(TypeRepr.of[Api].typeSymbol.companionModule).asExprOf[Api]
 
     for method <- mainMethods yield {
-
+      val rtpe = method.tree.asInstanceOf[DefDef].returnTpt.tpe.asType
       val invoke = '{
-
         (instance: A) => (args: Iterable[String]) => {
           val parser = $prefix.ArgumentParser()
           val accessors: Seq[argparse.Argument[_]] = ${
@@ -93,9 +92,26 @@ object EntrypointsMetadata {
                 paramAccessor(using qctx)(param, defaults, prefix, 'parser)
             )
           }
+          ${
+            rtpe match {
+              case '[Unit] => '{}
+              case '[t] => '{
+                parser.commands[t](${callFun(using qctx)('instance, method, '{accessors.map(_.value)})}.asInstanceOf[t])
+              }
+            }
+          }
+
           parser.parseOrExit(args)
-          val results = accessors.map(_.value)
-          ${callFun(using qctx)('instance, method, 'results)}
+
+          ${
+            rtpe match {
+              case '[Unit] => '{
+                val results = accessors.map(_.value)
+                ${callFun(using qctx)('instance, method, 'results)}
+              }
+              case '[t] => '{}
+            }
+          }
           ()
         }
       }
@@ -241,7 +257,8 @@ object EntrypointsMetadata {
             name = ${Expr(kebabify(param.name))},
             aliases = $annot.aliases,
             help = $annot.doc,
-            flag = false
+            flag = false,
+            endOfNamed = ${Expr(param.name == "args")}
           )(using ${summonReader(inner)}.asInstanceOf[p.Reader[tpe.Underlying]])
         }
 
