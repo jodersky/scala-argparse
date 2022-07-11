@@ -1,47 +1,57 @@
 
 class Foo
 
-// object api extends argparse.core.Api {
+object api extends argparse.core.Api {
 
-//   given Reader[Foo] with {
-//     def read(a: String): Reader.Result[Foo] = Reader.Success(Foo())
-//     def typeName: String = ""
-//   }
-
-// }
-
-
-
-class yo(base: Int) {
-
-  @argparse.main()
-  def foo(value: Int = base * 3, paths: List[os.Path] = Nil) = {
-    println(value)
-    println(paths)
+  given Reader[Foo] with {
+    def read(a: String): Reader.Result[Foo] = Reader.Success(Foo())
+    def typeName: String = ""
   }
 
-  // @argparse.main()
-  // def bar() = {
+}
 
-  // }
 
-  // @argparse.main()
-  // def baz(q: Int) = {
-  //   println(base * q)
-  // }
+
+class wrapper(base: Int) {
+
+  @argparse.main()
+  def command1(value: Int = base * 3, unsupported: Foo) = {
+    println(value)
+  }
+
+  @argparse.main()
+  def command2() = {
+
+  }
+
+  @argparse.main()
+  def command3(q: Int) = {
+    println(base * q)
+  }
 
 }
 
 @argparse.main()
-def foo(value: Int = 3, paths: List[os.Path] = Nil) = {
-  println(value)
-  println(paths)
+def foo(base: Int = 1) = {
+  println(base)
+  //wrapper(base)
 }
 
-// val x = this
-
 // this should become obsolete once macro annotations are available
-def main(args: Array[String]) = argparse.default.main(this, args)
+// def main(args: Array[String]) = api.main(this, args)
+
+def main(args: Array[String]) = {
+  val parser = argparse.default.ArgumentParser()
+
+  val base = parser.param[Int](
+    "--base",
+    default = 1
+  )
+
+  parser.parseOrExit(args)
+  foo(base.value)
+
+}
 
 // val entrypoints = argparse.default.initialize[yo]
 

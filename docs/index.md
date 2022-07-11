@@ -15,6 +15,8 @@ Pragmatic command line parsing for Scala applications.
 
 - Works with Scala 2 and 3, Native and JVM
 
+- Support for subcommands (aka "verbs")
+
 ## Example
 
 ```scala

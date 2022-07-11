@@ -1,8 +1,10 @@
 # scala-argparse
 
+[![project docs](https://img.shields.io/badge/docs-website-blueviolet)](https://jodersky.github.io/scala-argparse)
+[![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://crashbox.zulipchat.com/#narrow/stream/330744-argparse)
 [![Latest version][scaladex-badge]][scaladex-link]
 
-[scaladex-badge]: https://index.scala-lang.org/jodersky/scala-argparse/argparse/latest-by-scala-version.svg
+[scaladex-badge]: https://index.scala-lang.org/jodersky/scala-argparse/argparse/latest.svg
 [scaladex-link]: https://index.scala-lang.org/jodersky/scala-argparse/argparse
 
 Pragmatic command line parsing for Scala applications.
