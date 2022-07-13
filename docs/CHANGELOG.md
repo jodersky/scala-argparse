@@ -1,5 +1,9 @@
 ## Changelog
 
+### 0.16.1
+
+Add support for annotation-based, macro-generated argument parsers.
+
 ### 0.16.0
 
 The major change in this release is the migration to a mixin-based API. The
