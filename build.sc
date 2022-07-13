@@ -97,7 +97,7 @@ object ini extends Module {
     def scalaNativeVersion = crossScalaNativeVersion
     def millSourcePath = super.millSourcePath / os.up / os.up
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
-    object test extends Tests with Utest
+    // object test extends Tests with Utest
   }
   object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
 
