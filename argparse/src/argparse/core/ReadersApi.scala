@@ -164,22 +164,28 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
   }
 
   implicit def FilePathCollectionReader[Col <: Iterable[os.FilePath]]
-    (implicit factory: collection.Factory[os.FilePath, Col]): Reader[Col] =
+    (implicit factory: collection.Factory[os.FilePath, Col],
+      pathReader: Reader[os.FilePath]): Reader[Col] =
       colonSeparatedReader[os.FilePath, Col]
   implicit def PathCollectionReader[Col <: Iterable[os.Path]]
-    (implicit factory: collection.Factory[os.Path, Col]): Reader[Col] =
+    (implicit factory: collection.Factory[os.Path, Col],
+      pathReader: Reader[os.Path]): Reader[Col] =
       colonSeparatedReader[os.Path, Col]
   implicit def RelPathCollectionReader[Col <: Iterable[os.RelPath]]
-    (implicit factory: collection.Factory[os.RelPath, Col]): Reader[Col] =
+    (implicit factory: collection.Factory[os.RelPath, Col],
+      pathReader: Reader[os.RelPath]): Reader[Col] =
       colonSeparatedReader[os.RelPath, Col]
   implicit def SubPathCollectionReader[Col <: Iterable[os.SubPath]]
-    (implicit factory: collection.Factory[os.SubPath, Col]): Reader[Col] =
+    (implicit factory: collection.Factory[os.SubPath, Col],
+      pathReader: Reader[os.SubPath]): Reader[Col] =
       colonSeparatedReader[os.SubPath, Col]
   implicit def JPathCollectionReader[Col <: Iterable[java.nio.file.Path]]
-    (implicit factory: collection.Factory[java.nio.file.Path, Col]): Reader[Col] =
+    (implicit factory: collection.Factory[java.nio.file.Path, Col],
+      pathReader: Reader[java.nio.file.Path]): Reader[Col] =
       colonSeparatedReader[java.nio.file.Path, Col]
   implicit def JFileCollectionReader[Col <: Iterable[java.io.File]]
-    (implicit factory: collection.Factory[java.io.File, Col]): Reader[Col] =
+    (implicit factory: collection.Factory[java.io.File, Col],
+      pathReader: Reader[java.io.File]): Reader[Col] =
       colonSeparatedReader[java.io.File, Col]
 
   implicit def Mapping[K, V](
