@@ -237,19 +237,25 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
     private val commandInfos = mutable.ListBuffer.empty[CommandInfo]
 
-    // /** Low-level escape hatch for manually adding parameter definitions.
-    //   *
-    //   * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
-    //   * high-level API.
-    //   */
-    // def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
+    /** Low-level escape hatch for manually adding parameter definitions.
+      *
+      * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+      * high-level API.
+      */
+    def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
 
-    // /** Low-level escape hatch for manually adding parameter information.
-    //   *
-    //   * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
-    //   * high-level API.
-    //   */
-    // def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
+    /** Low-level escape hatch for manually adding parameter information.
+      *
+      * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
+      * high-level API.
+      */
+    def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
+
+    /** Low-level escape hatch for manually adding subcommand information.
+      *
+      * See also [[command]] for the high-level API.
+      */
+    def addCommandInfo(cinfo: CommandInfo): Unit = commandInfos += cinfo
 
     if (enableHelpFlag) {
       paramDefs += ParamDef(
