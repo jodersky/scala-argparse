@@ -205,6 +205,8 @@ object StandaloneBashCompletion {
           out.println(
             s"""  compopt -o default"""
           )
+        case BashCompleter.Raw(script) =>
+          out.println(s"  $script")
       }
       out.println("}")
     }
