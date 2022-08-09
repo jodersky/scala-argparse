@@ -652,6 +652,32 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       _commandInfos += CommandInfo(name, action, description)
     }
 
+    private var _unknownCommand: String => Iterable[String] => String = null
+
+    /** Action to run on an unknown subcommand. Use it to support dynamic
+      * subcommands.
+      *
+      * E.g. match on the exact command:
+      *
+      * ```
+      * parser.unknownCommand {
+      *   case "foo" => args => foo(args)
+      * }
+      * ```
+      *
+      * * E.g. run an external command:
+      * ```
+      * parser.unknownCommand { name =>
+      *  args => os.proc("app-$name", args)
+      * }
+      * ```
+      */
+    def unknownCommand(
+      fn: String => Iterable[String] => String
+    ): Unit = {
+      _unknownCommand = fn
+    }
+
     /** Parse the given arguments with respect to the parameters defined by
       * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
       */
@@ -696,6 +722,8 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         _commandInfos.find(_.name == _command()) match {
           case Some(cmd) =>
             cmd.action(_commandArgs())
+          case None if _unknownCommand != null =>
+            _unknownCommand(_command())(_commandArgs())
           case None =>
             reportUnknownCommand(
               _command(),
