@@ -652,7 +652,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       _commandInfos += CommandInfo(name, action, description)
     }
 
-    private var _unknownCommand: String => Iterable[String] => String = null
+    private var _unknownCommand: String => Iterable[String] => Unit = null
 
     /** Action to run on an unknown subcommand. Use it to support dynamic
       * subcommands.
@@ -673,7 +673,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       * ```
       */
     def unknownCommand(
-      fn: String => Iterable[String] => String
+      fn: String => Iterable[String] => Unit
     ): Unit = {
       _unknownCommand = fn
     }
