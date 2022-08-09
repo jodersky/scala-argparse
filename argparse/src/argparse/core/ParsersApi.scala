@@ -103,9 +103,9 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     * This is subjective, and you may disable style-checking by overriding this
     * method.
     */
-  def checkStyle(paramDefs: Iterable[ParamDef], stderr: java.io.PrintStream): Unit = {
+  def checkStyle(_paramDefs: Iterable[ParamDef], stderr: java.io.PrintStream): Unit = {
     var hasWarnings = false
-    for (param <- paramDefs) {
+    for (param <- _paramDefs) {
       val name = param.names.head
       if (name.exists(_.isLower) && name.exists(_.isUpper)) {
         stderr.println(s"style warning: the parameter '$name' contains upper and lower-case letters. " +
@@ -233,32 +233,56 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
 
     protected def hasErrors = errors > 0
 
-    private val paramDefs = mutable.ListBuffer.empty[ParamDef]
-    private val paramInfos = mutable.ListBuffer.empty[ParamInfo]
-    private val commandInfos = mutable.ListBuffer.empty[CommandInfo]
+    private val _paramDefs = mutable.ListBuffer.empty[ParamDef]
+    private val _paramInfos = mutable.ListBuffer.empty[ParamInfo]
+    private val _commandInfos = mutable.ListBuffer.empty[CommandInfo]
+
+    /** The actual parameters. These objects contains callbacks that are invoked
+      * by the parser.
+      *
+      * This is a low-level escape hatch. You should prefer declaring parameters
+      * via the `param()`, `requiredParam()` and `repeatedParam()` methods.
+      */
+    def paramDefs: List[ParamDef] = _paramDefs.toList
+
+    /** Human-readable information about parameters. These objects do not
+      * influence parsing, but contain additional information that is useful to
+      * generate help messages and bash completion.
+      *
+      * This is a low-level escape hatch. You should prefer declaring parameters
+      * via the `param()`, `requiredParam()` and `repeatedParam()` methods.
+      */
+    def paramInfos = _paramInfos.toList
+
+    /** Subcommands that have been declared in this parser.
+      *
+      * This is a low-level escape hatch. You should prefer declaring
+      * subcommands via the `command()` method.
+      */
+    def commandInfos = _commandInfos.toList
 
     /** Low-level escape hatch for manually adding parameter definitions.
       *
-      * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
-      * high-level API.
+      * You should prefer declaring parameters via the `param()`,
+      * `requiredParam()` and `repeatedParam()` methods.
       */
-    def addParamDef(pdef: ParamDef): Unit = paramDefs += pdef
+    def addParamDef(pdef: ParamDef): Unit = _paramDefs += pdef
 
     /** Low-level escape hatch for manually adding parameter information.
       *
-      * See also [[param]], [[requiredParam]] and [[repeatedParam]] for the
-      * high-level API.
+      * You should prefer declaring parameters via the `param()`,
+      * `requiredParam()` and `repeatedParam()` methods.
       */
-    def addParamInfo(pinfo: ParamInfo): Unit = paramInfos += pinfo
+    def addParamInfo(pinfo: ParamInfo): Unit = _paramInfos += pinfo
 
     /** Low-level escape hatch for manually adding subcommand information.
       *
-      * See also [[command]] for the high-level API.
+      * You should prefer declaring subcommands via the `command()` method.
       */
-    def addCommandInfo(cinfo: CommandInfo): Unit = commandInfos += cinfo
+    def addCommandInfo(cinfo: CommandInfo): Unit = _commandInfos += cinfo
 
     if (enableHelpFlag) {
-      paramDefs += ParamDef(
+      _paramDefs += ParamDef(
         Seq("--help"),
         (_, _) => {
           stdout.print(help())
@@ -269,7 +293,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         repeatPositional = false,
         endOfNamed = false
       )
-      paramInfos += ParamInfo(
+      _paramInfos += ParamInfo(
         isNamed = true,
         names = Seq("--help"),
         argName = None,
@@ -282,15 +306,27 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
     }
 
     /** A default help message, generated from parameter help strings. */
-    def help(): String = api.help(description, paramInfos.toSeq, commandInfos.toSeq)
+    def help(): String = api.help(description, _paramInfos.toSeq, _commandInfos.toSeq)
 
     if (enableBashCompletionFlag && bashCompletionFlag != "") {
-      paramDefs += ParamDef(
+      _paramDefs += ParamDef(
         Seq(bashCompletionFlag),
         (p, name) => {
           name match {
             case None => reportParseError(p, "argument required: name of program to complete")
-            case Some(name) => printBashCompletion(name)
+            case Some(name) =>
+              StandaloneBashCompletion.nested{ topLevel =>
+                val parts = name.split("""\s+""").toList
+                printBashCompletion(parts: _*)
+                for (command <- commandInfos) {
+                  try {
+                    command.action(Seq("--bash-completion", s"$name ${command.name}"))
+                  } catch {
+                    case _: StandaloneBashCompletion.CompletionReturned =>
+                  }
+                }
+                if (!topLevel) throw new StandaloneBashCompletion.CompletionReturned()
+              }
           }
           Parser.Stop
         },
@@ -299,7 +335,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         repeatPositional = false,
         endOfNamed = false
       )
-      // paramInfos += ParamInfo(
+      // _paramInfos += ParamInfo(
       //   isNamed = true,
       //   names = Seq(bashCompletionFlag),
       //   argName = None,
@@ -311,17 +347,13 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       // )
     }
 
-    def printBashCompletion(programName: String): Unit = {
-      try {
-        StandaloneBashCompletion.completeAndThrow(
-          stdout,
-          paramInfos.toList,
-          commandInfos.toList,
-          Seq("---nested-completion", programName)
-        )
-      } catch {
-        case _: StandaloneBashCompletion.CompletionReturned =>
-      }
+    def printBashCompletion(commandChain: String*): Unit = {
+      require(commandChain.length >= 1, "the command chain may not be empty")
+      StandaloneBashCompletion.printCommandCompletion(
+        commandChain,
+        paramInfos,
+        stdout
+      )
     }
 
     def singleParam[A](
@@ -370,9 +402,9 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         repeatPositional = false,
         endOfNamed = endOfNamed
       )
-      paramDefs += pdef
+      _paramDefs += pdef
 
-      paramInfos += ParamInfo(
+      _paramInfos += ParamInfo(
         isNamed = pdef.isNamed,
         names = pdef.names,
         argName = if (flag) None else argName.orElse(Some(reader.typeName)),
@@ -579,9 +611,9 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         repeatPositional = true,
         endOfNamed = endOfNamed
       )
-      paramDefs += pdef
+      _paramDefs += pdef
 
-      paramInfos += ParamInfo(
+      _paramInfos += ParamInfo(
         isNamed = pdef.isNamed,
         names = pdef.names,
         argName = if (flag) None else if (argName == null) Some(reader.typeName) else None,
@@ -617,20 +649,20 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         action: Seq[String] => Unit,
         description: String = ""
     ): Unit = {
-      commandInfos += CommandInfo(name, action, description)
+      _commandInfos += CommandInfo(name, action, description)
     }
 
     /** Parse the given arguments with respect to the parameters defined by
       * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
       */
     def parseResult(args: Iterable[String]): Result = {
-      checkStyle(paramDefs, stderr)
+      checkStyle(_paramDefs, stderr)
 
       var _command: () => String = null
       var _commandArgs: () => Seq[String] = null
 
-      if (!commandInfos.isEmpty) {
-        val commands = commandInfos.map(_.name)
+      if (!_commandInfos.isEmpty) {
+        val commands = _commandInfos.map(_.name)
         _command = requiredParam[String](
           "command",
           endOfNamed = true,
@@ -643,38 +675,31 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       }
 
       if (InteractiveBashCompletion.completeOrFalse(
-            paramInfos.toList,
-            commandInfos.toList,
+            _paramInfos.toList,
+            _commandInfos.toList,
             env,
             args,
             stdout
           )) {
         return EarlyExit
       }
-      StandaloneBashCompletion.completeAndThrow(
-        stdout,
-        paramInfos.toList,
-        commandInfos.toList,
-        args
-      )
 
       if (!Parser.parse(
-        paramDefs.result(),
+        _paramDefs.result(),
         args,
         reportUnknown
       )) return EarlyExit
 
-
       if (hasErrors) return Error
 
-      if (!commandInfos.isEmpty) {
-        commandInfos.find(_.name == _command()) match {
+      if (!_commandInfos.isEmpty) {
+        _commandInfos.find(_.name == _command()) match {
           case Some(cmd) =>
             cmd.action(_commandArgs())
           case None =>
             reportUnknownCommand(
               _command(),
-              commandInfos.map(_.name).result()
+              _commandInfos.map(_.name).result()
             )
             return Error
         }
