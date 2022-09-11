@@ -1,8 +1,15 @@
 ## Changelog
 
+### 0.16.2
+
+- Add low-level escape hatches for manually adding parameter descriptors to the
+  argument parser and bash completion scripts.
+- Add a hook provide hook for handling unknown subcommands.
+
 ### 0.16.1
 
-Add support for annotation-based, macro-generated argument parsers.
+Add support for annotation-based, macro-generated argument parsers
+(experimental).
 
 ### 0.16.0
 
