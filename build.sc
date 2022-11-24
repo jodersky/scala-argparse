@@ -70,6 +70,58 @@ object argparse extends Module {
 
 }
 
+// experimental, typed configuration library
+object configparse extends Module {
+
+  object core extends Module {
+    trait CoreConfigParseModule
+      extends ScalaModule
+      with ScalafmtModule
+      with Publish {
+      def scalaVersion = scala31 // this module is only available for Scala 3
+      def scalacOptions = Seq("-deprecation", "-release", "8")
+      def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.8.1")
+      def millSourcePath = super.millSourcePath / os.up
+      def artifactName = "configparse-core"
+    }
+    object jvm extends CoreConfigParseModule {
+      def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-jvm")))
+      object test extends Tests with Utest
+    }
+    object native extends CoreConfigParseModule with ScalaNativeModule {
+      def scalaNativeVersion = scalaNative
+      def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
+      object test extends Tests with Utest
+    }
+  }
+
+  trait ConfigParseModule
+    extends ScalaModule
+    with ScalafmtModule
+    with Publish {
+    def scalaVersion = scala31 // this module is only available for Scala 3
+    def scalacOptions = Seq("-deprecation", "-release", "8")
+    def ivyDeps = Agg(
+      ivy"com.lihaoyi::os-lib::0.8.1",
+      ivy"io.crashbox::yamlesque::0.3.2"
+    )
+    def millSourcePath = super.millSourcePath / os.up
+    def artifactName = "configparse"
+  }
+  object jvm extends ConfigParseModule {
+    def moduleDeps = Seq(core.jvm, argparse.jvm(scala3))
+
+    def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-jvm")))
+    object test extends Tests with Utest
+  }
+  object native extends ConfigParseModule with ScalaNativeModule {
+    def moduleDeps = Seq(core.native, argparse.native(scala31, scalaNative))
+    def scalaNativeVersion = scalaNative
+    def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
+    object test extends Tests with Utest
+  }
+}
+
 object ini extends Module {
 
   trait IniModule
