@@ -4,7 +4,7 @@ package core
 import scala.collection.mutable
 import Parser.ParamDef
 
-trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
+trait ParsersApi { api: TypesApi =>
 
   /** Generate a help message from parameters.
     *
@@ -203,7 +203,7 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       val stdout: java.io.PrintStream,
       val stderr: java.io.PrintStream,
       val env: Map[String, String]
-  ) extends ParserExtra { self =>
+  ) { self =>
     import ArgumentParser._
 
     private var errors = 0
@@ -231,11 +231,17 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       errors += 1
     }
 
+    protected def reportPostCheck(message: String) = {
+      stderr.println("error: " + message)
+      errors += 1
+    }
+
     protected def hasErrors = errors > 0
 
     private val _paramDefs = mutable.ListBuffer.empty[ParamDef]
     private val _paramInfos = mutable.ListBuffer.empty[ParamInfo]
     private val _commandInfos = mutable.ListBuffer.empty[CommandInfo]
+    private val _postChecks = mutable.ListBuffer.empty[(Iterable[String], Map[String, String]) => Option[String]]
 
     /** The actual parameters. These objects contains callbacks that are invoked
       * by the parser.
@@ -280,6 +286,15 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
       * You should prefer declaring subcommands via the `command()` method.
       */
     def addCommandInfo(cinfo: CommandInfo): Unit = _commandInfos += cinfo
+
+    /** Add a function which is run after parsing command line args, optionally
+      * reporting an error. */
+    def postCheck(
+      check: (Iterable[String], Map[String, String]) => Option[String]
+    ): this.type = {
+      _postChecks += check
+      this
+    }
 
     if (enableHelpFlag) {
       _paramDefs += ParamDef(
@@ -715,6 +730,13 @@ trait ParsersApi extends VersionSpecificParsersApi { api: TypesApi =>
         args,
         reportUnknown
       )) return EarlyExit
+
+      for (check <- _postChecks) {
+        check(args, env) match {
+          case None => // ok, no error
+          case Some(error) => reportPostCheck(error)
+        }
+      }
 
       if (hasErrors) return Error
 

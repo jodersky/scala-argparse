@@ -11,26 +11,26 @@ object AnnotationTest extends TestSuite {
   val tests = Tests {
     test("basic") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo() = {}
-        def main(args: Array[String]) = parsing.main(this, args)
+        def main(args: Array[String]) = parsing.dispatch(this, args)
       }
       wrapper.main(Array())
     }
     test("basic2") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo() = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       main(Array())
     }
     test("no args") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo() = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("too many arguments") {
         intercept[ParseException] {
           main(Array("a"))
@@ -39,10 +39,10 @@ object AnnotationTest extends TestSuite {
     }
     test("positional") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo(a: String) = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("not enough arguments") {
         intercept[ParseException] {
           main(Array())
@@ -54,10 +54,10 @@ object AnnotationTest extends TestSuite {
     }
     test("positional2") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo(a: String, b: Int) = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("not enough arguments") {
         intercept[ParseException] {
           main(Array())
@@ -79,10 +79,10 @@ object AnnotationTest extends TestSuite {
     }
     test("named") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo(a: String = "hello", b: Int = 42) = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("success1"){
         main(Array())
       }
@@ -97,10 +97,10 @@ object AnnotationTest extends TestSuite {
     }
     test("flag") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo(a: Boolean = false) = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("success1"){
         main(Array())
       }
@@ -126,10 +126,10 @@ object AnnotationTest extends TestSuite {
     }
     test("repeated positional") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo(a: Seq[String]) = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("success1"){
         main(Array())
       }
@@ -142,10 +142,10 @@ object AnnotationTest extends TestSuite {
     }
     test("repeated named") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo(a: Seq[String] = Seq()) = {}
       }
-      def main(args: Array[String]) = parsing.main(wrapper, args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
       test("success1"){
         main(Array())
       }
@@ -156,83 +156,56 @@ object AnnotationTest extends TestSuite {
         main(Array("--a", "hello", "--a", "world"))
       }
     }
+    test("repeated non-seq") {
+      object wrapper {
+        @parsing.main()
+        def foo(a: List[String]) = {}
+      }
+      def main(args: Array[String]) = parsing.dispatch(wrapper, args)
+      test("success1"){
+        main(Array())
+      }
+      test("success2"){
+        main(Array("hello"))
+      }
+      test("success3"){
+        main(Array("hello", "world"))
+      }
+    }
     test("no mains") {
       object wrapper {
         def foo() = {}
       }
-      val err = compileError("def main(args: Array[String]) = parsing.main(wrapper, args)")
+      val err = compileError("def main(args: Array[String]) = parsing.dispatch(wrapper, args)")
       assert(err.msg.contains("No main method found"))
     }
     test("too many mains") {
       object wrapper {
-        @argparse.main()
+        @parsing.main()
         def foo() = {}
-        @argparse.main()
+        @parsing.main()
         def bar() = {}
       }
-      val err = compileError("def main(args: Array[String]) = parsing.main(wrapper, args)")
+      val err = compileError("def main(args: Array[String]) = parsing.dispatch(wrapper, args)")
       assert(err.msg.contains("Too many main methods found"))
     }
     test("parameterized") {
       class wrapper(x: Int) {
-        @argparse.main()
+        @parsing.main()
         def foo() = x
       }
-      def main(args: Array[String]) = parsing.main(wrapper(42), args)
+      def main(args: Array[String]) = parsing.dispatch(wrapper(42), args)
       main(Array())
-    }
-    test("commands") {
-      class wrapper(x: Int) {
-        @argparse.main()
-        def foo() = x
-        @argparse.main()
-        def bar() = x
-      }
-      val parser = parsing.ArgumentParser()
-      parser.commands(wrapper(2))
-      test("foo") {
-        parser.parseOrExit(Seq("foo"))
-      }
-      test("bar") {
-        parser.parseOrExit(Seq("bar"))
-      }
-      test("invalid") {
-        intercept[ParseException] {
-          parser.parseOrExit(Seq("other"))
-        }
-      }
-    }
-    test("commands2") {
-      class wrapper(x: Int) {
-        @argparse.main()
-        def foo() = x
-        @argparse.main()
-        def bar() = x
-      }
-      val parser = parsing.ArgumentParser()
-      val x = parser.param[Int]("--x", 42)
-      parser.commands(wrapper(x.value))
-      test("foo") {
-        parser.parseOrExit(Seq("foo"))
-      }
-      test("bar") {
-        parser.parseOrExit(Seq("bar"))
-      }
-      test("invalid") {
-        intercept[ParseException] {
-          parser.parseOrExit(Seq("other"))
-        }
-      }
     }
     test("reader") {
       object wrapper {
         class Foo
 
-        @argparse.main()
+        @parsing.main()
         def foo(foo: Foo) = {}
       }
-      val err = compileError("def main(args: Array[String]) = parsing.main(wrapper, args)")
-      assert(err.msg == "no AnnotationTest.parsing.Reader[wrapper.Foo] available for parameter foo")
+      val err = compileError("def main(args: Array[String]) = parsing.dispatch(wrapper, args)")
+      assert(err.msg.startsWith("No AnnotationTest.parsing.Reader[wrapper.Foo] available for parameter foo"))
     }
   }
 }
