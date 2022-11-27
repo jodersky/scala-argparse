@@ -12,7 +12,7 @@ package argparse.core
   */
 case class Entrypoint(
   name: String,
-  invoke: Iterable[String] => Unit
+  invoke: (Iterable[String], Map[String, String]) => Unit
 )
 
 object Entrypoint:
@@ -73,7 +73,7 @@ object Entrypoint:
   }
 
   def mainImpl[Api <: MainArgsApi: Type, Container: Type](using qctx: Quotes)
-      (api: Expr[Api], container: Expr[Container], args: Expr[Iterable[String]]): Expr[Unit] =
+      (api: Expr[Api], container: Expr[Container], args: Expr[Iterable[String]], env: Expr[Map[String, String]]): Expr[Unit] =
     import qctx.reflect._
 
     // Note: for prettier error messages, instead of forwarding `api`, we get it
@@ -92,7 +92,7 @@ object Entrypoint:
         '{???}
       case head :: Nil =>
         '{
-          $head.invoke($args.toIterable)
+          $head.invoke($args, $env)
         }
       case list =>
         report.error(s"Too many main methods found in ${TypeRepr.of[Container].show}. The container object must contain exactly one method annotated with @argparse.main")
@@ -121,7 +121,7 @@ object Entrypoint:
     val defaultParamValues = getDefaultParamValues(container, method)
 
     '{
-      val invoke = (args: Iterable[String]) =>
+      val invoke = (args: Iterable[String], env: Map[String, String]) =>
         val parser = $api.ArgumentParser()
         val accessors: Seq[() => _] = ${
           Expr.ofSeq(

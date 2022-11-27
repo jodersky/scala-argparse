@@ -11,8 +11,8 @@ trait MainArgsApi extends TypesApi with LowPrioParamBuilders with ParsersApi:
     * This method will become obsolete once annotation macros become available
     * in scala 3.
     */
-  inline def dispatch[A](container: => A, args: Array[String]): Unit = ${
-    Entrypoint.mainImpl[this.type, A]('self, 'container, 'args)
+  inline def dispatch[A](container: => A, args: Array[String], env: Map[String, String] = sys.env): Unit = ${
+    Entrypoint.mainImpl[this.type, A]('self, 'container, 'args, 'env)
   }
 
   /** Mark a method as an application entrypoint.

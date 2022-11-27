@@ -9,8 +9,7 @@ class TestParser extends argparse.default.ArgumentParser(
   true,
   true,
   new java.io.PrintStream(NullStream),
-  new java.io.PrintStream(NullStream),
-  Map()
+  new java.io.PrintStream(NullStream)
 ) {
   var missing = 0
   override protected def reportMissing(name: String): Unit = {

@@ -138,8 +138,7 @@ trait ParsersApi { api: TypesApi =>
         enableBashCompletionFlag: Boolean = true,
         stdout: java.io.PrintStream = System.out,
         stderr: java.io.PrintStream = System.err,
-        env: Map[String, String] = sys.env
-    ) = new ArgumentParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr, env)
+    ) = new ArgumentParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr)
 
     sealed trait Result
     /** Parsing succeeded. Arguments are available. */
@@ -201,10 +200,11 @@ trait ParsersApi { api: TypesApi =>
       val enableHelpFlag: Boolean,
       val enableBashCompletionFlag: Boolean,
       val stdout: java.io.PrintStream,
-      val stderr: java.io.PrintStream,
-      val env: Map[String, String]
+      val stderr: java.io.PrintStream
   ) { self =>
     import ArgumentParser._
+
+    private var env: Map[String, String] = Map()
 
     private var errors = 0
 
@@ -696,8 +696,10 @@ trait ParsersApi { api: TypesApi =>
     /** Parse the given arguments with respect to the parameters defined by
       * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
       */
-    def parseResult(args: Iterable[String]): Result = {
+    def parseResult(args: Iterable[String], env: Map[String, String] = sys.env): Result = {
       checkStyle(_paramDefs, stderr)
+
+      this.env = env
 
       var _command: () => String = null
       var _commandArgs: () => Seq[String] = null
@@ -779,7 +781,7 @@ trait ParsersApi { api: TypesApi =>
       *
       * @see parseResult for a version of this function which does not exit
       */
-    def parseOrExit(args: Iterable[String]): Unit = parseResult(args) match {
+    def parseOrExit(args: Iterable[String], env: Map[String, String] = sys.env): Unit = parseResult(args) match {
       case Success   => ()
       case EarlyExit => exit(0)
       case Error =>
