@@ -22,12 +22,9 @@ trait SettingApi:
 
   def setting[A](default: => A)(
     using reader: SettingReader[A],
-    name: Name,
     doc: DocComment
   ): Setting[A] =
-    val key = settingKeyName(name.toString)
-    val s = Setting(Some(() => default), doc.toString, reader)
-    s
+    Setting(Some(() => default), doc.paragraphs.mkString("\n"), reader)
 
   class Setting[A](
     val default: Option[() => A],

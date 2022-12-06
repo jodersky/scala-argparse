@@ -60,33 +60,3 @@ object Position:
         }
 
 end Position
-
-opaque type Name = String
-
-object Name:
-  extension (c: Name)
-    def toString: String = c
-
-  import quoted.Expr, quoted.Varargs, quoted.Type, quoted.Quotes
-
-  inline given Name = ${here}
-
-  def here(using qctx: Quotes): Expr[String] =
-    import qctx.reflect.*
-    val s = Symbol.spliceOwner.owner.name
-    Expr(s)
-
-opaque type DocComment = String
-
-object DocComment:
-  extension (c: DocComment)
-    def toString: String = c
-
-  import quoted.Expr, quoted.Varargs, quoted.Type, quoted.Quotes
-
-  inline given DocComment = ${here}
-
-  def here(using qctx: Quotes): Expr[String] =
-    import qctx.reflect.*
-    val s = Symbol.spliceOwner.owner.docstring.getOrElse("")
-    Expr(s)
