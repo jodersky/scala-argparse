@@ -42,6 +42,7 @@ trait MainArgsApi extends TypesApi with LowPrioParamBuilders with ParsersApi:
   trait ParamBuilder[A]:
     def makeParams(
       name: String,
+      description: String,
       default: Option[() => A],
       annot: argparse.arg,
       argparser: ArgumentParser
@@ -50,6 +51,7 @@ trait MainArgsApi extends TypesApi with LowPrioParamBuilders with ParsersApi:
   given (using reader: Reader[Boolean]): ParamBuilder[Boolean] with
     def makeParams(
       name: String,
+      description: String,
       default: Option[() => Boolean],
       annot: argparse.arg,
       parser: ArgumentParser
@@ -59,7 +61,7 @@ trait MainArgsApi extends TypesApi with LowPrioParamBuilders with ParsersApi:
         default = default,
         env = Option(annot.env),
         aliases = annot.aliases,
-        help = annot.doc,
+        help = description,
         flag = true,
         endOfNamed = false,
         interactiveCompleter = None,
@@ -70,6 +72,7 @@ trait MainArgsApi extends TypesApi with LowPrioParamBuilders with ParsersApi:
   given [A, Col[_] <: Iterable[_]](using reader: Reader[A]): ParamBuilder[Col[A]] with
     def makeParams(
       name: String,
+      description: String,
       default: Option[() => Col[A]],
       annot: argparse.arg,
       parser: ArgumentParser
@@ -77,7 +80,7 @@ trait MainArgsApi extends TypesApi with LowPrioParamBuilders with ParsersApi:
       parser.repeatedParam(
         name = if default.isDefined then s"--$name" else name,
         aliases = annot.aliases,
-        help = annot.doc
+        help = description,
       ).asInstanceOf[argparse.Argument[Col[A]]]
 
 trait LowPrioParamBuilders:
@@ -86,6 +89,7 @@ trait LowPrioParamBuilders:
   given [A](using reader: Reader[A]): ParamBuilder[A] with
     def makeParams(
       name: String,
+      description: String,
       default: Option[() => A],
       annot: argparse.arg,
       parser: ArgumentParser
@@ -95,7 +99,7 @@ trait LowPrioParamBuilders:
         default = default,
         env = Option(annot.env),
         aliases = annot.aliases,
-        help = annot.doc,
+        help = description,
         flag = false,
         endOfNamed = false,
         interactiveCompleter = None,

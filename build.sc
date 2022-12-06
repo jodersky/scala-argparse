@@ -187,6 +187,7 @@ object examples extends Module {
     }
   }
 
+  object annotation extends ExampleApp
   object basic extends ExampleApp
   object completion1 extends ExampleApp
   object completion2 extends ExampleApp

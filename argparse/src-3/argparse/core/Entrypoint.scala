@@ -118,15 +118,19 @@ object Entrypoint:
       (api: Expr[Api], container: qctx.reflect.Term, method: qctx.reflect.Symbol): Expr[Entrypoint] =
     import qctx.reflect._
 
+    val doc = method.docstring match
+      case Some(s) => DocComment.extract(s)
+      case None => DocComment(Seq(), Map())
+
     val defaultParamValues = getDefaultParamValues(container, method)
 
     '{
       val invoke = (args: Iterable[String], env: Map[String, String]) =>
-        val parser = $api.ArgumentParser()
+        val parser = $api.ArgumentParser(description = ${Expr(doc.paragraphs.mkString("\n"))})
         val accessors: Seq[() => _] = ${
           Expr.ofSeq(
             for param <- method.paramSymss.flatten yield
-              paramAccessor[Api](using qctx)(api, defaultParamValues, param, 'parser)
+              paramAccessor[Api](using qctx)(api, doc.params.toMap, defaultParamValues, param, 'parser)
           )
         }
         parser.parseOrExit(args)
@@ -142,6 +146,7 @@ object Entrypoint:
 
   def paramAccessor[Api <: MainArgsApi: Type](using qctx: Quotes)(
     api: Expr[Api],
+    docs: Map[String, String],
     defaults: Map[qctx.reflect.Symbol, qctx.reflect.Term],
     param: qctx.reflect.Symbol,
     argumentParser: Expr[_]
@@ -185,6 +190,7 @@ object Entrypoint:
           val maker = $makerExpr.asInstanceOf[p.ParamBuilder[t]]
           maker.makeParams(
             name = p.paramName(${Expr(param.name)}),
+            description = ${Expr(docs.getOrElse(param.name, ""))},
             default = $defaultValue,
             annot = $annot,
             argparser = $argumentParser.asInstanceOf[p.ArgumentParser]
