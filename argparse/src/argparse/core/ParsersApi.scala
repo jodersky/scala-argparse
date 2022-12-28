@@ -129,6 +129,10 @@ trait ParsersApi { api: TypesApi =>
     }
   }
 
+  /** Called by parseOrExit in case of error.
+    *
+    * Overriding this can be useful in situations where you do not want to exit,
+    * for example in tests. */
   protected def exit(code: Int): Nothing = sys.exit(code)
 
   object ArgumentParser {
@@ -781,7 +785,7 @@ trait ParsersApi { api: TypesApi =>
       *
       * @see parseResult for a version of this function which does not exit
       */
-    def parseOrExit(args: Iterable[String], env: Map[String, String] = sys.env): Unit = parseResult(args) match {
+    def parseOrExit(args: Iterable[String], env: Map[String, String] = sys.env): Unit = parseResult(args, env) match {
       case Success   => ()
       case EarlyExit => exit(0)
       case Error =>
