@@ -1,5 +1,34 @@
 ## Changelog
 
+### 0.17.0
+
+#### New
+
+- Add experimental configuration parsing library.
+
+#### Breaking
+
+- Replace sub-commands with more structured sub-parsers.
+
+  While the idea of independent subcommands seems quite elegant, there are
+  unfortunately a couple of pitfalls which make them quite brittle to use. The
+  first is that the current API made it easy to capture arguments at the wrong
+  time in lambdas, hence leading to incomplete argument errors. The second, more
+  fundamental issue, is that independent commands are by definition independent,
+  and hence generating shared help messages and bash completion is quite tricky.
+  For example, we needed to resort to hacky workarounds that relied on the stack
+  and thread locals in combination with "magic" parameters to achieve composable
+  bash completion that worked with nested commands.
+
+  Subparsers are less powerful but also less brittle and should still be
+  suitable for the majority of usecases. In situations where absolute control is
+  necessary, the user can still define an all-absorbing parameter and handle
+  subcommands manually.
+
+#### Minor
+
+- Remove parameter style checker.
+
 ### 0.16.2
 
 - Add low-level escape hatches for manually adding parameter descriptors to the
