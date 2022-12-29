@@ -1,15 +1,13 @@
-object NullStream extends java.io.OutputStream {
-  override def write(x: Int): Unit = ()
-  override def write(x: Array[Byte]): Unit = ()
-  override def write(x: Array[Byte], y: Int, z: Int): Unit = ()
-}
+// object NullStream extends java.io.OutputStream {
+//   override def write(x: Int): Unit = ()
+//   override def write(x: Array[Byte]): Unit = ()
+//   override def write(x: Array[Byte], y: Int, z: Int): Unit = ()
+// }
 
 class TestParser extends argparse.default.ArgumentParser(
-  "",
-  true,
-  true,
-  new java.io.PrintStream(NullStream),
-  new java.io.PrintStream(NullStream)
+  description = "",
+  helpFlags = Seq("--help"),
+  bashCompletionFlags = Seq("--bash-completion")
 ) {
   var missing = 0
   override protected def reportMissing(name: String): Unit = {
@@ -21,8 +19,7 @@ class TestParser extends argparse.default.ArgumentParser(
 
   var unknownCmds = 0
   override protected def reportUnknownCommand(
-      actual: String,
-      available: Seq[String]
+      actual: String
   ): Unit = unknownCmds += 1
 
   var parseErrors = 0

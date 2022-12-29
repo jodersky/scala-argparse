@@ -8,21 +8,15 @@ https://1.1.1.1:10/a/b/c
 $ PORT=80 app a
 http://localhost:80/a
 $ app --help
-usage: [options] <path>
+Usage: [OPTIONS] PATH
 
 an example application
 
-positional arguments:
-  path
-        the path to use
-named arguments:
-  --help
-        show this message and exit
-  --host=<string>
-        the name of the host
-  --port=, -p=<int>
-        some port
-  --secure
-
-environment variables:
-  PORT                           sets --port
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --host string             the name of the host
+  -p, --port int                some port
+      --secure                  
+Environment variables:
+  PORT   sets --port

@@ -91,7 +91,7 @@ trait DocsModule extends mill.Module {
         "--template", template().path,
         "--css", css.relativeTo(T.dest / rel / os.up),
         "--toc",
-        "--highlight-style", "kate",
+        "--highlight-style", "pygments",
         "--variable", s"nav:${sidebarContent}",
         "--variable", s"js:${js.relativeTo(T.dest / rel / os.up)}",
         "--variable", s"repo-url:${repoUrl()}",

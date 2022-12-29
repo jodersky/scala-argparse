@@ -60,14 +60,24 @@ trait InteractionSuite extends TestSuite {
   val snippetText = if (os.exists(snippetFile)) os.read(snippetFile) else "$"
   val snippets: Array[String] = snippetText.split("""\$\s+""").tail
 
-  snippets.foreach { invocation =>
-    val lines = invocation.linesIterator
-    val command = lines.next()
-    val expected = lines.toList.map(_.trim).mkString("\n")
+  if (sys.env.contains("OVERWRITE")) {
+    val replacement = snippets.map{ invocation =>
+      val lines = invocation.linesIterator
+      val command = lines.next()
+      val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.mkString("\n")
+      s"$$ $command\n$actual\n"
+    }.mkString
+    os.write.over(snippetFile, replacement)
+  } else {
+    snippets.foreach { invocation =>
+      val lines = invocation.linesIterator
+      val command = lines.next()
+      val expected = lines.toList.map(_.trim).mkString("\n")
 
-    test(command) {
-      val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.map(_.trim).mkString("\n")
-      assertNoDiff(expected, actual)
+      test(command) {
+        val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.map(_.trim).mkString("\n")
+        assertNoDiff(expected, actual)
+      }
     }
   }
 

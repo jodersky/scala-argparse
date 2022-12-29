@@ -15,28 +15,13 @@ object InteractiveBashCompletion {
     * See `man bash` (search for Programmable Completion) for more information.
     */
   def completeOrFalse(
-      paramInfos: Seq[ParamInfo],
-      commandInfos: Seq[CommandInfo],
-      env: Map[String, String],
-      args: Iterable[String],
-      stdout: java.io.PrintStream
+    parser: ParsersApi#ArgumentParser,
+    env: Map[String, String],
+    stdout: java.io.PrintStream
   ): Boolean = {
     val comppoint = env.get("COMP_POINT")
     val compline = env.get("COMP_LINE")
-
-    // Since argparse supports independent nested commands, we must have a way to
-    // consume partial arguments and feed the rest to nested commands. We use
-    // the 'magic' parameter "--recursive-complete" to achieve this. If that
-    // argument is encountered, then it is assumed that we are completing a
-    // command line, and that all remaining arguments represent the command line
-    // to be completed. The initial command line is extracted from bash's
-    // COMP_LINE environment variable.
-    if (!args.isEmpty && args.head == "--recursive-complete") {
-      // nested completion
-      complete(paramInfos, commandInfos, args.tail, stdout)
-      true
-    } else if (comppoint.isDefined && compline.isDefined) {
-      // top-level completion
+    if (comppoint.isDefined && compline.isDefined) {
       val length = comppoint.get.toInt
 
       // Notes:
@@ -48,13 +33,8 @@ object InteractiveBashCompletion {
       //     "a b c ".split("\\s+", -1) == Array("a", "b", "c", "")
       // - .tail is safe, because COMP_LINE will always include $0
       val words = compline.get.take(length).split("\\s+", -1).tail
-      completeOrFalse(
-        paramInfos,
-        commandInfos,
-        env,
-        Seq("--recursive-complete") ++ words,
-        stdout
-      )
+      complete(parser, words, stdout)
+      true
     } else {
       // no completion requested
       false
@@ -62,13 +42,12 @@ object InteractiveBashCompletion {
   }
 
   private def complete(
-      paramInfos: Seq[ParamInfo],
-      commandInfos: Seq[CommandInfo],
+      parser: ParsersApi#ArgumentParser,
       args: Iterable[String],
       stdout: java.io.PrintStream
   ): Unit = {
-    val named = paramInfos.filter(_.isNamed)
-    val positionals = paramInfos.filter(!_.isNamed)
+    val named = parser.paramInfos.filter(_.isNamed)
+    val positionals = parser.paramInfos.filter(!_.isNamed)
 
     val argIter = args.iterator
     var arg: String = null
@@ -112,16 +91,12 @@ object InteractiveBashCompletion {
         case positional =>
           readArg()
 
-          if (commandInfos.exists(_.name == positional) && arg != null) {
-            return commandInfos
-              .find(_.name == positional)
-              .get
-              .action(
-                Seq("--recursive-complete", arg) ++ argIter.toSeq
-              )
-          } else {
-            completer =
-              positionalCompleters.nextOption().getOrElse(_ => Seq.empty)
+          parser.subparsers.get(positional) match {
+            case Some(subparser) if arg != null =>
+              return complete(subparser, Seq(arg) ++ argIter.toSeq, stdout)
+            case _ =>
+              completer =
+                positionalCompleters.nextOption().getOrElse(_ => Seq.empty)
           }
       }
     }
@@ -129,7 +104,7 @@ object InteractiveBashCompletion {
     // then, do the actual completion, depending on what completer was found in
     // the first step
     if (prefix.startsWith("-")) { // '-' will show all available named params
-      named.flatMap(_.names).filter(_.startsWith(prefix)).foreach { f =>
+      named.flatMap(_.names).filter(_.startsWith(prefix)).sorted.foreach { f =>
         stdout.print(f)
         stdout.println(" ")
       }

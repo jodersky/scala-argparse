@@ -97,7 +97,6 @@ A few concepts we can learn from the four commands:
   across a program you have never used before, and can figure out how it works
   simply by reading its help text.
 
-
 These concepts are core to `argparse`:
 
 **parameter**
@@ -386,7 +385,24 @@ which are more advanced than what is described in the [Tutorial](#tutorial).
 
 ### Subcommands
 
-TODO
+Many applications actually split their functionality into multiple nested
+commands, each corresponding to the verb of an action (such as `docker run` or
+`git clone`). This approach works particularly well if an application performs
+different functions which require different kinds of arguments.
+
+`ArgumentParser` has built-in support for these kinds of sub-commands with the
+`subparser()` method. This method will return a new `ArgumentParser` which can
+be modified as usual. The parent parser is aware of the child parser, and will
+include it in help messages and bash completion scripts. Each child parser will
+have its own parameters, but can access the arguments declared in the parent.
+
+```scala
+$include:examples/subparsers/src/main.scala$
+```
+
+```
+$include:examples/subparsers/src/shell.txt$
+```
 
 ### Bash Completion
 

@@ -285,7 +285,7 @@ object ArgParserTest extends TestSuite {
         // the --help flag has top priority; it can appear anywhere on the command line
         parser.parseResult(
           List("a", "b", "c", "--name", "--help", "foo", "--bar")
-        ) ==> argparse.default.ArgumentParser.EarlyExit
+        ) ==> argparse.ParseResult.EarlyExit
       }
     }
   }

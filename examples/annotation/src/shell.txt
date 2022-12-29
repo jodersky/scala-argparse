@@ -1,14 +1,10 @@
 $ app --help
-usage: [options] <p2>
+Usage: [OPTIONS] P2
 
 This is an example app.
 It does something interesting.
 
-positional arguments:
-  p2
-        description goes here
-named arguments:
-  --help
-        show this message and exit
-  --p1=<string>
-        description goes here
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --p1 string               description goes here

@@ -1,9 +1,10 @@
 $ app
+
 $ app --help
-usage: [options]
-named arguments:
-  --help
-        show this message and exit
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
 $ app --verbose
 unknown argument: --verbose
 run with '--help' for more information

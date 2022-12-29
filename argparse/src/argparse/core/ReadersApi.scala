@@ -143,7 +143,7 @@ trait ReadersApi extends LowPrioReaders { types: TypesApi =>
     override def interactiveCompleter =
       prefix => Seq("true", "false").filter(_.startsWith(prefix))
     override def standaloneCompleter = BashCompleter.Fixed(Set("true", "false"))
-    override def typeName: String = "true|false"
+    override def typeName: String = "bool"
   }
 
   private def colonSeparatedReader[E, Col <: Iterable[E]](

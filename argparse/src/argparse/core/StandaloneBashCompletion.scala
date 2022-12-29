@@ -259,21 +259,4 @@ object StandaloneBashCompletion {
     out.println("}")
   }
 
-  private[argparse] val isNestedCompletion = new ThreadLocal[Boolean]()
-
-  // Run an action, indicating if it is the top-most in nested calls to this
-  // method.
-  private[argparse] def nested(action: Boolean => Unit): Unit = {
-    var topLevel = false
-    try {
-      topLevel = !isNestedCompletion.get()
-      isNestedCompletion.set(true)
-      action(topLevel)
-    } finally {
-      if (topLevel) isNestedCompletion.remove()
-    }
-  }
-
-  class CompletionReturned() extends Throwable("returning after completion generated", null, true, false)
-
 }

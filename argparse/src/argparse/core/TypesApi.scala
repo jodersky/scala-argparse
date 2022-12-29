@@ -1,6 +1,7 @@
 package argparse
 package core
 
+// contains typeclasses that can be customized per API bundle
 trait TypesApi {
 
   /** A typeclass that defines how to convert a string from a single command
@@ -32,9 +33,9 @@ trait TypesApi {
       * a bash script generates completion, without the involvement of the the
       * user program.
       *
-      * If your program is implemented with Scala on the JVM, the startup time
-      * is considerable and hence standalone completion should be preferred for
-      * a snappy user experience.
+      * If your program is running on the JVM, the startup time is considerable
+      * and hence standalone completion should be preferred to interactive
+      * completion for a snappy user experience.
       */
     def standaloneCompleter: BashCompleter = BashCompleter.Empty
   }

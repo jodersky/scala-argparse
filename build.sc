@@ -204,6 +204,7 @@ object examples extends Module {
   object paramshort extends ExampleApp
   object reader extends ExampleApp
   object readme extends ExampleApp
+  object subparsers extends ExampleApp
 
 }
 

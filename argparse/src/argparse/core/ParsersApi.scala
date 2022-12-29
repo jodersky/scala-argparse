@@ -3,6 +3,7 @@ package core
 
 import scala.collection.mutable
 import Parser.ParamDef
+import scala.annotation.meta.param
 
 trait ParsersApi { api: TypesApi =>
 
@@ -11,77 +12,101 @@ trait ParsersApi { api: TypesApi =>
     * This message will be used by `ArgumentParser`s. Overriding this allows you
     * to customize the help message of all `ArgumentParser`s.
     */
-  def help(
-    description: String,
-    params: Seq[ParamInfo],
-    commands: Seq[CommandInfo]
-  ): String = {
-    val (named0, positional) = params.partition(_.isNamed)
+  def defaultHelpMessage(parser: ParsersApi#ArgumentParser): String = {
+    val (named0, positional) = parser.paramInfos.partition(_.isNamed)
     val named = named0.sortBy(_.names.head)
 
-    val width = math.max(argparse.term.cols - 20, 20)
-
     val b = new StringBuilder
-    b ++= s"usage: "
+    b ++= s"Usage:"
     if (!named.isEmpty) {
-      b ++= "[options] "
+      b ++= " [OPTIONS]"
     }
     for (param <- positional) {
-      b ++= s"<${param.names.head}>"
-      if (param.repeats) b ++= "..."
       b ++= " "
+      b ++= param.names.head.toUpperCase
+      if (param.repeats) b ++= "..."
     }
     b ++= "\n"
 
-    if (!description.isEmpty()) {
+    if (!parser.description.isEmpty()) {
       b ++= "\n"
-      b ++= description
+      b ++= parser.description
       b ++= "\n\n"
-    }
-
-    if (!commands.isEmpty) {
-      b ++= "commands:\n"
-      for (cmd <- commands) {
-        b ++= f"  ${cmd.name}%-20s"
-        TextUtils.wrap(cmd.description, b, width, "\n                     ")
-        b ++= "\n"
-      }
-    }
-
-    val describedPos = positional.filter(!_.description.isEmpty)
-    if (!describedPos.isEmpty && commands.isEmpty) {
-      b ++= "positional arguments:\n"
-      for (param <- positional) {
-        b ++= s"  ${param.names.head}\n        "
-        TextUtils.wrap(param.description, b, width, "\n        ")
-        b ++= "\n"
-      }
     }
 
     // Note that not necessarily all named parameters must be optional. However
     // since that is usually the case, this is what the default help message
     // assumes.
     if (!named.isEmpty) {
-      b ++= "named arguments:\n"
-    }
-    for (param <- named) {
-      val names = if (param.isFlag) {
-        param.names.mkString(", ")
-      } else {
-        param.names.map(_ + "=").mkString(", ")
+      b ++= "Options:\n"
+
+      // -short, --long tpe wrapped
+      val lhs = for (param <- named) yield {
+        val long = param.names.head
+        val short = if (long.length == 2) "" else param.names.find(_.length == 2).getOrElse("")
+        val argname = param.argName.getOrElse("")
+
+        if (short != "") {
+          s"  $short, $long $argname  "
+        } else {
+          s"      $long $argname  "
+        }
       }
-      b ++= s"  $names"
-      param.argName.foreach(n => b ++= s"<$n>")
-      b ++= "\n        "
-      TextUtils.wrap(param.description, b, width, "\n        ")
-      b ++= "\n"
+
+      val col1Width = lhs.map(_.length).max
+      val col2Width = argparse.term.cols - col1Width
+
+      if (col2Width > 30) {
+        for ((l, param) <- lhs.zip(named)) {
+          b ++= l
+          b ++= " " * (col1Width - l.length)
+          TextUtils.wrap(param.description, b, col2Width, "\n" + " " * col1Width)
+          b += '\n'
+        }
+      } else {
+        for ((l, param) <- lhs.zip(named)) {
+          b ++= l
+          b += '\n'
+          b ++= param.description
+          b += '\n'
+        }
+      }
     }
+
+    if (!parser.subparsers.isEmpty) {
+      val width = parser.subparsers.keySet.map(_.length).max + 3
+
+      b ++= "Commands:\n"
+      for ((name, cmd) <- parser.subparsers) {
+        b ++= "  "
+        b ++= name
+        b ++= " "
+        b ++= " " * (width - name.length)
+        TextUtils.wrap(cmd.description, b, argparse.term.cols - width, "\n" + " " * width)
+        b ++= "\n"
+      }
+    }
+
+    // val describedPos = positional.filter(!_.description.isEmpty)
+    // if (!describedPos.isEmpty) {
+    //   b ++= "positional arguments:\n"
+    //   for (param <- positional) {
+    //     b ++= s"  ${param.names.head}\n        "
+    //     TextUtils.wrap(param.description, b, width, "\n        ")
+    //     b ++= "\n"
+    //   }
+    // }
 
     val envVars = named.filter(_.env.isDefined)
     if (!envVars.isEmpty) {
-      b ++= "environment variables:\n"
+      val envWidth = envVars.map(_.env.get.length).max + 2
+      b ++= "Environment variables:\n"
       for (param <- envVars) {
-        b ++= f"  ${param.env.get}%-30s sets ${param.names.head}%s%n"
+        b ++= "  "
+        b ++= param.env.get
+        b ++= " " * (envWidth - param.env.get.length)
+        b ++= " "
+        b ++= s"sets ${param.names.head}\n"
       }
     }
 
@@ -90,9 +115,19 @@ trait ParsersApi { api: TypesApi =>
 
   /** The name of the flag to use for generating standalone bash-completion.
     *
-    * Set this to the empty string to disable bash-completion entirely.
+    * Set this to empty to disable bash-completion entirely.
+    *
+    * Note that individual argument parsers may override this.
     */
-  def bashCompletionFlag = "--bash-completion"
+  def defaultBashCompletionFlags = Seq("--bash-completion")
+
+  /** The name of the flag to use for printing help messages.
+    *
+    * Set this to empty to disable help entirely.
+    *
+    * Note that individual argument parsers may override this.
+    */
+  def defaultHelpFlags = Seq("--help")
 
   /** Called by parseOrExit in case of error.
     *
@@ -103,40 +138,23 @@ trait ParsersApi { api: TypesApi =>
   object ArgumentParser {
     def apply(
         description: String = "",
-        enableHelpFlag: Boolean = true,
-        enableBashCompletionFlag: Boolean = true,
-        stdout: java.io.PrintStream = System.out,
-        stderr: java.io.PrintStream = System.err,
-    ) = new ArgumentParser(description, enableHelpFlag, enableBashCompletionFlag, stdout, stderr)
-
-    sealed trait Result
-    /** Parsing succeeded. Arguments are available. */
-    case object Success extends Result
-
-    /** There was an error during parsing. Arguments are not available. */
-    case object Error extends Result
-
-    /** Parsing signalled an early exit. This means that there wasn't an error,
-      * but that not all arguments were parsed. This occurs if one of the
-      * arguments requested an early exit after some side-effect (for example,
-      * `--help` will print a help message and then signal an early exit).
-      * Arguments are not available. */
-    case object EarlyExit extends Result
-
+        helpFlags: Seq[String] = defaultHelpFlags,
+        bashCompletionFlags: Seq[String] = defaultBashCompletionFlags
+    ) = new ArgumentParser(description, helpFlags, bashCompletionFlags)
   }
 
   /** A simple command line argument parser.
     *
     * Usage:
     *
-    * 1. Define parameters with [[param]], [[requiredParam]], [[repeatedParam]]
-    *    and [[command]]. Each of these methods gives back a handle to a future
-    *    argument value.
+    * 1. Define parameters with [[param]], [[requiredParam]] and
+    *    [[repeatedParam]]. Each of these methods gives back a handle to a
+    *    future argument value.
     *
-    * 2. Call `parse()` with actual arguments.
+    * 2. Call `parseOrExit()` with actual arguments.
     *
     * 3. If parsing succeeds, the arguments will be available in the handles
-    *     defined in step 1.
+    *    defined in step 1.
     *
     *    If parsing fails, error descriptions are printed and the program exits
     *    with 2.
@@ -144,36 +162,36 @@ trait ParsersApi { api: TypesApi =>
     * Example:
     *
     * ```scala
-    * val parser = argparse.ArgumentParser("0.1.0")
+    * val parser = argparse.default.ArgumentParser()
     *
     * val p1 = parser.param[String]("--this-is-a-named-param", default = "default value")
     * val p2 = parser.param[Int]("positional-param", default = 2)
     *
-    * parser.parse(Seq("--this-is-a-named-param=other", 5))
+    * parser.parseOrExit(Seq("--this-is-a-named-param=other", 5))
     * println(p1.value)
     * println(p2.value)
     * ```
     *
     * @param description A short description of this command. Used in help
     * messages.
-    * @param enableHelpFlag Include a `--help` flag which will print a generated
-    * help message.
-    * @param enableBashCompletionFlag Include a `--bash-completion` flag which
-    * generate a bash completion script.
-    * @param stdout The standard output stream.
-    * @param stdout The standard error stream.
-    * @param env The environment.
+    * @param helpFlags Use these flags to print the help message. Set to empty
+    * to disable.
+    * @param bashCompletionFlag Use these flags to print a sourceable
+    * bash-completion script. Set to empty to disable.
     */
   class ArgumentParser(
       val description: String,
-      val enableHelpFlag: Boolean,
-      val enableBashCompletionFlag: Boolean,
-      val stdout: java.io.PrintStream,
-      val stderr: java.io.PrintStream
+      val helpFlags: Seq[String],
+      val bashCompletionFlags: Seq[String]
   ) { self =>
-    import ArgumentParser._
 
-    private var env: Map[String, String] = Map()
+    private var _env: Map[String, String] = Map()
+    private var _stdout: java.io.PrintStream = null
+    private var _stderr: java.io.PrintStream = null
+
+    def env = _env
+    def stdout = _stdout
+    def stderr = _stderr
 
     private var errors = 0
 
@@ -194,9 +212,8 @@ trait ParsersApi { api: TypesApi =>
       errors += 1
     }
 
-    protected def reportUnknownCommand(actual: String, available: Seq[String]) = {
+    protected def reportUnknownCommand(actual: String) = {
       stderr.println("unknown command: " + actual)
-      stderr.println("expected one of: " + available.mkString(", "))
       errors += 1
     }
 
@@ -209,7 +226,8 @@ trait ParsersApi { api: TypesApi =>
 
     private val _paramDefs = mutable.ListBuffer.empty[ParamDef]
     private val _paramInfos = mutable.ListBuffer.empty[ParamInfo]
-    private val _commandInfos = mutable.ListBuffer.empty[CommandInfo]
+    private val _subparsers = mutable.Map.empty[String, argparse.core.ParsersApi#ArgumentParser]
+    private val _subparserAliases = mutable.Map.empty[String, argparse.core.ParsersApi#ArgumentParser]
     private val _postChecks = mutable.ListBuffer.empty[(Iterable[String], Map[String, String]) => Option[String]]
 
     /** The actual parameters. These objects contains callbacks that are invoked
@@ -229,12 +247,12 @@ trait ParsersApi { api: TypesApi =>
       */
     def paramInfos = _paramInfos.toList
 
-    /** Subcommands that have been declared in this parser.
+    /** Nested parsers that have been declared in this parser.
       *
       * This is a low-level escape hatch. You should prefer declaring
       * subcommands via the `command()` method.
       */
-    def commandInfos = _commandInfos.toList
+    def subparsers = _subparsers.toMap
 
     /** Low-level escape hatch for manually adding parameter definitions.
       *
@@ -250,11 +268,19 @@ trait ParsersApi { api: TypesApi =>
       */
     def addParamInfo(pinfo: ParamInfo): Unit = _paramInfos += pinfo
 
-    /** Low-level escape hatch for manually adding subcommand information.
+    /** Low-level escape hatch for manually adding a nested parser.
       *
-      * You should prefer declaring subcommands via the `command()` method.
+      * You should use the [[subparser()]] method if you want to construct an
+      * argument parser of the same API package. This method allows you to nest
+      * ArgumentParsers of different API styles.
       */
-    def addCommandInfo(cinfo: CommandInfo): Unit = _commandInfos += cinfo
+    def addSubparser(name: String, parser: argparse.core.ParsersApi#ArgumentParser, aliases: Seq[String] = Seq()): this.type = {
+      _subparsers += name -> parser
+      for (alias <- aliases) {
+        _subparserAliases += alias -> parser
+      }
+      this
+    }
 
     /** Add a function which is run after parsing command line args, optionally
       * reporting an error. */
@@ -265,9 +291,9 @@ trait ParsersApi { api: TypesApi =>
       this
     }
 
-    if (enableHelpFlag) {
+    if (!helpFlags.isEmpty) {
       _paramDefs += ParamDef(
-        Seq("--help"),
+        helpFlags,
         (_, _) => {
           stdout.print(help())
           Parser.Stop
@@ -279,7 +305,7 @@ trait ParsersApi { api: TypesApi =>
       )
       _paramInfos += ParamInfo(
         isNamed = true,
-        names = Seq("--help"),
+        names = helpFlags,
         argName = None,
         repeats = false,
         env = None,
@@ -289,28 +315,23 @@ trait ParsersApi { api: TypesApi =>
       )
     }
 
-    /** A default help message, generated from parameter help strings. */
-    def help(): String = api.help(description, _paramInfos.toSeq, _commandInfos.toSeq)
+    private var _help: String = null
 
-    if (enableBashCompletionFlag && bashCompletionFlag != "") {
+    /** The help message. */
+    def help(): String = if (_help == null) api.defaultHelpMessage(this) else _help
+
+    def help(message: String): this.type = {
+      _help = message
+      this
+    }
+
+    if (!bashCompletionFlags.isEmpty) {
       _paramDefs += ParamDef(
-        Seq(bashCompletionFlag),
+        bashCompletionFlags,
         (p, name) => {
           name match {
             case None => reportParseError(p, "argument required: name of program to complete")
-            case Some(name) =>
-              StandaloneBashCompletion.nested{ topLevel =>
-                val parts = name.split("""\s+""").toList
-                printBashCompletion(parts: _*)
-                for (command <- commandInfos) {
-                  try {
-                    command.action(Seq("--bash-completion", s"$name ${command.name}"))
-                  } catch {
-                    case _: StandaloneBashCompletion.CompletionReturned =>
-                  }
-                }
-                if (!topLevel) throw new StandaloneBashCompletion.CompletionReturned()
-              }
+            case Some(name) => printBashCompletion(stdout, name)
           }
           Parser.Stop
         },
@@ -319,25 +340,39 @@ trait ParsersApi { api: TypesApi =>
         repeatPositional = false,
         endOfNamed = false
       )
-      // _paramInfos += ParamInfo(
-      //   isNamed = true,
-      //   names = Seq(bashCompletionFlag),
-      //   argName = None,
-      //   repeats = false,
-      //   env = None,
-      //   description = "generate bash completion for this command",
-      //   interactiveCompleter = _ => Seq.empty,
-      //   standaloneCompleter = BashCompleter.Empty
-      // )
+      _paramInfos += ParamInfo(
+        isNamed = true,
+        names = bashCompletionFlags,
+        argName = Some("string"),
+        repeats = false,
+        env = None,
+        description = "generate bash completion for this command",
+        interactiveCompleter = _ => Seq.empty,
+        standaloneCompleter = BashCompleter.Empty
+      )
     }
 
-    def printBashCompletion(commandChain: String*): Unit = {
+    /** Generate and print a standalone bash completion script.
+      *
+      * @param out the stream to which to print the script to
+      * @param commandChain the name of the program
+      */
+    def printBashCompletion(out: java.io.PrintStream, commandChain: String*): Unit = {
       require(commandChain.length >= 1, "the command chain may not be empty")
+
+      if (!_subparsers.isEmpty) {
+        command
+        commandArgs
+      }
+
       StandaloneBashCompletion.printCommandCompletion(
         commandChain,
         paramInfos,
-        stdout
+        out
       )
+      for ((name, p) <- _subparsers) {
+        p.printBashCompletion(out, (commandChain ++ Seq(name)): _*)
+      }
     }
 
     def singleParam[A](
@@ -548,14 +583,14 @@ trait ParsersApi { api: TypesApi =>
       * [[repeatedParam]] takes an `A` but gives back a `Seq[A]`, while other
       * params take `A` and give back `A`.*
       *
-      * E.g. consider the command line `--foo=1 --foo=2 --foo=3`
-      *
-      * In case foo is a regular named parameter, then, after parsing, the value
-      * will be `3`. In case it is defined as a repeating parameter, its value
-      * will be `Seq(1,2,3)`.
+      * E.g. consider the command line `--foo=1 --foo=2 --foo=3`. In case foo is
+      * a regular named parameter, then, after parsing, the value will be `3`.
+      * In case it is defined as a repeating parameter, its value will be
+      * `Seq(1,2,3)`.
       *
       * Repeated positional parameters consume all remaining positional command
-      * line arguments.
+      * line arguments. They should thus only ever be defined as the last
+      * positional parameter.
       */
     def repeatedParam[A](
         name: String,
@@ -611,94 +646,105 @@ trait ParsersApi { api: TypesApi =>
       arg
     }
 
-    /** Utility to define a subcommand.
+    /** Utility to define a nested argument parser.
       *
-      * Many modern command line apps actually consist of multiple nested
-      * commands, each corresponding to the verb of an action, such as 'run' or
-      * 'clone'. Typically, each sub command also has its own dedicated
+      * Many applications actually consist of multiple nested commands, each
+      * corresponding to the verb of an action (such as 'docker run' or 'git
+      * clone'). Typically, each nested command also has its own dedicated
       * parameter list.
       *
-      * In argparse, subcommands can easily be modelled by a positional
-      * parameter that represents the command, followed by a repeated,
-      * all-absorbing parameter which represents the command's arguments.
-      * However, since this pattern is fairly common, this method is provided as
-      * a shortcut.
+      * @param name The name of the subcommand.
+      * @param description Information about what the nested command does.
+      * @param aliases Other names of the subcommand.
       *
-      * @param name The name of the command.
-      * @param action A function called with the remaining arguments after this
-      * command. Note that you may reference an argument's value in the action.
+      * @return a new [[ArgumentParser]] which will receive any remaining
+      * arguments. Note that you should defined an [[action()]] on the new
+      * [[ArgumentParser]].
       */
-    def command(
-        name: String,
-        action: Seq[String] => Unit,
-        description: String = ""
-    ): Unit = {
-      _commandInfos += CommandInfo(name, action, description)
+    def subparser(name: String, description: String = "",  aliases: Seq[String] = Seq()): ArgumentParser = {
+      val sp = ArgumentParser(
+        description = description,
+        helpFlags = helpFlags,
+        bashCompletionFlags = Seq() // bash completion is handled by the top-level
+      )
+      addSubparser(name, sp, aliases)
+      sp
     }
 
-    private var _unknownCommand: String => Iterable[String] => Unit = null
+    private var _subparserUnknown: (String, Iterable[String]) => Unit =
+      (command, _) => reportUnknownCommand(command)
 
-    /** Action to run on an unknown subcommand. Use it to support dynamic
-      * subcommands.
+    /** Action to run on an unknown subcommand (if subparsers have been
+      * defined).
       *
-      * E.g. match on the exact command:
+      * You can use it to support dynamic subcommands. E.g.
       *
-      * ```
-      * parser.unknownCommand {
-      *   case "foo" => args => foo(args)
-      * }
-      * ```
+      * - match on the exact command:
       *
-      * * E.g. run an external command:
-      * ```
-      * parser.unknownCommand { name =>
-      *  args => os.proc("app-$name", args)
-      * }
-      * ```
+      *   ```
+      *   parser.subparserUnknown {
+      *     case ("foo", args) => foo(args)
+      *   }
+      *   ```
+      *
+      * - run an external command:
+      *
+      *   ```
+      *   parser.subparserUnknown {
+      *    case (name, args) => os.proc("app-$name", args)
+      *   }
+      *   ```
       */
-    def unknownCommand(
-      fn: String => Iterable[String] => Unit
-    ): Unit = {
-      _unknownCommand = fn
+    def subparserUnknown(action: (String, Iterable[String]) => Unit): this.type = {
+      _subparserUnknown = action
+      this
     }
+
+    private var _action: () => Unit = () => ()
+
+    /** Set an action to be run after successful parsing. */
+    def action(fn: => Unit): this.type = {
+      _action = () => fn
+      this
+    }
+
+    /* Note: these are initialized at the latest possible stage, in
+     * [[parseResult]] or [[printBashCompletion]]. */
+    private lazy val command = requiredParam[String](
+      "command",
+      endOfNamed = true,
+      interactiveCompleter = prefix => _subparsers.keySet.filter(_.startsWith(prefix)).toList.sorted,
+      standaloneCompleter = BashCompleter.Fixed(_subparsers.keySet.toSet)
+    )
+    private lazy val commandArgs = repeatedParam[String]("args")
 
     /** Parse the given arguments with respect to the parameters defined by
-      * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
+      * [[param]], [[requiredParam]], [[repeatedParam]].
       */
-    def parseResult(args: Iterable[String], env: Map[String, String] = sys.env): Result = {
-      this.env = env
+    def parseResult(
+      args: Iterable[String],
+      env: Map[String, String] = sys.env,
+      stdout: java.io.PrintStream = System.out,
+      stderr: java.io.PrintStream = System.err
+    ): ParseResult = {
+      this._env = env
+      this._stdout = stdout
+      this._stderr = stderr
 
-      var _command: () => String = null
-      var _commandArgs: () => Seq[String] = null
-
-      if (!_commandInfos.isEmpty) {
-        val commands = _commandInfos.map(_.name)
-        _command = requiredParam[String](
-          "command",
-          endOfNamed = true,
-          interactiveCompleter = prefix => commands.filter(_.startsWith(prefix)).toList,
-          standaloneCompleter = BashCompleter.Fixed(commands.toSet)
-        )
-        _commandArgs = repeatedParam[String](
-          "args"
-        )
+      if (!_subparsers.isEmpty) {
+        command
+        commandArgs
       }
 
-      if (InteractiveBashCompletion.completeOrFalse(
-            _paramInfos.toList,
-            _commandInfos.toList,
-            env,
-            args,
-            stdout
-          )) {
-        return EarlyExit
+      if (InteractiveBashCompletion.completeOrFalse(this, env, stdout)) {
+        return ParseResult.EarlyExit
       }
 
-      if (!Parser.parse(
-        _paramDefs.result(),
-        args,
-        reportUnknown
-      )) return EarlyExit
+      if (!Parser.parse(_paramDefs.result(), args, reportUnknown)) {
+        return ParseResult.EarlyExit
+      }
+
+      if (hasErrors) return ParseResult.Error
 
       for (check <- _postChecks) {
         check(args, env) match {
@@ -707,24 +753,21 @@ trait ParsersApi { api: TypesApi =>
         }
       }
 
-      if (hasErrors) return Error
+      if (hasErrors) return ParseResult.Error
 
-      if (!_commandInfos.isEmpty) {
-        _commandInfos.find(_.name == _command()) match {
+      if (!_subparsers.isEmpty) {
+        _subparsers.get(command.value).orElse(_subparserAliases.get(command.value)) match {
           case Some(cmd) =>
-            cmd.action(_commandArgs())
-          case None if _unknownCommand != null =>
-            _unknownCommand(_command())(_commandArgs())
+            return cmd.parseResult(commandArgs.value, env)
           case None =>
-            reportUnknownCommand(
-              _command(),
-              _commandInfos.map(_.name).result()
-            )
-            return Error
+            _subparserUnknown(command.value, commandArgs.value)
+            return ParseResult.Error
         }
       }
 
-      Success
+      _action()
+
+      ParseResult.Success
     }
 
     /** Parse the given arguments with respect to the parameters defined by
@@ -748,10 +791,15 @@ trait ParsersApi { api: TypesApi =>
       *
       * @see parseResult for a version of this function which does not exit
       */
-    def parseOrExit(args: Iterable[String], env: Map[String, String] = sys.env): Unit = parseResult(args, env) match {
-      case Success   => ()
-      case EarlyExit => exit(0)
-      case Error =>
+    def parseOrExit(
+      args: Iterable[String],
+      env: Map[String, String] = sys.env,
+      stdout: java.io.PrintStream = System.out,
+      stderr: java.io.PrintStream = System.err
+    ): Unit = parseResult(args, env, stdout, stderr) match {
+      case ParseResult.Success   => ()
+      case ParseResult.EarlyExit => exit(0)
+      case ParseResult.Error =>
         stderr.println("run with '--help' for more information")
         exit(2)
     }

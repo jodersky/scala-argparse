@@ -1,9 +1,8 @@
 $ app -v
 true
 $ app --help
-usage: [options]
-named arguments:
-  --help
-        show this message and exit
-  --verbose, -v, --talkative
-        use verbose output
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+  -v, --verbose                 use verbose output

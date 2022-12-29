@@ -13,8 +13,3 @@ case class ParamInfo(
 ) {
   def isFlag = isNamed && argName == None
 }
-case class CommandInfo(
-    name: String,
-    action: Seq[String] => Unit,
-    description: String
-)
