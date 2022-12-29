@@ -94,41 +94,6 @@ trait ParsersApi { api: TypesApi =>
     */
   def bashCompletionFlag = "--bash-completion"
 
-  /** Check the style of parameters.
-    *
-    * This is intended to nudge developers into building command line
-    * applications that integrate seamlessly into other system utilities and
-    * provide a pleasant user experience.
-    *
-    * This is subjective, and you may disable style-checking by overriding this
-    * method.
-    */
-  def checkStyle(_paramDefs: Iterable[ParamDef], stderr: java.io.PrintStream): Unit = {
-    var hasWarnings = false
-    for (param <- _paramDefs) {
-      val name = param.names.head
-      if (name.exists(_.isLower) && name.exists(_.isUpper)) {
-        stderr.println(s"style warning: the parameter '$name' contains upper and lower-case letters. " +
-          "Since command line arguments are often written by humans, we recommend that you use only " +
-          "lower-case letters, since they require less finger movement to type."
-        )
-        stderr.println(s"suggestion: replace '$name' with '${TextUtils.kebabify(name)}'")
-        hasWarnings = true
-      }
-      if (name.startsWith("-") && name.length > 2 && !name.startsWith("--")) {
-        stderr.println(s"style warning: the parameter '$name' starts with '-' but contains more than one letter. " +
-          "We recommend that you use a double-dash to differentiate it from short parameters, which are " +
-          "often grouped."
-        )
-        stderr.println(s"suggestion: replace '$name' with '-$name'")
-        hasWarnings = true
-      }
-      if (hasWarnings) {
-        stderr.println("you may disable these warnings by overriding `checkStyle()`")
-      }
-    }
-  }
-
   /** Called by parseOrExit in case of error.
     *
     * Overriding this can be useful in situations where you do not want to exit,
@@ -701,8 +666,6 @@ trait ParsersApi { api: TypesApi =>
       * [[param]], [[requiredParam]], [[repeatedParam]] and [[command]].
       */
     def parseResult(args: Iterable[String], env: Map[String, String] = sys.env): Result = {
-      checkStyle(_paramDefs, stderr)
-
       this.env = env
 
       var _command: () => String = null
