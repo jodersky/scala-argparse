@@ -1,0 +1,19 @@
+$ app --num 42 --num2 1.1 --path /a/b/c --key-value hello=2 --key-values a=1 --key-values b=2
+num=42
+num2=1.1
+path=/a/b/c
+keyValue=(hello,2)
+keyValues=List((a,1), (b,2))
+$ app --num 1.1
+error processing argument --num: '1.1' is not an integral number
+run with '--help' for more information
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --key-value string=int    
+      --key-values string=int   
+      --num int                 
+      --num2 float              
+      --path path               

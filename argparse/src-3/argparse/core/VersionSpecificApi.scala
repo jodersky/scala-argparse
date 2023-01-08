@@ -1,3 +1,3 @@
 package argparse.core
 
-trait VersionSpecificApi extends MainArgsApi
+trait VersionSpecificApi extends MacroApi

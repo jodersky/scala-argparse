@@ -2,11 +2,10 @@
 
 ### 0.17.0
 
-#### New
-
-- Add experimental configuration parsing library.
-
 #### Breaking
+
+- Rework annotation-based macro API and remove experimental status. This is now
+  the recommended interface for basic use cases.
 
 - Replace sub-commands with more structured sub-parsers.
 
@@ -28,6 +27,10 @@
 #### Minor
 
 - Remove parameter style checker.
+
+#### Experimental
+
+- Add experimental configuration parsing library.
 
 ### 0.16.2
 
