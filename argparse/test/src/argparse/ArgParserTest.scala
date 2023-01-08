@@ -288,5 +288,161 @@ object ArgParserTest extends TestSuite {
         ) ==> argparse.ParseResult.EarlyExit
       }
     }
+    test("short options") {
+      val parser = new TestParser
+      test("named args") {
+        parser.requiredParam[String]("-p1")
+        parser.requiredParam[String]("-p2")
+        parser.parseResult("-p1=a" :: "-p2=b" :: Nil)
+
+        parser.missing ==> 0
+        parser.unknown ==> 0
+      }
+      test("named args missing") {
+        parser.requiredParam[String]("-p1")
+        parser.requiredParam[String]("-p2")
+        parser.parseResult(Nil)
+
+        parser.missing ==> 2
+        parser.unknown ==> 0
+      }
+      test("named args missing default") {
+        parser.param[String]("-p1", "a")
+        parser.requiredParam[String]("-p2")
+        parser.parseResult(Nil)
+
+        parser.missing ==> 1
+        parser.unknown ==> 0
+      }
+      test("named args too many") {
+        parser.requiredParam[String]("-p1")
+        parser.requiredParam[String]("-p2")
+        parser.parseResult("-p2=a" :: "-p3=c" :: Nil)
+
+        parser.missing ==> 1
+        parser.unknown ==> 1
+      }
+      test("flags") {
+        val a = parser.param[Boolean]("-a", default = false, flag = true)
+        val b = parser.param[Boolean]("-b", default = false, flag = true)
+        val c = parser.param[Boolean]("-c", default = false, flag = true)
+
+
+        test("all") {
+          parser.parseResult("-abc" :: Nil)
+
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          a.value ==> true
+          b.value ==> true
+          c.value ==> true
+        }
+        test("order") {
+          parser.parseResult("-cab" :: Nil)
+
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          a.value ==> true
+          b.value ==> true
+          c.value ==> true
+        }
+        test("partial1") {
+          parser.parseResult("-cb" :: Nil)
+
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          a.value ==> false
+          b.value ==> true
+          c.value ==> true
+        }
+        test("partial2") {
+          parser.parseResult("-cb" :: "-a" :: Nil)
+
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          a.value ==> true
+          b.value ==> true
+          c.value ==> true
+        }
+      }
+      test("options1") {
+        val param = parser.param[String]("-a", "unset")
+        test("no value") {
+          parser.parseResult("-a" :: Nil)
+          parser.parseErrors ==> 1
+        }
+        test("with value") {
+          parser.parseResult("-ahello" :: Nil)
+          param.value ==> "hello"
+        }
+        test("with value separate") {
+          parser.parseResult("-a" :: "hello" :: Nil)
+          param.value ==> "hello"
+        }
+      }
+      test("options2") {
+        val param = parser.requiredParam[(String, String)]("-D")
+        test("no value") {
+          parser.parseResult("-D" :: Nil)
+          parser.parseErrors ==> 1
+        }
+        test("with value") {
+          parser.parseResult("-Da=b" :: Nil)
+          param.value ==> ("a", "b")
+        }
+        test("with value separate") {
+          parser.parseResult("-D" :: "a=b" :: Nil)
+          param.value ==> ("a", "b")
+        }
+        test("with value embedded") {
+          parser.parseResult("-D=a=b" :: Nil)
+          param.value ==> ("a", "b")
+        }
+      }
+      test("mixed") {
+        val flag = parser.param[Boolean]("-a", default = false, flag = true)
+        val param = parser.param[String]("-b", "unset")
+        val pos = parser.param[String]("pos", "unset")
+
+        test("ok1") {
+          parser.parseResult("-bhello" :: Nil)
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          flag.value ==> false
+          param.value ==> "hello"
+        }
+        test("ok2") {
+          parser.parseResult("-bahello" :: Nil)
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          flag.value ==> false
+          param.value ==> "ahello"
+        }
+        test("ok3") {
+          parser.parseResult("-b" :: "hello" :: Nil)
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          flag.value ==> false
+          param.value ==> "hello"
+        }
+        test("withflag1") {
+          parser.parseResult("-abhello" :: Nil)
+          parser.missing ==> 0
+          parser.unknown ==> 0
+          flag.value ==> true
+          param.value ==> "hello"
+        }
+        test("withflag2") {
+          parser.parseResult("-ab" :: "hello" :: Nil)
+          parser.parseErrors ==> 1
+        }
+        test("withflag3") {
+          parser.parseResult("-ba" :: "hello" :: Nil)
+          flag.value ==> false
+          param.value == "a"
+          pos.value ==> "hello"
+        }
+      }
+    }
   }
 }

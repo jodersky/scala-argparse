@@ -19,6 +19,12 @@ object Parser {
     * command line, as long as they are prefixed by the parameter's name.
     * Positional parameters are given arguments in the order they appear in.
     *
+    * Special case for single-letter named parameters: one argument may specify
+    * multiple named parameters of a single letter. In this case, letters are
+    * read left to right, and the first non-flag parameter will consume the
+    * remaining letters. E.g. assume `-i` and `-t` are flags, and `-I` takes an
+    * argument, then `-itIhello` sets `-i` and `-t` and assigns `hello` to `-I`.
+    *
     * @param parseAndSet A function that is invoked anytime this parameter is
     * encountered on the command line.
     *
@@ -77,6 +83,9 @@ object Parser {
 
   // extractor for named arguments
   private val Named = "(--?[^=]+)(?:=(.*))?".r
+
+  // used for special-casing short parameters
+  private val ShortNamed = "-([^-].*)".r
 
   /** Parse command line arguments according to some parameter definitions.
     *
@@ -173,6 +182,34 @@ object Parser {
               readArg()
             }
             if (param.endOfNamed) onlyPositionals = true
+          case ShortNamed(name) =>
+            readArg()
+            // deal with combined single-letter options (the previous case
+            // already took care of any named args that are known, long and
+            // short)
+            val letters = name.iterator
+            while (letters.hasNext) {
+              val option = s"-${letters.next()}"
+              if (aliases.contains(option)) {
+                val param = aliases(option)
+                namedArgs.getOrElseUpdate(param, mutable.ListBuffer.empty)
+                if (param.isFlag) { // flags never take an arg and are set to "true"
+                  namedArgs(param) += (option -> Some("true"))
+                } else if (letters.hasNext) {
+                  namedArgs(param) += (option -> Some(letters.mkString))
+                } else {
+                  namedArgs(param) += (option -> None)
+                }
+                if (param.endOfNamed) onlyPositionals = true
+              } else {
+                // In case of an unknown short letter, the argument is reported
+                // unknown as in the regular named case. In other words, the
+                // remaining letters are consumed and any embedded values are
+                // omitted
+                val Named(name, _) = s"$option${letters.mkString}"
+                reportUnknown(name)
+              }
+            }
           case Named(name, _) =>
             reportUnknown(name)
             readArg()
