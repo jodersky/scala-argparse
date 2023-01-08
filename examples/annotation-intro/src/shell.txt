@@ -1,0 +1,16 @@
+$ app --server example.org --secure a/b/c
+https://example.org/a/b/c
+$ app
+missing argument: path
+run with '--help' for more information
+$ app --help
+Usage: [OPTIONS] PATH
+
+This is an example app.
+It shows how a command line interface can be generated from various kinds of method parameters.
+
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --secure                  this is a flag
+      --server string           a sample named parameter

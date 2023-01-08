@@ -48,6 +48,13 @@ trait InteractionSuite extends TestSuite {
     }
   }
 
+  def savingStty[A](action: => A) =
+    val sttySettings = exec(Seq("stty", "-a")).linesIterator.next()
+    try
+      action
+    finally
+          exec(Seq("stty", sttySettings))
+
   private def assertNoDiff(expected: String, actual: String): Unit =
     if (expected != actual) {
       val diff = exec(
@@ -64,7 +71,11 @@ trait InteractionSuite extends TestSuite {
     val replacement = snippets.map{ invocation =>
       val lines = invocation.linesIterator
       val command = lines.next()
-      val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.mkString("\n")
+      val actual =
+        savingStty{
+          exec(Seq("stty", "cols", "80"))
+          exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.mkString("\n")
+        }
       s"$$ $command\n$actual\n"
     }.mkString
     os.write.over(snippetFile, replacement)
@@ -75,8 +86,11 @@ trait InteractionSuite extends TestSuite {
       val expected = lines.toList.map(_.trim).mkString("\n")
 
       test(command) {
-        val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.map(_.trim).mkString("\n")
-        assertNoDiff(expected, actual)
+        savingStty{
+          exec(Seq("stty", "cols", "80"))
+          val actual = exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.map(_.trim).mkString("\n")
+          assertNoDiff(expected, actual)
+        }
       }
     }
   }

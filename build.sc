@@ -47,11 +47,20 @@ object argparse extends Module {
     def artifactName = "argparse"
   }
 
-  class JvmModule(val crossScalaVersion: String) extends ArgParseModule {
+  class JvmModule(val crossScalaVersion: String) extends ArgParseModule { main =>
     def millSourcePath = super.millSourcePath / os.up
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-jvm")))
+
+    def superOptions = T{super.scalacOptions()}
+
+    def scalacOptions = if (crossScalaVersion.startsWith("3")) {
+      // it's enough to check macros for only one configuration
+      superOptions() ++ Seq("-Xcheck-macros", "-Ycheck:all")
+    } else superOptions()
+
     object test extends Tests with Utest {
       def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / s"src-${crossScalaVersion.head}")))
+      def scalacOptions = main.superOptions()
     }
   }
   object jvm extends Cross[JvmModule]((Seq(scala213, scala3) ++ dottyCustomVersion):_*)
@@ -67,6 +76,12 @@ object argparse extends Module {
     }
   }
   object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
+
+  object sandbox extends ScalaModule {
+    def moduleDeps = Seq(jvm(scala3))
+    def scalaVersion = scala3
+    // def scalacOptions = Seq("-Xprint:inline")
+  }
 
 }
 
@@ -187,7 +202,11 @@ object examples extends Module {
     }
   }
 
-  object annotation extends ExampleApp
+  object `annotation-intro` extends ExampleApp
+  object `annotation-mappings` extends ExampleApp
+  object `annotation-types` extends ExampleApp
+  object `annotation-commands` extends ExampleApp
+  object `annotation-annot` extends ExampleApp
   object basic extends ExampleApp
   object completion1 extends ExampleApp
   object completion2 extends ExampleApp
@@ -211,4 +230,10 @@ object examples extends Module {
 import $file.doctool.doctool
 object docs extends doctool.DocsModule {
   def docVersion = gitVersion()
+
+  def html = T{
+    os.copy.over(super.html().path, T.dest)
+    os.copy(argparse.jvm(scala3).docJar().path / os.up / "javadoc", T.dest / "javadoc")
+    PathRef(T.dest)
+  }
 }
