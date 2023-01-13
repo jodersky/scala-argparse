@@ -5,6 +5,7 @@ repeatable=List(a, b)
 positional1=1
 positional2=2
 remaining=List(3, 4, 5)
+
 $ app --help
 Usage: [OPTIONS] POSITIONAL1 POSITIONAL2 REMAINING...
 Options:

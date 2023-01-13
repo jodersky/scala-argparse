@@ -1,10 +1,12 @@
 $ app
 missing argument: echo
 run with '--help' for more information
+
 $ app --help
 Usage: [OPTIONS] ECHO
 Options:
       --bash-completion string  generate bash completion for this command
       --help                    show this message and exit
+
 $ app foo
 foo

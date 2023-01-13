@@ -1,18 +1,23 @@
 $ app --verbosity
 error processing argument --verbosity: argument expected
 run with '--help' for more information
+
 $ app --verbosity 1
 verbosity: 1
+
 $ app --verbosity=1
 verbosity: 1
+
 $ app --verbosity 1 file1 file2
 verbosity: 1
 if this were a real program, we would delete file1
 if this were a real program, we would delete file2
+
 $ app file1 --verbosity 1 file2
 verbosity: 1
 if this were a real program, we would delete file1
 if this were a real program, we would delete file2
+
 $ app file1 -- --verbosity 1 file2
 verbosity: 0
 if this were a real program, we would delete file1

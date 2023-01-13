@@ -1,5 +1,6 @@
 $ app -v
 true
+
 $ app --help
 Usage: [OPTIONS]
 Options:

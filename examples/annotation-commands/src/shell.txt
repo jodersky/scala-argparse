@@ -1,11 +1,15 @@
 $ app
 missing argument: command
 run with '--help' for more information
+
 $ app version
 v1000
+
 $ app op show-factor
 the factor is 1.0
+
 $ app op multiply 2
 result is: 2.0
+
 $ app op --factor 3 multiply 2
 result is: 6.0

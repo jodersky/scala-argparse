@@ -1,12 +1,16 @@
 $ app
 missing argument: path
 run with '--help' for more information
+
 $ app a
 http://localhost:8080/a
+
 $ app a/b/c --host 1.1.1.1 -p 10 --secure
 https://1.1.1.1:10/a/b/c
+
 $ PORT=80 app a
 http://localhost:80/a
+
 $ app --help
 Usage: [OPTIONS] PATH
 

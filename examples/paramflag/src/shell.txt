@@ -1,6 +1,8 @@
 $ app
 false
+
 $ app --verbose
 true
+
 $ app --verbose=false
 false

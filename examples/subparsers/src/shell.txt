@@ -1,18 +1,23 @@
 $ app
 missing argument: command
 run with '--help' for more information
+
 $ app get k
 global: unset
 getting key k
+
 $ app set k v
 global: unset
 setting key k to v
+
 $ app --global=a set k v
 global: a
 setting key k to v
+
 $ app set --global=a k v
 unknown argument: --global
 run with '--help' for more information
+
 $ app --help
 Usage: [OPTIONS] COMMAND ARGS...
 

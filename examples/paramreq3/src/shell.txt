@@ -1,5 +1,6 @@
 $ app 4
 16
+
 $ app four
 error processing argument square: 'four' is not an integral number
 run with '--help' for more information

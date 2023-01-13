@@ -1,6 +1,8 @@
 $ app --server foo
 foo
+
 $ app -s bar
 bar
+
 $ app --address baz
 baz

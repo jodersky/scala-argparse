@@ -1,5 +1,6 @@
 $ app WARN
 2
+
 $ app FATAL
 error processing argument log-level: 'FATAL' is not a valid level
 run with '--help' for more information

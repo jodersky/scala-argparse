@@ -65,7 +65,7 @@ trait InteractionSuite extends TestSuite {
 
   val snippetFile = os.Path(sys.env("SNIPPET_FILE"), os.pwd)
   val snippetText = if (os.exists(snippetFile)) os.read(snippetFile) else "$"
-  val snippets: Array[String] = snippetText.split("""\$\s+""").tail
+  val snippets: Array[String] = snippetText.split("""\n?\$\s+""").tail
 
   if (sys.env.contains("OVERWRITE")) {
     val replacement = snippets.map{ invocation =>
@@ -77,7 +77,7 @@ trait InteractionSuite extends TestSuite {
           exec(Seq("/bin/sh", "-c", command)).linesIterator.toList.mkString("\n")
         }
       s"$$ $command\n$actual\n"
-    }.mkString
+    }.mkString("\n")
     os.write.over(snippetFile, replacement)
   } else {
     snippets.foreach { invocation =>
