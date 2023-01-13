@@ -237,17 +237,6 @@ object examples extends Module {
 
 }
 
-import $file.doctool.doctool
-object docs extends doctool.DocsModule {
-  def docVersion = gitVersion()
-
-  def html = T{
-    os.copy.over(super.html().path, T.dest)
-    os.copy(argparse.jvm(scala3).docJar().path / os.up / "javadoc", T.dest / "javadoc")
-    PathRef(T.dest)
-  }
-}
-
 object book extends Module {
   def book = T.input {
     val env = Map(
