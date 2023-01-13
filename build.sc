@@ -13,6 +13,16 @@ def gitVersion = T.input {
   os.proc("git", "describe", "--dirty=-SNAPSHOT").call(check = false).out.string.trim
 }
 
+val VersionHeader = """## (\d.*)""".r
+def releaseVersion = T.input {
+  val lines = os.read.lines.stream(os.pwd / "CHANGELOG.md")
+  val version = lines.collectFirst{
+    case VersionHeader(version) => version
+  }.getOrElse("<latest version>")
+  os.write(T.dest / "version", version)
+  version
+}
+
 trait Utest extends ScalaModule with TestModule {
   def ivyDeps = Agg(
     ivy"com.lihaoyi::utest::0.7.11",
@@ -235,5 +245,16 @@ object docs extends doctool.DocsModule {
     os.copy.over(super.html().path, T.dest)
     os.copy(argparse.jvm(scala3).docJar().path / os.up / "javadoc", T.dest / "javadoc")
     PathRef(T.dest)
+  }
+}
+
+object book extends Module {
+  def book = T.input {
+    val env = Map(
+      "MDBOOK_BOOK__title" -> s"scala-argparse ${releaseVersion()}"
+    )
+    os.proc("mdbook", "build", "--dest-dir", T.dest, millSourcePath).call(env = env, stdout = os.Inherit)
+    os.copy(argparse.jvm(scala3).docJar().path / os.up / "javadoc", T.dest / "javadoc")
+    T.dest
   }
 }

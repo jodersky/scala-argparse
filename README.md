@@ -1,6 +1,7 @@
 # scala-argparse
 
 [![project docs](https://img.shields.io/badge/docs-website-blueviolet)](https://jodersky.github.io/scala-argparse)
+[![discord](https://img.shields.io/badge/chat-discord-blue)](https://discord.gg/usj9DC8FDN)
 [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://crashbox.zulipchat.com/#narrow/stream/330744-argparse)
 [![latest version][scaladex-badge]][scaladex-link]
 [![stability: firm](https://img.shields.io/badge/stability-firm-silver)](https://www.crashbox.io/stability.html)
