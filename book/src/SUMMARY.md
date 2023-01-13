@@ -7,6 +7,7 @@
   - [Tutorial](./ll/tutorial.md)
   - [Cookbook](./ll/cookbook.md)
 - [Usecases](./usecases.md)
+- [Utilities](./utils.md)
 - [Man Page Template](./manpage.md)
 ---
 
