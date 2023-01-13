@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.18.0
+
+- Migrate documentation from custom static site to mdbook.
+- Improve documentation
+- Replace general `arg()` annotation with more specialized versions
+
 ## 0.17.0
 
 ### Breaking
