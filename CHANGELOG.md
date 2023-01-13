@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.18.1
+
+- Fix flag-derivation in the annotation API.
+
 ## 0.18.0
 
 - Migrate documentation from custom static site to mdbook.
