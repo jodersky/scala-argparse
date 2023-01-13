@@ -176,7 +176,7 @@ object CommandMacros:
                               case Some(name) => name},
                             aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = ${Expr(paramTpe =:= TypeRepr.of[Boolean])},
+                            flag = ${Expr(inner =:= TypeRepr.of[Boolean])},
                             endOfNamed = false
                           )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
                           () => arg.value
@@ -210,7 +210,7 @@ object CommandMacros:
                             env = ${envAnnot},
                             aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = ${Expr(paramTpe =:= TypeRepr.of[Boolean])},
+                            flag = ${Expr(t =:= TypeRepr.of[Boolean])},
                             endOfNamed = false,
                             interactiveCompleter = None,
                             standaloneCompleter = None,
