@@ -60,13 +60,22 @@ E.g.
 {{#include ../../examples/annotation-types/src/shell.txt}}
 ```
 
-### Additional Parameter Information
+### Additional Parameter Settings
 
 The generated command line parameters can further be customized by annotating
-Scala parameters with the [`@arg()`](javadoc/api/argparse/arg.html) annotation.
-This annotation allows defining settings which cannot be derived from types or
-doc comments (for example short-form names for frequently used parameteres). It
-also allows overriding some defaults.
+Scala parameters with certain annotations:
+
+- [`@alias()`](javadoc/api/argparse/alias.html): set other names as which the
+  parameter will be available. This is particularly useful for defining
+  single-letter short names for frequently used parameters.
+
+- [`@env()`](javadoc/api/argparse/env.html): set the name of an environment
+  variable which will be used to lookup the parameter if it is not found on the
+  command line.
+
+- [`@name()`](javadoc/api/argparse/name.html): override the name derived from
+  the parameter name. This can be used as an escape hatch for changing
+  positional to named arguments and vice versa.
 
 E.g.
 
@@ -101,7 +110,7 @@ E.g.
 {{#include ../../examples/annotation-commands/src/shell.txt}}
 ```
 
-### Bells-and-Whistles
+### Bells and Whistles
 
 Any program that uses scala-argparse automatically gets:
 

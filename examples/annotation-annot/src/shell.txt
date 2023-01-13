@@ -1,8 +1,4 @@
-$ app --server foo
-foo
-
-$ app -s bar
-bar
-
-$ app --address baz
-baz
+$ APPLICATION_CREDENTIALS=/secret app -s localhost --named 42
+server=localhost
+creds=/secret
+positional=42

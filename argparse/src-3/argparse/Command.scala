@@ -9,8 +9,8 @@ case class Command[A](
 ):
   type Container = A
 
-inline def main[Container](instance: Container, args: Iterable[String]): Unit = ${
-  CommandMacros.mainImpl[Container]('instance, 'args)
+inline def main[Container](instance: Container, args: Iterable[String], env: Map[String, String] = sys.env): Unit = ${
+  CommandMacros.mainImpl[Container]('instance, 'args, 'env)
 }
 
 object Command:
@@ -24,7 +24,11 @@ object CommandMacros:
   import quoted.Quotes
   import quoted.Type
 
-  def mainImpl[Container: Type](using qctx: Quotes)(instance: Expr[Container], args: Expr[Iterable[String]]) =
+  def mainImpl[Container: Type](using qctx: Quotes)(
+    instance: Expr[Container],
+    args: Expr[Iterable[String]],
+    env: Expr[Map[String, String]]
+  ) =
     import qctx.reflect.*
     findAllImpl[Container] match
       case Nil =>
@@ -33,7 +37,7 @@ object CommandMacros:
       case head :: Nil =>
         '{
           val parser = $head.makeParser(() => $instance)
-          parser.parseOrExit($args)
+          parser.parseOrExit($args, $env)
         }
       case list =>
         report.error(s"Too many main methods found in ${TypeRepr.of[Container].show}. The container object must contain exactly one method annotated with @command")
@@ -134,9 +138,20 @@ object CommandMacros:
           val accessors =
             for paramList <- method.paramSymss yield
               val ls = for param <- paramList yield
-                val argAnnot: Expr[argparse.arg] = param.getAnnotation(TypeRepr.of[argparse.arg].typeSymbol) match
-                  case Some(a) => a.asExprOf[argparse.arg]
-                  case None => '{argparse.arg()} // use default arg() values
+                val overrideName: Option[Expr[String]] =
+                  param.getAnnotation(TypeRepr.of[argparse.name].typeSymbol).map(
+                    a => '{${a.asExprOf[argparse.name]}.name}
+                  )
+
+                val aliasAnnot: Expr[Seq[String]] = param.getAnnotation(TypeRepr.of[argparse.alias].typeSymbol) match
+                  case Some(a) => '{${a.asExprOf[argparse.alias]}.aliases}
+                  case None => '{Seq()}
+
+                val envAnnot: Expr[Option[String]] = param.getAnnotation(TypeRepr.of[argparse.env].typeSymbol) match
+                  case Some(a) => '{Some(${a.asExprOf[argparse.env]}.env)}
+                  case None => '{None}
+
+
                 // TODO: replace with `param.termRef.widenTermRefByName` when upgrading scala version
                 val paramTpe = param.tree.asInstanceOf[ValDef].tpt.tpe
 
@@ -163,16 +178,13 @@ object CommandMacros:
                         '{
                           val p = $api
                           val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
-                            name =
-                              $argAnnot.name match
-                                case null => TextUtils.kebabify(${Expr(s"--${param.name}")})
-                                case other => other,
-                            aliases = $argAnnot.aliases,
+                            name = ${overrideName match
+                              case None => Expr(TextUtils.kebabify(s"--${param.name}"))
+                              case Some(name) => name},
+                            aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
                             flag = ${Expr(paramTpe =:= TypeRepr.of[Boolean])},
-                            endOfNamed = false,
-                            interactiveCompleter = $argAnnot.interactiveCompleter,
-                            standaloneCompleter = $argAnnot.standaloneCompleter
+                            endOfNamed = false
                           )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
                           () => arg.value
                         }
@@ -180,16 +192,13 @@ object CommandMacros:
                         '{
                           val p = $api
                           val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
-                            name =
-                              $argAnnot.name match
-                                case null => TextUtils.kebabify(${Expr(param.name)})
-                                case other => other,
-                            aliases = $argAnnot.aliases,
+                            name = ${overrideName match
+                              case None => Expr(TextUtils.kebabify(param.name))
+                              case Some(name) => name},
+                            aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
                             flag = false,
-                            endOfNamed = false,
-                            interactiveCompleter = $argAnnot.interactiveCompleter,
-                            standaloneCompleter = $argAnnot.standaloneCompleter
+                            endOfNamed = false
                           )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
                           () => arg.value
                         }
@@ -201,18 +210,17 @@ object CommandMacros:
                         '{
                           val p = $api
                           val arg = parser.asInstanceOf[p.ArgumentParser].singleParam[Any](
-                            name =
-                              $argAnnot.name match
-                                case null => TextUtils.kebabify(${Expr(s"--${param.name}")})
-                                case other => other,
+                            name = ${overrideName match
+                              case None => Expr(TextUtils.kebabify(s"--${param.name}"))
+                              case Some(name) => name},
                             default = Some(() => ${default.asExpr}),
-                            env = Option($argAnnot.env),
-                            aliases = $argAnnot.aliases,
+                            env = ${envAnnot},
+                            aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
                             flag = ${Expr(paramTpe =:= TypeRepr.of[Boolean])},
                             endOfNamed = false,
-                            interactiveCompleter = Option($argAnnot.interactiveCompleter),
-                            standaloneCompleter = Option($argAnnot.standaloneCompleter),
+                            interactiveCompleter = None,
+                            standaloneCompleter = None,
                             argName = None
                           )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
                           () => arg.value
@@ -221,18 +229,17 @@ object CommandMacros:
                         '{
                           val p = $api
                           val arg = parser.asInstanceOf[p.ArgumentParser].singleParam[Any](
-                            name =
-                              $argAnnot.name match
-                                case null => TextUtils.kebabify(${Expr(param.name)})
-                                case other => other,
+                            name = ${overrideName match
+                              case None => Expr(TextUtils.kebabify(param.name))
+                              case Some(name) => name},
                             default = None,
-                            env = Option($argAnnot.env),
-                            aliases = $argAnnot.aliases,
+                            env = ${envAnnot},
+                            aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
                             flag = false,
                             endOfNamed = false,
-                            interactiveCompleter = Option($argAnnot.interactiveCompleter),
-                            standaloneCompleter = Option($argAnnot.standaloneCompleter),
+                            interactiveCompleter = None,
+                            standaloneCompleter = None,
                             argName = None
                           )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
                           () => arg.value

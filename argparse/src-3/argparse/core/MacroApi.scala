@@ -8,10 +8,15 @@ trait MacroApi extends TypesApi with ParsersApi:
   class command() extends annotation.StaticAnnotation
   class unknownCommand() extends annotation.StaticAnnotation
 
-  // the arg annotation is not bound to a specific API bundle, but we add
+  // these annotations are not bound to a specific API bundle, but we add
   // forwarders for convenience
-  type arg = argparse.arg
-  val arg = argparse.arg
+  type name = argparse.name
+  val name = argparse.name
+  type alias = argparse.alias
+  val alias = argparse.alias
+  type env = argparse.env
+  val env = argparse.env
+
 
 object Macros:
   import scala.quoted.Expr

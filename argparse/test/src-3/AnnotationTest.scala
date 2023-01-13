@@ -193,4 +193,55 @@ object AnnotationTest extends TestSuite:
       val err = compileError("def main(args: Array[String]) = argparse.main(app, args)")
       assert(err.msg.contains("No AnnotationTest.api.Reader[app.Foo] available for parameter data"))
     }
+    test("override name") {
+      object app:
+        @api.command()
+        def foo(@api.name("--a") a: String) = {}
+      def main(args: Array[String]) = argparse.main(app, args)
+
+      test("success"){
+        main(Array("--a", "value"))
+      }
+      test("error"){
+        intercept[ParseException]{
+          main(Array("hello"))
+        }
+      }
+    }
+    test("add aliases") {
+      object app:
+        @api.command()
+        def foo(@api.alias("-a", "--long") a: String = "") = {}
+      def main(args: Array[String]) = argparse.main(app, args)
+
+      test("success1"){
+        main(Array("-a", "value"))
+      }
+      test("success2"){
+        main(Array("--long", "value"))
+      }
+      test("error"){
+        intercept[ParseException]{
+          main(Array("hello"))
+        }
+      }
+    }
+    test("env") {
+      object app:
+        @api.command()
+        def foo(@api.env("FOO") a: String) = {}
+      def main(args: Array[String], env: Map[String, String]) = argparse.main(app, args, env)
+
+      test("success1"){
+        main(Array("value"), Map())
+      }
+      test("success2"){
+        main(Array(), Map("FOO" -> "value"))
+      }
+      test("error"){
+        intercept[ParseException]{
+          main(Array(), Map())
+        }
+      }
+    }
   }
