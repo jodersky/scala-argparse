@@ -126,4 +126,28 @@ object DocCommentTest extends TestSuite:
         "param2" -> "Curabitur viverra blandit turpis non fringilla. Phasellus sit amet turpis non nibh aliquet varius quis ut metus."
       )
     }
+    test("full compact") {
+      val c = DocComment.extract(
+        """|/** Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a
+           |  * nulla odio. Aliquam diam ex, consequat vitae condimentum vitae,
+           |  * cursus non ex. Suspendisse vehicula efficitur augue.
+           |  *
+           |  * Curabitur viverra blandit turpis non fringilla. Phasellus sit
+           |  * amet turpis non nibh aliquet varius quis ut metus.
+           |  *
+           |  * @param param1 Curabitur viverra blandit turpis non fringilla. Phasellus sit
+           |  * amet turpis non nibh aliquet varius quis ut metus.
+           |  * @param param2 Curabitur viverra blandit turpis non fringilla. Phasellus sit
+           |  * amet turpis non nibh aliquet varius quis ut metus.
+           |  */""".stripMargin
+      )
+      c.paragraphs ==> Seq(
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a nulla odio. Aliquam diam ex, consequat vitae condimentum vitae, cursus non ex. Suspendisse vehicula efficitur augue.",
+        "Curabitur viverra blandit turpis non fringilla. Phasellus sit amet turpis non nibh aliquet varius quis ut metus."
+      )
+      c.params ==> Map(
+        "param1" -> "Curabitur viverra blandit turpis non fringilla. Phasellus sit amet turpis non nibh aliquet varius quis ut metus.",
+        "param2" -> "Curabitur viverra blandit turpis non fringilla. Phasellus sit amet turpis non nibh aliquet varius quis ut metus."
+      )
+    }
   }

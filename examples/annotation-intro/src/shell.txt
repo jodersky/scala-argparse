@@ -6,8 +6,7 @@ run with '--help' for more information
 $ app --help
 Usage: [OPTIONS] PATH
 
-This is an example app.
-It shows how a command line interface can be generated from various kinds of method parameters.
+This is an example app. It shows how a command line interface can be generated from various kinds of method parameters.
 
 Options:
       --bash-completion string  generate bash completion for this command
