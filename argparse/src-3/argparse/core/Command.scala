@@ -1,17 +1,10 @@
-package argparse
-
-import argparse.core.DocComment
-import argparse.core.TextUtils
+package argparse.core
 
 case class Command[A](
   name: String,
-  makeParser: (() => A) => core.ParsersApi#ArgumentParser
+  makeParser: (() => A) => ParsersApi#ArgumentParser
 ):
   type Container = A
-
-inline def main[Container](instance: Container, args: Iterable[String], env: Map[String, String] = sys.env): Unit = ${
-  CommandMacros.mainImpl[Container]('instance, 'args, 'env)
-}
 
 object Command:
 
@@ -48,7 +41,7 @@ object CommandMacros:
 
   def findAllImpl[Container: Type](using qctx: Quotes): List[Expr[Command[Container]]] =
     import qctx.reflect.*
-    val CommandAnnot = TypeRepr.of[core.MacroApi#command]
+    val CommandAnnot = TypeRepr.of[MacroApi#command]
 
     val methods = TypeRepr.of[Container].typeSymbol.memberMethods
     val classes = TypeRepr.of[Container].typeSymbol.memberTypes.filter(_.isClassDef)
@@ -71,8 +64,8 @@ object CommandMacros:
       val doc = DocComment.extract(sym.docstring.getOrElse(""))
 
       apiType.asType match
-        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[core.MacroApi] =>
-          makeCommand[Container, core.MacroApi](api.asExprOf[core.MacroApi], method, sym.name, doc)
+        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[MacroApi] =>
+          makeCommand[Container, MacroApi](api.asExprOf[MacroApi], method, sym.name, doc)
         case '[t] =>
           report.error(s"wrong API ${Type.show[t]}")
           '{???}
@@ -115,7 +108,7 @@ object CommandMacros:
     val application = accesses.foldLeft(term)((lhs, args) => Apply(lhs, args))
     application
 
-  def makeCommand[Container: Type, Api <: core.MacroApi: Type](using qctx: Quotes)(
+  def makeCommand[Container: Type, Api <: MacroApi: Type](using qctx: Quotes)(
     api: Expr[Api],
     method: qctx.reflect.Symbol,
     name: String, // name is separate because method name is not always representative (e.g. if method is class constructor)
