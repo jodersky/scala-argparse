@@ -279,10 +279,7 @@ object CommandMacros:
                 val pr = ${printer.asExpr}.asInstanceOf[p.Printer[Any]]
                 pr.print(
                   callOrInstantiate(),
-                  System.out,
-                  OutputApi.StreamInfo(
-                    isatty = Platform.isConsole()
-                  )
+                  System.out
                 )
               }
               parser

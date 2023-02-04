@@ -1,8 +1,9 @@
 $ app
-item1           2.0
+NAME         VALUE    COMMENT                     
+item1           2.0                               
 item2           0.213 notice the numeric alignment
-item3        -100.2
-item4          10.2   a comment
-another_item   12.54  a comment
-               12.54  item has no name
-etc             0.0   ...
+item3        -100.2                               
+item4          10.2   a comment                   
+another_item   12.54  a comment                   
+               12.54  item has no name            
+etc             0.0   ...                         

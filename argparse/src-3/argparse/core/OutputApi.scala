@@ -23,15 +23,10 @@ trait OutputApi extends ParsersApi with TypesApi with Printers:
   trait Printer[A]:
     def print(
       a: A,
-      out: java.io.PrintStream,
-      info: OutputApi.StreamInfo
+      out: java.io.PrintStream
     ): Unit
 
 object OutputApi:
-
-  case class StreamInfo(
-    isatty: Boolean
-  )
 
   enum Alignment:
     case Left
@@ -216,38 +211,34 @@ trait Printers extends LowPrioPrinters:
   self: OutputApi =>
 
   given Printer[Unit] with
-    def print(a: Unit, out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit = ()
+    def print(a: Unit, out: java.io.PrintStream): Unit = ()
 
   given Printer[Array[Byte]] with
-    def print(a: Array[Byte], out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
+    def print(a: Array[Byte], out: java.io.PrintStream): Unit =
       out.write(a)
 
   given Printer[geny.Writable] with
-    def print(a: geny.Writable, out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
+    def print(a: geny.Writable, out: java.io.PrintStream): Unit =
       a.writeBytesTo(out)
 
   given [A](using p: Printer[A]): Printer[geny.Generator[A]] with
-    def print(value: geny.Generator[A], out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
-      value.foreach(v => p.print(v, out, info))
+    def print(value: geny.Generator[A], out: java.io.PrintStream): Unit =
+      value.foreach(v => p.print(v, out))
 
   inline given productListPrinter[A <: Iterable[B], B <: Product](using m: ProductLabels[B]): Printer[A] with
-    def print(value: A, out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
+    def print(value: A, out: java.io.PrintStream): Unit =
       val rows = value.map(_.productIterator.toIterable)
-      if info.isatty then
-        out.println(OutputApi.tabulate(rows, header = m.labels.map(_.toUpperCase)))
-      else
-        out.println(OutputApi.tabulate(rows, header = Iterable.empty))
+      out.println(OutputApi.tabulate(rows, header = m.labels.map(_.toUpperCase)))
 
   given nonProductListPrinter[A <: Iterable[B], B](using elemPrinter: Printer[B]): Printer[A] with
-    def print(value: A, out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
-      for elem <- value do elemPrinter.print(elem, out, info)
+    def print(value: A, out: java.io.PrintStream): Unit =
+      for elem <- value do elemPrinter.print(elem, out)
 
   given [A](using p: Printer[A]): Printer[concurrent.Future[A]] with
-    def print(value: concurrent.Future[A], out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
+    def print(value: concurrent.Future[A], out: java.io.PrintStream): Unit =
       p.print(
         concurrent.Await.result(value, concurrent.duration.Duration.Inf),
-        out,
-        info
+        out
       )
 
 trait LowPrioPrinters:
@@ -255,5 +246,5 @@ trait LowPrioPrinters:
 
   // fallback to always print something
   given [A]: Printer[A] with
-    def print(a: A, out: java.io.PrintStream, info: OutputApi.StreamInfo): Unit =
+    def print(a: A, out: java.io.PrintStream): Unit =
       out.println(a.toString)
