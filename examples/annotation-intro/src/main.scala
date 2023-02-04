@@ -12,9 +12,9 @@ def main(
   server: String = "localhost",
   secure: Boolean = false,
   path: os.SubPath
-) =
+): String =
   val scheme = if secure then "https" else "http"
-  println(s"$scheme://$server/$path")
+  s"$scheme://$server/$path"
 
 // boilerplate necessary until macro annotations become available in Scala 3
-def main(args: Array[String]) = argparse.main(this, args)
+def main(args: Array[String]): Unit = argparse.main(this, args)

@@ -1,6 +1,6 @@
 package argparse.core
 
-trait MacroApi extends TypesApi with ParsersApi:
+trait MacroApi extends TypesApi with ParsersApi with OutputApi:
 
   // this will be used once macro-annotations are released
   // class main() extends annotation.StaticAnnotation

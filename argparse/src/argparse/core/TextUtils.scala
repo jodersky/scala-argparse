@@ -47,4 +47,5 @@ object TextUtils {
     }
     kebab.result()
   }
+
 }

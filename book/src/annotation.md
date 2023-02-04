@@ -9,8 +9,8 @@ such as help messages and bash completion.[^1]
     introductory example.
 
 Note: the generated code uses a lower-level interface, which can also be
-directly used by developers for more flexibility. It is suggested that you [read
-the tutorial](./ll/index.html) in any case, for further understanding of how
+directly used for more flexibility. It is suggested that you [read the
+tutorial](./ll/index.html) in any case, for further understanding of how
 argument parsing works at a lower level.
 
 ### Parameter Mapping
@@ -60,12 +60,12 @@ E.g.
 {{#include ../../examples/annotation-types/src/shell.txt}}
 ```
 
-### Additional Parameter Settings
+### Parameter Overrides
 
 The generated command line parameters can further be customized by annotating
 Scala parameters with certain annotations:
 
-- [`@alias()`](javadoc/api/argparse/alias.html): set other names as which the
+- [`@alias()`](javadoc/api/argparse/alias.html): set other names by which the
   parameter will be available. This is particularly useful for defining
   single-letter short names for frequently used parameters.
 
@@ -87,6 +87,39 @@ E.g.
 {{#include ../../examples/annotation-annot/src/shell.txt}}
 ```
 
+### Output Mapping
+
+The returned values of annotated functions are automatically converted to
+strings and printed to standard out. There are builtin conversions for some
+common return values:
+
+- iterables of products (aka case classes) are printed in a tabular format
+- other iterables are printed one per line
+- byte arrays and other sources of binary data are streamed
+- futures are awaited
+
+In other cases, the `toString` method of the returned value is simply called.
+
+E.g.
+
+```scala
+{{#include ../../examples/annotation-output/src/main.scala}}
+```
+
+```
+{{#include ../../examples/annotation-output/src/shell.txt}}
+```
+
+You can also define your own conversions by defining instances of the
+`argparse.core.OutputApi#Printer` typeclass.
+
+### Error Handling
+
+In case a command throws, only the exception's message is printed. The stack trace
+is not shown unless a `DEBUG` environment variable is defined.
+
+You can change this behavior by overriding the `handleError` function of the
+`OutputApi` trait.
 
 ### Nested Commands
 

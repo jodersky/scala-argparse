@@ -121,6 +121,14 @@ object CommandMacros:
     val inner = rtpe.asType match
       case '[t] => findAllImpl[t]
 
+    val printerTpe = TypeSelect(api.asTerm, "Printer").tpe.appliedTo(List(rtpe))
+    val printer = Implicits.search(printerTpe) match
+      case iss: ImplicitSearchSuccess =>
+        iss.tree
+      case other =>
+        report.error(s"No ${printerTpe.show} available for ${method.name}.", method.pos.get)
+        '{???}.asTerm
+
     val makeParser = '{
       (instance: () => Container) =>
         val parser = $api.ArgumentParser(description = ${Expr(doc.paragraphs.mkString("\n"))})
@@ -242,7 +250,7 @@ object CommandMacros:
           Expr.ofSeq(accessors)
         }
 
-        def callOrInstantiate() =
+        def callOrInstantiate() = try
           val outer = instance()
           val results = args.map(_.map(_()))
           ${
@@ -259,11 +267,24 @@ object CommandMacros:
                 'results
               ).asExpr
           }
+        catch
+          case t: Throwable =>
+            $api.handleError(t)
 
         ${
           if inner.isEmpty then
             '{
-              parser.action{callOrInstantiate()}
+              parser.action{
+                val p = $api
+                val pr = ${printer.asExpr}.asInstanceOf[p.Printer[Any]]
+                pr.print(
+                  callOrInstantiate(),
+                  System.out,
+                  OutputApi.StreamInfo(
+                    isatty = Platform.isConsole()
+                  )
+                )
+              }
               parser
             }
           else
