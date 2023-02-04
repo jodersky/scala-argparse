@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.0
+
+- Add error handling and output printing to the annotation API.
+
 ## 0.18.1
 
 - Fix flag-derivation in the annotation API.
