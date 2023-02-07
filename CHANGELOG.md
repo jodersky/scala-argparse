@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.19.1
+
+- Add support for defining top-level main functions with nested commands.
+
 ## 0.19.0
 
 - Add error handling and output printing to the annotation API.

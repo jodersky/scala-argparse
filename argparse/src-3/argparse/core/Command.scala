@@ -43,8 +43,17 @@ object CommandMacros:
     import qctx.reflect.*
     val CommandAnnot = TypeRepr.of[MacroApi#command]
 
-    val methods = TypeRepr.of[Container].typeSymbol.memberMethods
-    val classes = TypeRepr.of[Container].typeSymbol.memberTypes.filter(_.isClassDef)
+    val containerTpe = TypeRepr.of[Container].typeSymbol
+
+    // need to handle the case where `findImpl` is called from a top-level
+    // function, but commands are wrapped in a top-level annotated class
+    val isTopLevel = containerTpe.owner.isPackageDef && containerTpe.name.endsWith("$package$")
+
+    val methods = containerTpe.memberMethods
+    val classes = if isTopLevel then
+      containerTpe.owner.memberTypes.filter(_.isClassDef)
+    else
+      containerTpe.memberTypes.filter(_.isClassDef)
 
     for
       sym <- (methods ++ classes)
@@ -65,7 +74,7 @@ object CommandMacros:
 
       apiType.asType match
         case '[t] if TypeRepr.of[t] <:< TypeRepr.of[MacroApi] =>
-          makeCommand[Container, MacroApi](api.asExprOf[MacroApi], method, sym.name, doc)
+          makeCommand[Container, MacroApi](api.asExprOf[MacroApi], method, sym.name, doc, isTopLevel)
         case '[t] =>
           report.error(s"wrong API ${Type.show[t]}")
           '{???}
@@ -112,7 +121,8 @@ object CommandMacros:
     api: Expr[Api],
     method: qctx.reflect.Symbol,
     name: String, // name is separate because method name is not always representative (e.g. if method is class constructor)
-    doc: DocComment
+    doc: DocComment,
+    isTopLevel: Boolean
   ): Expr[Command[Container]] =
     import qctx.reflect.*
 
@@ -165,7 +175,7 @@ object CommandMacros:
                   Implicits.search(readerType) match
                     case iss: ImplicitSearchSuccess => iss.tree
                     case other =>
-                      report.error( s"No ${readerType.show} available for parameter ${param.name}.", param.pos.get)
+                      report.error(s"No ${readerType.show} available for parameter ${param.name}.", param.pos.get)
                       '{???}.asTerm
 
                 paramTpe match
@@ -251,18 +261,28 @@ object CommandMacros:
         }
 
         def callOrInstantiate() = try
-          val outer = instance()
           val results = args.map(_.map(_()))
           ${
-            if method.isClassConstructor then
+            if method.isClassConstructor && isTopLevel then
               call(using qctx)(
-                New(TypeSelect('{outer}.asTerm, rtpe.typeSymbol.name)).select(method),
+                New(method.tree.asInstanceOf[DefDef].returnTpt).select(method),
                 ptpes,
                 'results
               ).asExpr
+            else if method.isClassConstructor && !isTopLevel then
+              '{
+                val outer = instance()
+                ${
+                  call(using qctx)(
+                    New(TypeSelect('{outer}.asTerm, rtpe.typeSymbol.name)).select(method),
+                    ptpes,
+                    'results
+                  ).asExpr
+                }
+              }
             else
               call(using qctx)(
-                Select('{outer}.asTerm, method),
+                Select('{instance()}.asTerm, method),
                 ptpes,
                 'results
               ).asExpr

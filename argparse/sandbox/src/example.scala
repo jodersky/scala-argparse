@@ -8,23 +8,21 @@ object api
 
   override def defaultHelpFlags = Seq("-h")
 
-object app:
-
-  /**
-    * Hello world
-    *
-    * @param base the base value
-    */
+/**
+  * Hello world
+  *
+  * @param base the base value
+  */
+@api.command()
+class wrapper(base: Int):
   @api.command()
-  class wrapper(base: Int):
-    @api.command()
-    def add(x: Int) = println(base + x)
+  def add(x: Int) = println(base + x)
 
-    /** A nested command */
+  /** A nested command */
+  @api.command()
+  def nested(y: Int = 2) = foo(y)
+  class foo(y: Int):
     @api.command()
-    def nested(y: Int = 2) = foo(y)
-    class foo(y: Int):
-      @api.command()
-      def ok() = println("ok")
+    def ok() = println("ok")
 
-  def main(args: Array[String]): Unit = argparse.main(this, args)
+def main(args: Array[String]): Unit = argparse.main(this, args)
