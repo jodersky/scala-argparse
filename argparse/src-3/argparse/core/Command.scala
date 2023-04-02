@@ -183,9 +183,18 @@ object CommandMacros:
                     '{() => parser}
                   case t if t <:< TypeRepr.of[Iterable[?]] =>
                     val AppliedType(_, List(inner)) = paramTpe.dealias
+
                     val reader = summonReader(inner)
+
+                    // Note: for some reason we cannot access `inner` in the
+                    // expression. It will lead to a compiler crash with a
+                    // message "key not found: method $anonfun". To work around
+                    // this, we duplicate code and introduce a new top-level
+                    // case.
+                    val innerBoolean = inner =:= TypeRepr.of[Boolean]
+
                     defaults.get(param) match
-                      case Some(default) => // --named repeated
+                      case Some(_) if innerBoolean => // --named repeated flag
                         '{
                           val p = $api
                           val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
@@ -194,7 +203,21 @@ object CommandMacros:
                               case Some(name) => name},
                             aliases = ${aliasAnnot},
                             help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = ${Expr(inner =:= TypeRepr.of[Boolean])},
+                            flag = true,
+                            endOfNamed = false
+                          )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
+                          () => arg.value
+                        }
+                      case Some(_) => // --named repeated
+                        '{
+                          val p = $api
+                          val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
+                            name = ${overrideName match
+                              case None => Expr(TextUtils.kebabify(s"--${param.name}"))
+                              case Some(name) => name},
+                            aliases = ${aliasAnnot},
+                            help = ${Expr(doc.params.getOrElse(param.name, ""))},
+                            flag = false,
                             endOfNamed = false
                           )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
                           () => arg.value
