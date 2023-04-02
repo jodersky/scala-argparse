@@ -1,12 +1,8 @@
 import mill._, scalalib._, scalanativelib._, publish._, scalafmt._
 
-val scala213 = "2.13.6"
-val scala3 = "3.0.2"
-// Note: this is temporary. Once Scala 3.1.2 is released, we fall back to using
-// only the latest Scala 3 version and the -Yrelease flag to target the oldest
-// possible version.
-val scala31 = "3.1.1"
-val scalaNative = "0.4.4"
+val scala213 = "2.13.10"
+val scala3 = "3.2.2"
+val scalaNative = "0.4.12"
 val dottyCustomVersion = Option(sys.props("dottyVersion"))
 
 def gitVersion = T.input {
@@ -25,8 +21,8 @@ def releaseVersion = T.input {
 
 trait Utest extends ScalaModule with TestModule {
   def ivyDeps = Agg(
-    ivy"com.lihaoyi::utest::0.7.11",
-    ivy"com.lihaoyi::upickle:1.5.0"
+    ivy"com.lihaoyi::utest::0.8.1",
+    ivy"com.lihaoyi::upickle:3.0.0"
   )
   def testFramework = "utest.runner.Framework"
 }
@@ -53,7 +49,7 @@ object argparse extends Module {
     with Publish {
 
     def scalacOptions = Seq("-deprecation", "-release", "8")
-    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.8.1")
+    def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.9.1")
     def artifactName = "argparse"
   }
 
@@ -85,12 +81,12 @@ object argparse extends Module {
       def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / s"src-${crossScalaVersion.head}")))
     }
   }
-  object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
+  object native extends Cross[NativeModule]((scala213, scalaNative), (scala3, scalaNative))
 
   object sandbox extends ScalaModule {
     def moduleDeps = Seq(jvm(scala3))
     def scalaVersion = scala3
-    // def scalacOptions = Seq("-Xprint:inline")
+    def scalacOptions = Seq("-Xprint:inline")
   }
 
 }
@@ -103,9 +99,9 @@ object configparse extends Module {
       extends ScalaModule
       with ScalafmtModule
       with Publish {
-      def scalaVersion = scala31 // this module is only available for Scala 3
+      def scalaVersion = scala3 // this module is only available for Scala 3
       def scalacOptions = Seq("-deprecation", "-release", "8")
-      def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.8.1")
+      def ivyDeps = Agg(ivy"com.lihaoyi::os-lib::0.9.1")
       def millSourcePath = super.millSourcePath / os.up
       def artifactName = "configparse-core"
     }
@@ -124,10 +120,10 @@ object configparse extends Module {
     extends ScalaModule
     with ScalafmtModule
     with Publish {
-    def scalaVersion = scala31 // this module is only available for Scala 3
+    def scalaVersion = scala3 // this module is only available for Scala 3
     def scalacOptions = Seq("-deprecation", "-release", "8")
     def ivyDeps = Agg(
-      ivy"com.lihaoyi::os-lib::0.8.1",
+      ivy"com.lihaoyi::os-lib::0.9.1",
       ivy"io.crashbox::yamlesque::0.3.2"
     )
     def millSourcePath = super.millSourcePath / os.up
@@ -140,7 +136,7 @@ object configparse extends Module {
     object test extends Tests with Utest
   }
   object native extends ConfigParseModule with ScalaNativeModule {
-    def moduleDeps = Seq(core.native, argparse.native(scala31, scalaNative))
+    def moduleDeps = Seq(core.native, argparse.native(scala3, scalaNative))
     def scalaNativeVersion = scalaNative
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
     object test extends Tests with Utest
@@ -156,7 +152,7 @@ object ini extends Module {
 
     def scalacOptions = Seq("-deprecation", "-release", "8")
     def ivyDeps = Agg(
-      ivy"com.lihaoyi::os-lib::0.8.1"
+      ivy"com.lihaoyi::os-lib::0.9.1"
     )
     def artifactName = "argparse-ini"
   }
@@ -176,27 +172,27 @@ object ini extends Module {
     def sources = T.sources(super.sources() ++ Seq(PathRef(millSourcePath / "src-native")))
     // object test extends Tests with Utest
   }
-  object native extends Cross[NativeModule]((scala213, scalaNative), (scala31, scalaNative))
+  object native extends Cross[NativeModule]((scala213, scalaNative), (scala3, scalaNative))
 
 }
 
 object testutil extends ScalaNativeModule {
-  def scalaVersion = scala31
+  def scalaVersion = scala3
   def scalaNativeVersion = scalaNative
-  def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
+  def scalacOptions = argparse.native(scala3, scalaNative).scalacOptions
   def ivyDeps = Agg(
-    ivy"com.lihaoyi::utest::0.7.11",
-    ivy"com.lihaoyi::os-lib::0.8.1"
+    ivy"com.lihaoyi::utest::0.8.1",
+    ivy"com.lihaoyi::os-lib::0.9.1"
   )
 }
 
 object examples extends Module {
 
   trait ExampleApp extends ScalaNativeModule { self =>
-    def scalaVersion = scala31
+    def scalaVersion = scala3
     def scalaNativeVersion = scalaNative
-    def scalacOptions = argparse.native(scala31, scalaNative).scalacOptions
-    def moduleDeps = Seq(argparse.native(scala31, scalaNative))
+    def scalacOptions = argparse.native(scala3, scalaNative).scalacOptions
+    def moduleDeps = Seq(argparse.native(scala3, scalaNative))
     object test extends Tests with Utest {
       def moduleDeps = super.moduleDeps ++ Seq(testutil)
       def forkEnv = T {

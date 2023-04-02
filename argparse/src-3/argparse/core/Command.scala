@@ -1,5 +1,9 @@
 package argparse.core
 
+import quoted.Expr
+import quoted.Quotes
+import quoted.Type
+
 case class Command[A](
   name: String,
   makeParser: (() => A) => ParsersApi#ArgumentParser
@@ -8,84 +12,35 @@ case class Command[A](
 
 object Command:
 
-  inline def find[Container]: Seq[Command[Container]] = ${
-    CommandMacros.findImpl[Container]
-  }
-
-object CommandMacros:
-  import quoted.Expr
-  import quoted.Quotes
-  import quoted.Type
-
-  def mainImpl[Container: Type](using qctx: Quotes)(
+  def entrypointImpl[Container: Type](using Quotes)(
     instance: Expr[Container],
     args: Expr[Iterable[String]],
     env: Expr[Map[String, String]]
   ) =
-    import qctx.reflect.*
-    findAllImpl[Container] match
+    val util = MacroUtil()
+    import util.qctx.reflect.*
+
+    util.makeCommands[Container] match
       case Nil =>
         report.error(s"No main method found in ${TypeRepr.of[Container].show}. The container object must contain exactly one method annotated with @command")
         '{???}
       case head :: Nil =>
         '{
-          val parser = $head.makeParser(() => $instance)
+          val parser = $head.asInstanceOf[Command[Any]].makeParser(() => $instance)
           parser.parseOrExit($args, $env)
         }
       case list =>
         report.error(s"Too many main methods found in ${TypeRepr.of[Container].show}. The container object must contain exactly one method annotated with @command")
         '{???}
 
-  def findImpl[Container: Type](using qctx: Quotes) =
-    Expr.ofList(findAllImpl[Container])
+class MacroUtil(using val qctx: Quotes):
+  import qctx.reflect.*
 
-  def findAllImpl[Container: Type](using qctx: Quotes): List[Expr[Command[Container]]] =
-    import qctx.reflect.*
-    val CommandAnnot = TypeRepr.of[MacroApi#command]
-
-    val containerTpe = TypeRepr.of[Container].typeSymbol
-
-    // need to handle the case where `findImpl` is called from a top-level
-    // function, but commands are wrapped in a top-level annotated class
-    val isTopLevel = containerTpe.owner.isPackageDef && containerTpe.name.endsWith("$package$")
-
-    val methods = containerTpe.memberMethods
-    val classes = if isTopLevel then
-      containerTpe.owner.memberTypes.filter(_.isClassDef)
-    else
-      containerTpe.memberTypes.filter(_.isClassDef)
-
-    for
-      sym <- (methods ++ classes)
-      annots = sym.annotations
-      annot = annots.find(_.tpe <:< CommandAnnot)
-      if annot.isDefined
-    yield
-      val TypeRef(apiType: TermRef, _) = annot.get.tpe
-      val api = Ref.term(apiType)
-
-      val method =
-        if sym.isClassDef then
-          sym.primaryConstructor
-        else
-          sym
-
-      val doc = DocComment.extract(sym.docstring.getOrElse(""))
-
-      apiType.asType match
-        case '[t] if TypeRepr.of[t] <:< TypeRepr.of[MacroApi] =>
-          makeCommand[Container, MacroApi](api.asExprOf[MacroApi], method, sym.name, doc, isTopLevel)
-        case '[t] =>
-          report.error(s"wrong API ${Type.show[t]}")
-          '{???}
-
-  def getDefaultParams(using qctx: Quotes)(instance: qctx.reflect.Term, method: qctx.reflect.Symbol): Map[qctx.reflect.Symbol, qctx.reflect.Term] =
-    import qctx.reflect.*
-
+  def getDefaultParams(instance: Term, method: Symbol): Map[Symbol, Term] =
     val pairs = for
       (param, idx) <- method.paramSymss.flatten.zipWithIndex
       if (param.flags.is(Flags.HasDefault))
-    yield {
+    yield
       val tree = if method.isClassConstructor then
         val defaultName = s"$$lessinit$$greater$$default$$${idx + 1}"
         Select(
@@ -96,254 +51,265 @@ object CommandMacros:
         val defaultName = s"${method.name}$$default$$${idx + 1}"
         Select(instance, method.owner.memberMethod(defaultName).head)
       param -> tree
-    }
     pairs.toMap
 
-  // term.apply(List(argss(0)(0),...,argss(0)(N)), ..., List(argss(M)(0),...,argss(M)(N)))
-  def call(using qctx: Quotes)(
-    term: qctx.reflect.Term,
-    paramss: List[List[qctx.reflect.TypeRepr]],
-    argss: Expr[Seq[Seq[?]]]
-  ): qctx.reflect.Term =
-    import qctx.reflect.*
+  def callOrInstantiate(instance: Term, methodOrClass: Symbol, argss: Expr[List[List[?]]]): Term =
+    val base: Term = if methodOrClass.isClassDef then
+      //Select.unique(New(instance.select(methodOrClass).tpe)), "<init>")
+      Select.unique(New(Inferred(instance.tpe.select(methodOrClass))), "<init>")
+    else
+      instance.select(methodOrClass)
+
+    val paramss = if methodOrClass.isClassDef then
+      methodOrClass.primaryConstructor.paramSymss
+    else
+      methodOrClass.paramSymss
 
     val accesses =
       for i <- paramss.indices.toList yield
         for j <- paramss(i).indices.toList yield
-          paramss(i)(j).asType match
+          paramss(i)(j).termRef.widenTermRefByName.asType match
             case '[t] =>
               '{$argss(${Expr(i)})(${Expr(j)}).asInstanceOf[t]}.asTerm
 
-    val application = accesses.foldLeft(term)((lhs, args) => Apply(lhs, args))
+    val application = accesses.foldLeft(base)((lhs, args) => Apply(lhs, args))
     application
 
-  def makeCommand[Container: Type, Api <: MacroApi: Type](using qctx: Quotes)(
-    api: Expr[Api],
-    method: qctx.reflect.Symbol,
-    name: String, // name is separate because method name is not always representative (e.g. if method is class constructor)
-    doc: DocComment,
-    isTopLevel: Boolean
-  ): Expr[Command[Container]] =
-    import qctx.reflect.*
+  // Find all methods and class defs which have been annotated with a command
+  // annotation from any api trait
+  //
+  // return a reference to the instance of the API trait and the annotated symbol
+  def findAnnotated(tpe: TypeRepr): List[(Ref, Symbol)] =
+    val CommandAnnot = TypeRepr.of[MacroApi#command]
 
-    val rtpe = method.tree.asInstanceOf[DefDef].returnTpt.tpe
-    val ptpes = method.paramSymss.map(_.map(_.tree.asInstanceOf[ValDef].tpt.tpe))
-    val inner = rtpe.asType match
-      case '[t] => findAllImpl[t]
+    // is the annotated type the synthetically-generated class for top-level methods?
+    val isTopLevel = //!tpe.typeSymbol.maybeOwner.exists &&
+      tpe.typeSymbol.name.endsWith("$package$")
 
-    val printerTpe = TypeSelect(api.asTerm, "Printer").tpe.appliedTo(List(rtpe))
-    val printer = Implicits.search(printerTpe) match
-      case iss: ImplicitSearchSuccess =>
-        iss.tree
-      case other =>
-        report.error(s"No ${printerTpe.show} available for ${method.name}.", method.pos.get)
-        '{???}.asTerm
+    val methods = tpe.typeSymbol.methodMembers
+    val classes = if isTopLevel then
+      tpe.typeSymbol.owner.typeMembers
+    else
+      tpe.typeSymbol.typeMembers
 
-    val makeParser = '{
-      (instance: () => Container) =>
-        val parser = $api.ArgumentParser(description = ${Expr(doc.paragraphs.mkString("\n"))})
-
-        val args: Seq[Seq[() => ?]] = ${
-          val defaults = getDefaultParams(using qctx)('{instance()}.asTerm, method)
-
-          val accessors =
-            for paramList <- method.paramSymss yield
-              val ls = for param <- paramList yield
-                val overrideName: Option[Expr[String]] =
-                  param.getAnnotation(TypeRepr.of[argparse.name].typeSymbol).map(
-                    a => '{${a.asExprOf[argparse.name]}.name}
-                  )
-
-                val aliasAnnot: Expr[Seq[String]] = param.getAnnotation(TypeRepr.of[argparse.alias].typeSymbol) match
-                  case Some(a) => '{${a.asExprOf[argparse.alias]}.aliases}
-                  case None => '{Seq()}
-
-                val envAnnot: Expr[Option[String]] = param.getAnnotation(TypeRepr.of[argparse.env].typeSymbol) match
-                  case Some(a) => '{Some(${a.asExprOf[argparse.env]}.env)}
-                  case None => '{None}
+    for
+      sym <- (methods ++ classes)
+      if sym.isDefDef || (sym.isClassDef && !sym.flags.is(Flags.Module))
+      annots = sym.annotations
+      annot = annots.find(_.tpe <:< CommandAnnot)
+      if annot.isDefined
+    yield
+      val TypeRef(apiType: TermRef, _) = annot.get.tpe: @unchecked
+      val api = Ref.term(apiType)
+      (api, sym)
 
 
-                // TODO: replace with `param.termRef.widenTermRefByName` when upgrading scala version
-                val paramTpe = param.tree.asInstanceOf[ValDef].tpt.tpe
+  def makeCommands[C: Type]: List[Expr[Command[_]]] =
+    val containerTpe = TypeRepr.of[C]
+    for (api, sym) <- findAnnotated(containerTpe) yield
+      makeCommandForSym(api, sym)
 
-                def summonReader(tpe: TypeRepr): Term =
-                  val readerType =
-                    TypeSelect(
-                      api.asTerm,
-                      "Reader"
-                    ).tpe.appliedTo(List(tpe))
-                  Implicits.search(readerType) match
-                    case iss: ImplicitSearchSuccess => iss.tree
-                    case other =>
-                      report.error(s"No ${readerType.show} available for parameter ${param.name}.", param.pos.get)
-                      '{???}.asTerm
+  def makeCommandForSym[C: Type](api: Ref, sym: Symbol): Expr[Command[C]] =
+    val containerTpe = TypeRepr.of[C]
+    val symTpe = containerTpe.select(sym)
 
-                paramTpe match
-                  case t if t =:= TermRef(api.asTerm.tpe, "ArgumentParser") =>
-                    '{() => parser}
-                  case t if t <:< TypeRepr.of[Iterable[?]] =>
-                    val AppliedType(_, List(inner)) = paramTpe.dealias
+    val rtpe = symTpe.widen match
+      case MethodType(_, _, r) => r
+      case other => other
 
-                    val reader = summonReader(inner)
+    val children = rtpe.asType match
+      case '[t] => makeCommands[t]
 
-                    // Note: for some reason we cannot access `inner` in the
-                    // expression. It will lead to a compiler crash with a
-                    // message "key not found: method $anonfun". To work around
-                    // this, we duplicate code and introduce a new top-level
-                    // case.
-                    val innerBoolean = inner =:= TypeRepr.of[Boolean]
+    val apiExpr = api.asExprOf[MacroApi]
 
-                    defaults.get(param) match
-                      case Some(_) if innerBoolean => // --named repeated flag
-                        '{
-                          val p = $api
-                          val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
-                            name = ${overrideName match
-                              case None => Expr(TextUtils.kebabify(s"--${param.name}"))
-                              case Some(name) => name},
-                            aliases = ${aliasAnnot},
-                            help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = true,
-                            endOfNamed = false
-                          )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
-                          () => arg.value
-                        }
-                      case Some(_) => // --named repeated
-                        '{
-                          val p = $api
-                          val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
-                            name = ${overrideName match
-                              case None => Expr(TextUtils.kebabify(s"--${param.name}"))
-                              case Some(name) => name},
-                            aliases = ${aliasAnnot},
-                            help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = false,
-                            endOfNamed = false
-                          )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
-                          () => arg.value
-                        }
-                      case None => // positional repeated
-                        '{
-                          val p = $api
-                          val arg = parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
-                            name = ${overrideName match
-                              case None => Expr(TextUtils.kebabify(param.name))
-                              case Some(name) => name},
-                            aliases = ${aliasAnnot},
-                            help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = false,
-                            endOfNamed = false
-                          )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
-                          () => arg.value
-                        }
-                  case t =>
-                    val reader = summonReader(t)
+    val doc = DocComment.extract(sym.docstring.getOrElse(""))
 
-                    defaults.get(param) match
-                      case Some(default) => // --named
-                        '{
-                          val p = $api
-                          val arg = parser.asInstanceOf[p.ArgumentParser].singleParam[Any](
-                            name = ${overrideName match
-                              case None => Expr(TextUtils.kebabify(s"--${param.name}"))
-                              case Some(name) => name},
-                            default = Some(() => ${default.asExpr}),
-                            env = ${envAnnot},
-                            aliases = ${aliasAnnot},
-                            help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = ${Expr(t =:= TypeRepr.of[Boolean])},
-                            endOfNamed = false,
-                            interactiveCompleter = None,
-                            standaloneCompleter = None,
-                            argName = None
-                          )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
-                          () => arg.value
-                        }
-                      case None => // positional
-                        '{
-                          val p = $api
-                          val arg = parser.asInstanceOf[p.ArgumentParser].singleParam[Any](
-                            name = ${overrideName match
-                              case None => Expr(TextUtils.kebabify(param.name))
-                              case Some(name) => name},
-                            default = None,
-                            env = ${envAnnot},
-                            aliases = ${aliasAnnot},
-                            help = ${Expr(doc.params.getOrElse(param.name, ""))},
-                            flag = false,
-                            endOfNamed = false,
-                            interactiveCompleter = None,
-                            standaloneCompleter = None,
-                            argName = None
-                          )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
-                          () => arg.value
-                        }
-              Expr.ofSeq(ls)
-            end for
-          Expr.ofSeq(accessors)
-        }
+    val makeParser = if children.isEmpty then
+      val printerTpe: TypeRepr = TypeSelect(api, "Printer").tpe.appliedTo(List(rtpe))
 
-        def callOrInstantiate() = try
-          val results = args.map(_.map(_()))
-          ${
-            if method.isClassConstructor && isTopLevel then
-              call(using qctx)(
-                New(method.tree.asInstanceOf[DefDef].returnTpt).select(method),
-                ptpes,
-                'results
-              ).asExpr
-            else if method.isClassConstructor && !isTopLevel then
-              '{
-                val outer = instance()
-                ${
-                  call(using qctx)(
-                    New(TypeSelect('{outer}.asTerm, rtpe.typeSymbol.name)).select(method),
-                    ptpes,
-                    'results
-                  ).asExpr
-                }
-              }
-            else
-              call(using qctx)(
-                Select('{instance()}.asTerm, method),
-                ptpes,
-                'results
-              ).asExpr
+      val printer: Expr[_] = Implicits.search(printerTpe) match
+        case iss: ImplicitSearchSuccess =>
+          iss.tree.asExpr
+        case other =>
+          report.error(s"No ${printerTpe.show} available for ${sym.name}.", sym.pos.get)
+          '{???}
+      '{
+        (getInstance: () => C) =>
+          val parser = $apiExpr.ArgumentParser(description = ${Expr(doc.paragraphs.mkString("\n"))})
+
+          val args: List[List[() => ?]] = ${makeArgs(api, '{getInstance()}.asTerm, sym, 'parser)}
+
+          def call() =
+            val instance: C = getInstance()
+            val results: List[List[Any]] = args.map(_.map(_()))
+            ${
+              callOrInstantiate('{instance}.asTerm, sym, 'results).asExpr
+            }
+
+          parser.action{
+            val p = $apiExpr
+            try
+              val pr = ${printer}.asInstanceOf[p.Printer[Any]]
+              pr.print(
+                call(),
+                System.out
+              )
+            catch
+              case t: Throwable =>
+                p.handleError(t)
           }
-        catch
-          case t: Throwable =>
-            $api.handleError(t)
+          parser
+      }
+    else
+      '{
+        (getInstance: () => C) =>
+          val parser = $apiExpr.ArgumentParser(description = ${Expr(doc.paragraphs.mkString("\n"))})
 
-        ${
-          if inner.isEmpty then
-            '{
-              parser.action{
-                val p = $api
-                val pr = ${printer.asExpr}.asInstanceOf[p.Printer[Any]]
-                pr.print(
-                  callOrInstantiate(),
-                  System.out
-                )
-              }
-              parser
+          val args: List[List[() => ?]] = ${makeArgs(api, '{getInstance()}.asTerm, sym, 'parser)}
+
+          def instantiateSym() =
+            val instance: C = getInstance()
+            val results: List[List[Any]] = args.map(_.map(_()))
+            ${
+              callOrInstantiate('{instance}.asTerm, sym, 'results).asExpr
             }
-          else
-            '{
-              val commands = ${Expr.ofList(inner)}
-              for cmd <- commands do
-                parser.addSubparser(
-                  cmd.name,
-                  cmd.makeParser(() => callOrInstantiate().asInstanceOf[cmd.Container])
-                )
-              parser
-            }
-        }
-    }
+
+          val subcommands = ${Expr.ofList(children)}
+          for cmd <- subcommands do
+            parser.addSubparser(
+              cmd.name,
+              cmd.makeParser(() => instantiateSym().asInstanceOf[cmd.Container])
+            )
+          parser
+      }
+
     '{
-      Command(
-        ${Expr(TextUtils.kebabify(name))},
-        $makeParser
+      Command[C](
+        ${Expr(TextUtils.kebabify(sym.name))},
+        ${makeParser}
       )
     }
 
-  end makeCommand
+  def makeArgs(api: Ref, instance: Term, sym: Symbol, parser: Expr[_]): Expr[List[List[() => ?]]] =
+    val method = if sym.isClassDef then
+      sym.primaryConstructor
+    else
+      sym
+
+    val defaults = getDefaultParams(instance, method)
+    val docs = DocComment.extract(sym.docstring.getOrElse(""))
+
+    val ys = for plist <- method.paramSymss yield
+      val xs = for param <- plist yield
+        makeArg(api, param, defaults, docs, parser)
+      Expr.ofList(xs)
+    Expr.ofList(ys)
+
+  def makeArg(api: Ref, param: Symbol, defaults: Map[Symbol, Term], docs: DocComment, parser: Expr[_]): Expr[() => ?] =
+    val overrideName: Option[Expr[String]] =
+      param.getAnnotation(TypeRepr.of[argparse.name].typeSymbol).map(
+        a => '{${a.asExprOf[argparse.name]}.name}
+      )
+
+    val aliasAnnot: Expr[Seq[String]] = param.getAnnotation(TypeRepr.of[argparse.alias].typeSymbol) match
+      case Some(a) => '{${a.asExprOf[argparse.alias]}.aliases}
+      case None => '{Seq()}
+
+    val envAnnot: Expr[Option[String]] = param.getAnnotation(TypeRepr.of[argparse.env].typeSymbol) match
+      case Some(a) => '{Some(${a.asExprOf[argparse.env]}.env)}
+      case None => '{None}
+
+    val paramTpe = param.termRef.widenTermRefByName
+
+    def summonReader(tpe: TypeRepr): Term =
+      val readerType =
+        TypeSelect(
+          api,
+          "Reader"
+        ).tpe.appliedTo(List(tpe))
+      Implicits.search(readerType) match
+        case iss: ImplicitSearchSuccess => iss.tree
+        case other =>
+          report.error(s"No ${readerType.show} available for parameter ${param.name}.", param.pos.get)
+          '{???}.asTerm
+
+    val doc = Expr(docs.params.getOrElse(param.name, ""))
+    val apiExpr = api.asExprOf[ParsersApi & TypesApi]
+    paramTpe match
+      case t if t <:< TypeRepr.of[Iterable[?]] =>
+        val AppliedType(_, List(inner)) = paramTpe.dealias: @unchecked
+        val reader = summonReader(inner)
+        val innerBoolean = inner =:= TypeRepr.of[Boolean]
+        defaults.get(param) match
+          case Some(_) => // --named repeated
+            '{
+              val p = $apiExpr
+              val arg = $parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
+                name = ${overrideName match
+                  case None => Expr(TextUtils.kebabify(s"--${param.name}"))
+                  case Some(name) => name},
+                aliases = ${aliasAnnot},
+                help = ${doc},
+                flag = ${Expr(innerBoolean)},
+                endOfNamed = false
+              )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
+              () => arg.value
+            }
+          case None => // positional repeated
+            '{
+              val p = $apiExpr
+              val arg = $parser.asInstanceOf[p.ArgumentParser].repeatedParam[Any](
+                name = ${overrideName match
+                  case None => Expr(TextUtils.kebabify(param.name))
+                  case Some(name) => name},
+                aliases = ${aliasAnnot},
+                help = ${doc},
+                flag = false,
+                endOfNamed = false
+              )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
+              () => arg.value
+            }
+      case t =>
+        val reader = summonReader(t)
+
+        defaults.get(param) match
+          case Some(default) => // --named
+            '{
+              val p = $apiExpr
+              val arg = $parser.asInstanceOf[p.ArgumentParser].singleParam[Any](
+                name = ${overrideName match
+                  case None => Expr(TextUtils.kebabify(s"--${param.name}"))
+                  case Some(name) => name},
+                default = Some(() => ${default.asExpr}),
+                env = ${envAnnot},
+                aliases = ${aliasAnnot},
+                help = ${doc},
+                flag = ${Expr(t =:= TypeRepr.of[Boolean])},
+                endOfNamed = false,
+                interactiveCompleter = None,
+                standaloneCompleter = None,
+                argName = None
+              )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
+              () => arg.value
+            }
+          case None => // positional
+            '{
+              val p = $apiExpr
+              val arg = $parser.asInstanceOf[p.ArgumentParser].singleParam[Any](
+                name = ${overrideName match
+                  case None => Expr(TextUtils.kebabify(param.name))
+                  case Some(name) => name},
+                default = None,
+                env = ${envAnnot},
+                aliases = ${aliasAnnot},
+                help = ${doc},
+                flag = false,
+                endOfNamed = false,
+                interactiveCompleter = None,
+                standaloneCompleter = None,
+                argName = None
+              )(using ${reader.asExpr}.asInstanceOf[p.Reader[Any]])
+              () => arg.value
+            }
+
+  end makeArg

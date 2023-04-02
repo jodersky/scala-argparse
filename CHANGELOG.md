@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.20.0
+
+This release focuses on changes to the annotation-based API. The minimum Scala 3
+version has been bumped to 3.2
+
+- Refactor the annotation-based macro parser to work with Scala 3.2 and avoid
+  some strange compiler crashes.
+- Include the exception class's name in the default error message,
+
 ## 0.19.1
 
 - Add support for defining top-level main functions with nested commands.

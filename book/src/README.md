@@ -30,14 +30,14 @@ In a terminal:
 
   - Interactive bash completion for the most custom needs.
 
-- Works with Scala 3, on the JVM and Native (the lower-level interface also
-  works with Scala 2)
+- Works with Scala 3.2, on the JVM and Native (the lower-level interface also
+  works with Scala 2.13)
 
 - Support for subcommands (aka "verbs")
 
 ## Binaries
 
-This library is published for Scala 3 and 2.13, for the JVM and Native. It is
+This library is published for Scala 3.2 and 2.13, for the JVM and Native. It is
 available on maven central under the coordinates:
 
 - mill: `ivy"io.crashbox::argparse::{{#include ../../out/releaseVersion.dest/version}}"`

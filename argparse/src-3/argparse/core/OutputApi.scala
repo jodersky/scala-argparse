@@ -17,7 +17,8 @@ trait OutputApi extends ParsersApi with TypesApi with Printers:
     if sys.env.contains("DEBUG") then
       t.printStackTrace()
     else
-      System.err.println(t.getMessage())
+      val msg = s"${t.getClass().getSimpleName()}: ${t.getMessage()}"
+      System.err.println(msg)
     exit(1)
 
   trait Printer[A]:
@@ -245,6 +246,6 @@ trait LowPrioPrinters:
   self: OutputApi =>
 
   // fallback to always print something
-  given [A]: Printer[A] with
+  given anyPrinter[A]: Printer[A] with
     def print(a: A, out: java.io.PrintStream): Unit =
       out.println(a.toString)
