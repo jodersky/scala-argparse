@@ -1,0 +1,471 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Cookbook - scala-argparse 0.20.0</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/pagetoc.css">
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../annotation.html"><strong aria-hidden="true">2.</strong> Annotation Interface</a></li><li class="chapter-item expanded "><a href="../ll/index.html"><strong aria-hidden="true">3.</strong> Argparse Interface</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../ll/tutorial.html"><strong aria-hidden="true">3.1.</strong> Tutorial</a></li><li class="chapter-item expanded "><a href="../ll/cookbook.html" class="active"><strong aria-hidden="true">3.2.</strong> Cookbook</a></li></ol></li><li class="chapter-item expanded "><a href="../usecases.html"><strong aria-hidden="true">4.</strong> Usecases</a></li><li class="chapter-item expanded "><a href="../utils.html"><strong aria-hidden="true">5.</strong> Utilities</a></li><li class="chapter-item expanded "><a href="../manpage.html"><strong aria-hidden="true">6.</strong> Man Page Template</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="../changelog.html">Changelog</a></li></ol>
+                <a href="../javadoc/index.html">API Docs</a>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">scala-argparse 0.20.0</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse/edit/master/book/src/ll/cookbook.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main><div class="sidetoc"><nav class="pagetoc"></nav></div>
+                        <h2 id="cookbook"><a class="header" href="#cookbook">Cookbook</a></h2>
+<p>This <em>cookbook</em> contains recipes (i.e. &quot;how-tos&quot;) for accomplishing common tasks
+which are more advanced than what is described in the <a href="#tutorial">Tutorial</a>.</p>
+<h3 id="subcommands"><a class="header" href="#subcommands">Subcommands</a></h3>
+<p>Many applications actually split their functionality into multiple nested
+commands, each corresponding to the verb of an action (such as <code>docker run</code> or
+<code>git clone</code>). This approach works particularly well if an application performs
+different functions which require different kinds of arguments.</p>
+<p><code>ArgumentParser</code> has built-in support for these kinds of sub-commands with the
+<code>subparser()</code> method. This method will return a new <code>ArgumentParser</code> which can
+be modified as usual. The parent parser is aware of the child parser, and will
+include it in help messages and bash completion scripts. Each child parser will
+have its own parameters, but can access the arguments declared in the parent.</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser(description = &quot;an example application&quot;)
+
+  val global = parser.param[String](&quot;--global&quot;, &quot;unset&quot;)
+
+  val getter = parser.subparser(&quot;get&quot;, &quot;get a value&quot;)
+  val getterKey = getter.requiredParam[String](&quot;key&quot;)
+  getter.action{
+    println(s&quot;global: ${global.value}&quot;)
+    println(s&quot;getting key ${getterKey.value}&quot;)
+  }
+
+  val setter = parser.subparser(&quot;set&quot;, &quot;set a value&quot;)
+  val setterKey = setter.requiredParam[String](&quot;key&quot;)
+  val setterValue = setter.requiredParam[String](&quot;value&quot;)
+  setter.action{
+    println(s&quot;global: ${global.value}&quot;)
+    println(s&quot;setting key ${setterKey.value} to ${setterValue.value}&quot;)
+  }
+
+  val nested = parser.subparser(&quot;nested&quot;, &quot;another command&quot;)
+  nested.subparser(&quot;inner1&quot;)
+  nested.subparser(&quot;inner2&quot;)
+
+  parser.parseOrExit(args)
+</code></pre>
+<pre><code>$ app
+missing argument: command
+run with '--help' for more information
+
+$ app get k
+global: unset
+getting key k
+
+$ app set k v
+global: unset
+setting key k to v
+
+$ app --global=a set k v
+global: a
+setting key k to v
+
+$ app set --global=a k v
+unknown argument: --global
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS] COMMAND ARGS...
+
+an example application
+
+Options:
+      --bash-completion string  generate bash completion for this command
+      --global string           
+      --help                    show this message and exit
+Commands:
+  set       set a value
+  get       get a value
+  nested    another command
+</code></pre>
+<h3 id="bash-completion"><a class="header" href="#bash-completion">Bash Completion</a></h3>
+<p>If you are an avid user of the command line, you will probably have noticed that
+you can get argument suggestions by pressing the <code>tab</code> key on a partially typed
+word. This is a very helpful feature for quickly navigating and exploring
+command line tools. It is known as <em>bash completion</em>, and can work in one of two
+ways:</p>
+<ol>
+<li>
+<p>Standalone. A <em>completion script</em> has been <em>sourced</em> by your shell and is
+what is called to generate completions when you press tab.</p>
+</li>
+<li>
+<p>Interactive. Your program is called to complete the partially typed word.</p>
+</li>
+</ol>
+<p>The <code>argparse</code> library allows you to use both options with minimal setup. We do
+however recommend to use <em>standalone</em> completion if you are writing your program
+for the JVM, since you otherwise have to suffer the JVM's startup delay when
+you're waiting for tab completion.</p>
+<h4 id="standalone-bash-completion"><a class="header" href="#standalone-bash-completion">Standalone Bash Completion</a></h4>
+<p>Every <code>ArgumentParser</code> accepts a <code>--bash-completion</code> parameter which will
+generate a bash-completion script. You can source this script at the start of
+your shell session, for example by adding it to your <code>~/.bashrc</code>.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  parser.param[os.Path](&quot;--foo&quot;, os.pwd)
+  parser.param[os.Path](&quot;--bar&quot;, os.pwd)
+  parser.param[os.Path](
+    &quot;--baz&quot;,
+    os.pwd,
+    standaloneCompleter = argparse.BashCompleter.Fixed(Set(&quot;a&quot;, &quot;b&quot;))
+  )
+  parser.parseOrExit(args)
+</code></pre>
+<pre><code>$ app --bash-completion app &gt; complete.sh
+$ source complete.sh
+$ app -[press tab]
+--bar=  --baz=  --foo=  --help
+$ app --baz=[press tab]
+a  b
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>The argument <code>--bash-completion</code> will generate a completion script for bash.</p>
+<p>You can read the full details of how bash completion works on <code>man 1 bash</code>.</p>
+</li>
+<li>
+<p>Completions are based on the parameter type, but can be overriden by
+explicitly setting the <code>standaloneCompleter</code> parameter.</p>
+</li>
+<li>
+<p>Completion will only complete positional arguments by default, unless you have
+started typing a word which starts with <code>-</code>.</p>
+</li>
+<li>
+<p>This works also with subcommands.</p>
+</li>
+</ul>
+<p>We suggest that you include the bash completion script in the files distributed alongside the binary distribution of your application.</p>
+<h4 id="interactive-bash-completion"><a class="header" href="#interactive-bash-completion">Interactive Bash Completion</a></h4>
+<p>You can also write completion logic in the program itself. In this case, you
+will need to instruct bash to call your program with a special environment when
+you press tab. You can do this by running <code>complete -o nospace -C &lt;program&gt; &lt;program&gt;</code> at the start of your shell session, for exmaple by putting it into
+<code>~/.bashrc</code>.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  parser.param[os.Path](&quot;--foo&quot;, os.pwd)
+  parser.param[os.Path](&quot;--bar&quot;, os.pwd)
+  parser.param[os.Path](
+    &quot;--baz&quot;,
+    os.pwd,
+    interactiveCompleter = s =&gt; Seq(&quot;a&quot;, &quot;b&quot;)
+  )
+  parser.parseOrExit(args)
+</code></pre>
+<pre><code>$ complete -o nospace -C app app
+$ app -[press tab]
+--bar    --baz    --foo    --help
+$ app --baz [press tab]
+a  b
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>Bash sets a few &quot;magic&quot; environment variables before invoking your program,
+which will cause it to behave differently than when invoked normally.</p>
+</li>
+<li>
+<p>Completions are based on the parameter type, but can be overriden by
+explicitly setting the <code>interactiveCompleter</code> parameter.</p>
+</li>
+<li>
+<p>You can read the full details of how bash completion works on <code>man 1 bash</code>.</p>
+</li>
+</ul>
+<p>We suggest that you only use interactive completion for programs targeting
+Scala Native.</p>
+<h3 id="depending-on-another-parameter"><a class="header" href="#depending-on-another-parameter">Depending on another Parameter</a></h3>
+<p>In some situations you may want a parameter's default value to depend on the
+value of another parameter. You can achieve this by simply calling the
+argument holder's <code>value</code> method in the default.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val dir = parser.param[os.Path](&quot;-C&quot;, default = os.root)
+  val file = parser.param[os.Path](&quot;--file&quot;, default = dir.value / &quot;file&quot;)
+  parser.parseOrExit(args)
+  println(file.value)
+</code></pre>
+<pre><code>$ app
+/file
+
+$ app -C /foo
+/foo/file
+
+$ app --file /bar
+/bar
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>The <code>default</code> method parameter is call-by-name.</li>
+<li>Arguments are parsed in order of parameter definition. Hence a parameter can
+reference the values of others in its default value.</li>
+</ul>
+<h3 id="adding-support-for-a-new-type-of-parameter"><a class="header" href="#adding-support-for-a-new-type-of-parameter">Adding Support for a New Type of Parameter</a></h3>
+<p>This library has support for reading arguments for many kinds of Scala types. In
+advanced programs however, it can happen that you run into an unsupported type.
+You will receive a <em>compile-time</em> error, informing you that a specific type is
+not supported. In this situation, you can define a custom <em>API bundle</em> with an
+additional <code>Reader</code> for your type of parameter.</p>
+<p>Example of the problem:</p>
+<pre><code class="language-scala">case class Level(n: Int)
+
+def main(args: Array[Strig]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val level = parser.requiredParam[Level](&quot;log-level&quot;) // Compile error: no Reader[Level] found
+  parser.parseOrExit(args)
+  println(bytes.value.n)
+</code></pre>
+<p>Solution:</p>
+<pre><code class="language-scala">case class Level(n: Int)
+
+object custom extends argparse.core.Api {
+
+  given Reader[Level] with {
+    def read(str: String): Reader.Result[Level] = str match {
+      case &quot;DEBUG&quot; =&gt; Reader.Success(Level(0))
+      case &quot;INFO&quot; =&gt; Reader.Success(Level(1))
+      case &quot;WARN&quot; =&gt; Reader.Success(Level(2))
+      case &quot;ERROR&quot; =&gt; Reader.Success(Level(3))
+      case other =&gt; Reader.Error(s&quot;'$other' is not a valid level&quot;)
+    }
+    def typeName = &quot;level&quot;
+  }
+
+}
+
+def main(args: Array[String]): Unit =
+  val parser = custom.ArgumentParser() // notice how we use `custom` instead of `argparse.default`
+  val level = parser.requiredParam[Level](&quot;log-level&quot;)
+  parser.parseOrExit(args)
+  println(level.value.n)
+</code></pre>
+<pre><code class="language-scala">$ app WARN
+2
+
+$ app FATAL
+error processing argument log-level: 'FATAL' is not a valid level
+run with '--help' for more information
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p><code>Reader</code> is a <em>typeclass</em> which is responsible for parsing strings from the
+command line into instances of Scala types.</p>
+</li>
+<li>
+<p>Readers are declared in an API bundle. An API bundle is a bunch of traits that
+are mixed together in order to define &quot;a flavor&quot; of argparse.</p>
+<p>The default bundle implemented in this library is
+<a href="../javadoc/api/argparse/default$.html"><code>argparse.default</code></a>, which includes
+Readers for most common types.</p>
+</li>
+<li>
+<p>You can create a custom bundle by creating an object which extends
+<code>argparse.core.Api</code>, and declare additional readers in it.</p>
+</li>
+<li>
+<p>The <code>ArgumentParser</code> from the custom bundle will find the <em>Reader</em> instance
+which can parse the desired parameter type.</p>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ll/tutorial.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../usecases.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ll/tutorial.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../usecases.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/pagetoc.js"></script>
+
+
+    </body>
+</html>

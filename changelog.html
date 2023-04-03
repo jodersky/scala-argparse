@@ -1,0 +1,378 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Changelog - scala-argparse 0.20.0</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/pagetoc.css">
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="annotation.html"><strong aria-hidden="true">2.</strong> Annotation Interface</a></li><li class="chapter-item expanded "><a href="ll/index.html"><strong aria-hidden="true">3.</strong> Argparse Interface</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="ll/tutorial.html"><strong aria-hidden="true">3.1.</strong> Tutorial</a></li><li class="chapter-item expanded "><a href="ll/cookbook.html"><strong aria-hidden="true">3.2.</strong> Cookbook</a></li></ol></li><li class="chapter-item expanded "><a href="usecases.html"><strong aria-hidden="true">4.</strong> Usecases</a></li><li class="chapter-item expanded "><a href="utils.html"><strong aria-hidden="true">5.</strong> Utilities</a></li><li class="chapter-item expanded "><a href="manpage.html"><strong aria-hidden="true">6.</strong> Man Page Template</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="changelog.html" class="active">Changelog</a></li></ol>
+                <a href="javadoc/index.html">API Docs</a>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">scala-argparse 0.20.0</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse/edit/master/book/src/changelog.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main><div class="sidetoc"><nav class="pagetoc"></nav></div>
+                        <h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<h2 id="0200"><a class="header" href="#0200">0.20.0</a></h2>
+<p>This release focuses on changes to the annotation-based API. The minimum Scala 3
+version has been bumped to 3.2</p>
+<ul>
+<li>Refactor the annotation-based macro parser to work with Scala 3.2 and avoid
+some strange compiler crashes.</li>
+<li>Include the exception class's name in the default error message,</li>
+</ul>
+<h2 id="0191"><a class="header" href="#0191">0.19.1</a></h2>
+<ul>
+<li>Add support for defining top-level main functions with nested commands.</li>
+</ul>
+<h2 id="0190"><a class="header" href="#0190">0.19.0</a></h2>
+<ul>
+<li>Add error handling and output printing to the annotation API.</li>
+</ul>
+<h2 id="0181"><a class="header" href="#0181">0.18.1</a></h2>
+<ul>
+<li>Fix flag-derivation in the annotation API.</li>
+</ul>
+<h2 id="0180"><a class="header" href="#0180">0.18.0</a></h2>
+<ul>
+<li>Migrate documentation from custom static site to mdbook.</li>
+<li>Improve documentation</li>
+<li>Replace general <code>arg()</code> annotation with more specialized versions</li>
+</ul>
+<h2 id="0170"><a class="header" href="#0170">0.17.0</a></h2>
+<h3 id="breaking"><a class="header" href="#breaking">Breaking</a></h3>
+<ul>
+<li>
+<p>Rework annotation-based macro API and remove experimental status. This is now
+the recommended interface for basic use cases.</p>
+</li>
+<li>
+<p>Replace sub-commands with more structured sub-parsers.</p>
+<p>While the idea of independent subcommands seems quite elegant, there are
+unfortunately a couple of pitfalls which make them quite brittle to use. The
+first is that the current API made it easy to capture arguments at the wrong
+time in lambdas, hence leading to incomplete argument errors. The second, more
+fundamental issue, is that independent commands are by definition independent,
+and hence generating shared help messages and bash completion is quite tricky.
+For example, we needed to resort to hacky workarounds that relied on the stack
+and thread locals in combination with &quot;magic&quot; parameters to achieve composable
+bash completion that worked with nested commands.</p>
+<p>Subparsers are less powerful but also less brittle and should still be
+suitable for the majority of usecases. In situations where absolute control is
+necessary, the user can still define an all-absorbing parameter and handle
+subcommands manually.</p>
+</li>
+</ul>
+<h3 id="minor"><a class="header" href="#minor">Minor</a></h3>
+<ul>
+<li>Remove parameter style checker.</li>
+</ul>
+<h3 id="experimental"><a class="header" href="#experimental">Experimental</a></h3>
+<ul>
+<li>Add experimental configuration parsing library.</li>
+</ul>
+<h2 id="0162"><a class="header" href="#0162">0.16.2</a></h2>
+<ul>
+<li>Add low-level escape hatches for manually adding parameter descriptors to the
+argument parser and bash completion scripts.</li>
+<li>Add a hook provide hook for handling unknown subcommands.</li>
+</ul>
+<h2 id="0161"><a class="header" href="#0161">0.16.1</a></h2>
+<p>Add support for annotation-based, macro-generated argument parsers
+(experimental).</p>
+<h2 id="0160"><a class="header" href="#0160">0.16.0</a></h2>
+<p>The major change in this release is the migration to a mixin-based API. The
+<code>ArgumentParser</code> trait as well as all readers have been moved to traits in
+<code>argparse.core._</code>, and the new top-level object for users is <code>argparse.default</code>.
+Thus, any references to <code>argparse.ArgumentParser</code> need to updated to
+<code>argparse.default.ArgumentParser</code>.</p>
+<p>Other breaking changes:</p>
+<ul>
+<li>Disable most experimental macro-based parser. This includes <code>settings</code> and
+<code>mutableSetting</code>. A new macro-based parser is in the works.</li>
+<li>Remove <code>show()</code> function from <code>Reader</code>.</li>
+<li>Add a <code>typeName</code> function to <code>Reader</code>.</li>
+<li>Rename <code>BashCompletion</code> to <code>InteractiveBashCompletion</code>.</li>
+<li>Make argument a top-level class, instead of <code>() =&gt; A</code>.</li>
+<li>Remove deprecated features.</li>
+</ul>
+<p>Other changes:</p>
+<ul>
+<li>Implement terminal properties for Native (the code between Native and JVM is
+now shared).</li>
+<li>Upgrade to Scala Native 0.4.4</li>
+</ul>
+<h2 id="0152"><a class="header" href="#0152">0.15.2</a></h2>
+<ul>
+<li>Add an INI printer</li>
+<li>Derive publish version from Git</li>
+</ul>
+<h2 id="0151"><a class="header" href="#0151">0.15.1</a></h2>
+<ul>
+<li>Cleanup INI parser support and add more tests.</li>
+</ul>
+<h2 id="0150"><a class="header" href="#0150">0.15.0</a></h2>
+<ul>
+<li>Add support for Scala Native for Scala 3.</li>
+<li>Add standalone bash completion. This allows user programs to generate bash
+scripts for completion, rather than relying on the program itself to generate
+completions. Although the former is less powerful than the latter, it is
+suitable for JVM programs, where the startup cost would be prohibitive for
+interactive completions.</li>
+<li>Remove the ability for parameters to fall back to values provided in a
+configuration file. This was experimental, and configuration files are not in
+scope of this project.</li>
+<li>Move INI-style configuration parser into separate package.</li>
+<li>Add toggles for default help and bash-completion parameters.</li>
+</ul>
+<h2 id="0140"><a class="header" href="#0140">0.14.0</a></h2>
+<p>Rename project to scala-argparse.</p>
+<h2 id="0130"><a class="header" href="#0130">0.13.0</a></h2>
+<ul>
+<li>Remove ability to read args from a file (predef reader). This caused ordering
+issues in the parser and seemed like a recipe for obsuring config origins.</li>
+<li>Implement an ini-style config parser, and allow params to read from config.</li>
+</ul>
+<h2 id="0121"><a class="header" href="#0121">0.12.1</a></h2>
+<ul>
+<li>Add range reader.</li>
+<li>Upgrade mill to 0.9.10</li>
+</ul>
+<h2 id="0120"><a class="header" href="#0120">0.12.0</a></h2>
+<ul>
+<li>Add experimental case class parser (Scala 3 only), available under
+<code>parser.settings</code> (the previous mutable settings parser has been renamed to
+<code>parser.mutableSettings</code>).</li>
+<li>Add readers for:
+<ul>
+<li><code>scala.concurrent.time.Duration</code></li>
+<li>Common <code>java.time</code> data types</li>
+<li>Collections of paths. These readers use <code>:</code> as a separator, instead of the
+usual <code>,</code>'.</li>
+</ul>
+</li>
+<li>Upgrade to Scala 3.0.2.</li>
+</ul>
+<h2 id="0110"><a class="header" href="#0110">0.11.0</a></h2>
+<ul>
+<li>Upgrade to Scala 2.13.6</li>
+<li>Refactor XDG directory implemention</li>
+<li>Refactor default help message</li>
+</ul>
+<h2 id="0103"><a class="header" href="#0103">0.10.3</a></h2>
+<ul>
+<li>Add support for Scala 3.0.0</li>
+</ul>
+<h2 id="0102"><a class="header" href="#0102">0.10.2</a></h2>
+<ul>
+<li>Wrap text in help messages</li>
+<li>Add support for Scala 3.0.0-RC3</li>
+</ul>
+<h2 id="0101"><a class="header" href="#0101">0.10.1</a></h2>
+<ul>
+<li>Add support for Scala 3.0.0-RC2</li>
+</ul>
+<h2 id="0100"><a class="header" href="#0100">0.10.0</a></h2>
+<ul>
+<li>Add readers for <code>() =&gt; InputStream</code>, <code>() =&gt; OutputStream</code> and <code>geny.Readable</code>.
+These readers follow the convention of using '-' to read/write from
+stdin/stdout.</li>
+<li>Change the parser to support inserting parameters during parsing. Predefs can
+now be specified as parameters.</li>
+</ul>
+<h2 id="090"><a class="header" href="#090">0.9.0</a></h2>
+<ul>
+<li>Show default values of named parameters in help messages.</li>
+<li>Implement XDG Base Directory Specification.</li>
+<li>Introduce the concept of a &quot;predef&quot;, a flat configuration file which contains
+command line arguments</li>
+</ul>
+<h2 id="080-and-before"><a class="header" href="#080-and-before">0.8.0 and before</a></h2>
+<p>A command line parser for Scala 2 and 3, featuring:</p>
+<ul>
+<li>simple interfaces</li>
+<li>bash completion</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="manpage.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="manpage.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/pagetoc.js"></script>
+
+
+    </body>
+</html>

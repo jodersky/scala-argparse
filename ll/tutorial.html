@@ -1,0 +1,661 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Tutorial - scala-argparse 0.20.0</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="../fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="../theme/pagetoc.css">
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="../index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="../annotation.html"><strong aria-hidden="true">2.</strong> Annotation Interface</a></li><li class="chapter-item expanded "><a href="../ll/index.html"><strong aria-hidden="true">3.</strong> Argparse Interface</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../ll/tutorial.html" class="active"><strong aria-hidden="true">3.1.</strong> Tutorial</a></li><li class="chapter-item expanded "><a href="../ll/cookbook.html"><strong aria-hidden="true">3.2.</strong> Cookbook</a></li></ol></li><li class="chapter-item expanded "><a href="../usecases.html"><strong aria-hidden="true">4.</strong> Usecases</a></li><li class="chapter-item expanded "><a href="../utils.html"><strong aria-hidden="true">5.</strong> Utilities</a></li><li class="chapter-item expanded "><a href="../manpage.html"><strong aria-hidden="true">6.</strong> Man Page Template</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="../changelog.html">Changelog</a></li></ol>
+                <a href="../javadoc/index.html">API Docs</a>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">scala-argparse 0.20.0</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse/edit/master/book/src/ll/tutorial.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main><div class="sidetoc"><nav class="pagetoc"></nav></div>
+                        <h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
+<p><em>Acknowledgement: this tutorial is inspired by and largely copied from the
+<a href="https://docs.python.org/3/howto/argparse.html">Python Argparse Tutorial by Tshepang
+Lekhonkhobe</a>, made available
+under the Zero Clause BSD License.</em></p>
+<p>This tutorial is intended to be an introduction to the lower-level interface of
+argparse. This interface deals with building command line parsers, and is
+generated by the higher-level annotation-based interface. As such, it is helpful
+to understand these concepts, even if you only use the higher-level interface.</p>
+<h2 id="concepts"><a class="header" href="#concepts">Concepts</a></h2>
+<p>Let's show the sort of functionality that we are going to explore in this
+introductory tutorial by making use of the <code>ls</code> command:</p>
+<pre><code>$ ls
+argparse  build.sc  ci  examples  ini  LICENSE.md  mill  out  README.md
+$ ls argparse
+src  src-2  src-3  test
+$ ls -l
+total 48
+drwxr-xr-x 9 jodersky jodersky  4096 Jul  3 10:12 argparse
+-rw-r--r-- 1 jodersky jodersky  4836 Jul  3 15:30 build.sc
+drwxr-xr-x 2 jodersky jodersky  4096 Jan 31 18:05 ci
+drwxr-xr-x 5 jodersky jodersky  4096 Jul  3 15:07 examples
+drwxr-xr-x 4 jodersky jodersky  4096 May 20 19:58 ini
+-rw-r--r-- 1 jodersky jodersky  1473 Apr 30  2020 LICENSE.md
+-rwxr-xr-x 1 jodersky jodersky  1646 Mar  7  2021 mill
+drwxr-xr-x 5 jodersky jodersky  4096 Jul  3 15:54 out
+-rw-r--r-- 1 jodersky jodersky 10090 Jul  3 17:10 README.md
+$ ls --help
+Usage: ls [OPTION]... [FILE]...
+List information about the FILEs (the current directory by default).
+Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.
+...
+</code></pre>
+<p>A few concepts we can learn from the four commands:</p>
+<ul>
+<li>
+<p>The <strong>ls</strong> command is useful when run without any arguments at all. It
+defaults to displaying the contents of the current directory.</p>
+</li>
+<li>
+<p>If we want beyond what it provides by default, we tell it a bit more. In this
+case, we want it to display a different directory, <code>argparse</code>. What we did is
+specify what is known as a <em>positional argument</em>. It's called so because the
+program should know what to do with the value, solely based on where it
+appears on the command line. This concept is more relevant to a command like
+<strong>cp</strong>, whose most basic usage is <code>cp SRC DEST</code>. The first position is what
+you want copied, and the second position is where you want it copied to.</p>
+</li>
+<li>
+<p>Now, say we want to change behaviour of the program. In our example, we
+display more info for each file instead of just showing the file names. The
+<code>-l</code> in that case is known as a <em>named argument</em>.</p>
+</li>
+<li>
+<p>That's a snippet of the help text. It's very useful in that you can come
+across a program you have never used before, and can figure out how it works
+simply by reading its help text.</p>
+</li>
+</ul>
+<p>These concepts are core to <code>argparse</code>:</p>
+<p><strong>parameter</strong>
+: a named variable, a placeholder, in a command line definition</p>
+<p><strong>argument</strong>
+: the value assigned to a parameter</p>
+<p><strong><em>named</em> argument</strong>
+: an argument that starts with <code>-</code>. The characters following determine the name
+of the parameter that the argument is assigned to. The actual value assigned to
+the parameter is given after an '=' or a space. For instance <code>--foo=bar</code> assigns
+<code>bar</code> to <code>foo</code>. Named arguments may appear in any order on a command line.</p>
+<p><strong><em>positional</em> argument</strong>
+: an argument that is not named. Positional arguments are assigned to positional
+parameters according to their respective order of occurence.</p>
+<h2 id="basics"><a class="header" href="#basics">Basics</a></h2>
+<p>Let's start with an example that does almost nothing:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  parser.parseOrExit(args)
+</code></pre>
+<p>The following is a result of running the code:</p>
+<pre><code>$ app
+
+
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+
+$ app --verbose
+unknown argument: --verbose
+run with '--help' for more information
+
+$ app foo
+unknown argument: foo
+run with '--help' for more information
+</code></pre>
+<p>Here is what is happening:</p>
+<ul>
+<li>
+<p>Running the program without any arguments results in nothing displayed to
+stdout. Not so useful.</p>
+</li>
+<li>
+<p>The second one starts to display the usefulness of the <code>argparse</code> library. We
+have done almost nothing, but already we get a help message.</p>
+</li>
+<li>
+<p>The <code>--help</code> option is the only option we get for free (i.e. no need to
+specify it). Specifying anything else results in an error. But even then, we
+do get a useful usage message, also for free.</p>
+</li>
+</ul>
+<h2 id="required-parameters"><a class="header" href="#required-parameters">Required Parameters</a></h2>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val echo = parser.requiredParam[String](&quot;echo&quot;)
+  parser.parseOrExit(args)
+  println(echo.value)
+</code></pre>
+<p>And running the code:</p>
+<pre><code>$ app
+missing argument: echo
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS] ECHO
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+
+$ app foo
+foo
+</code></pre>
+<p>Here is what's happening:</p>
+<ul>
+<li>
+<p>We've added the <code>requiredParam()</code> method, which is what we use to specify
+which command-line arguments the program needs. In this case, I've named it
+<code>echo</code> so that it's in line with its function.</p>
+<p>The result of this method is a holder to some future value of an argument,
+which can be accessed by calling the <code>.value</code> method.</p>
+</li>
+<li>
+<p>Calling our program now <strong>requires</strong> us to specify an argument.</p>
+</li>
+<li>
+<p>We can specify how an argument should be read from the command line by
+specifying the type of the parameter, <code>String</code> in this case.</p>
+</li>
+<li>
+<p>The <code>parser.parseOrExit()</code> method is what actually goes through the command
+line arguments and sets the argument holders' values.</p>
+<p>After calling this method, the arguments can be accessed via the <code>.value</code>
+method of the argument holders.</p>
+</li>
+</ul>
+<p>Note however that, although the help display looks nice and all, it currently is
+not as helpful as it can be. For example we see that we got <code>echo</code> as a
+positional argument, but we don't know what it does, other than by guessing or
+by reading the source code. So, let's make it a bit more useful:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val echo: argparse.Argument[String] = parser.requiredParam[String](
+    &quot;echo&quot;,
+    help = &quot;echo the string you use here&quot;
+  )
+  parser.parseOrExit(args)
+  print(echo.value)
+</code></pre>
+<p>And we get:</p>
+<pre><code>$ app --help
+Usage: [OPTIONS] ECHO
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+</code></pre>
+<p>Now, how about doing something even more useful:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val square = parser.requiredParam[Int](
+    &quot;square&quot;,
+    help = &quot;display a square of a given number&quot;
+  )
+  parser.parseOrExit(args)
+  print(square.value * square.value)
+
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app 4
+16
+
+$ app four
+error processing argument square: 'four' is not an integral number
+run with '--help' for more information
+</code></pre>
+<p>That went well. The program now even helpfully quits on bad input.</p>
+<h2 id="optional-parameters"><a class="header" href="#optional-parameters">Optional Parameters</a></h2>
+<p>So far the parameters that we have specified were required. Let's look at how we
+can make an argument optional.</p>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val answer = parser.param[Int](
+    &quot;answer&quot;,
+    default = 42,
+    help = &quot;display the answer to the universe&quot;
+  )
+  parser.parseOrExit(args)
+  println(answer.value)
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app
+42
+
+$ app 1000
+1000
+</code></pre>
+<p>Here is what's happening:</p>
+<ul>
+<li>
+<p>The parameter is made <strong>optional</strong> by declaring it with the <code>param()</code> method
+instead of the <code>requiredParam()</code> method.</p>
+</li>
+<li>
+<p>This method requires a default value.</p>
+</li>
+<li>
+<p>The default value will be used if the argument is not encountered on the
+command-line.</p>
+</li>
+</ul>
+<h2 id="repeated-parameters"><a class="header" href="#repeated-parameters">Repeated Parameters</a></h2>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val files = parser.repeatedParam[os.FilePath](
+    &quot;files&quot;,
+    help = &quot;remove these files&quot;
+  )
+  parser.parseOrExit(args)
+  for (file &lt;- files.value) {
+    println(s&quot;if this were a real program, we would delete $file&quot;)
+  }
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app
+
+
+$ app file1
+if this were a real program, we would delete file1
+
+$ app file1 file2 file3
+if this were a real program, we would delete file1
+if this were a real program, we would delete file2
+if this were a real program, we would delete file3
+</code></pre>
+<p>Here is what's happening:</p>
+<ul>
+<li>
+<p>The parameter is made <strong>repeated</strong> by declaring it with the <code>repeatedParam()</code>.</p>
+</li>
+<li>
+<p>Repeated parameters accumulate all ocurences in the argument holder.</p>
+<p>Thus, here, <code>value</code> will give us back a <code>Seq[os.FilePath]</code> rather than a single
+<code>os.FilePath</code>.</p>
+</li>
+</ul>
+<h2 id="named-parameters-and-positional-parameters"><a class="header" href="#named-parameters-and-positional-parameters">Named Parameters and Positional Parameters</a></h2>
+<p>So far you may have noticed that all our examples have used <em>positional</em>
+parameters. Recall from the initial <code>ls</code> example, that a positional parameter is
+one which is set solely based on the position of its argument. When parameter
+lists get very long or change over time, it can become very difficult to keep
+matching argument lists coherent. Therefore, most command line tools will mostly
+use <em>named</em> parameters.</p>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val verbosity = parser.param[Int](
+    &quot;--verbosity&quot;,
+    default = 0,
+    help = &quot;level of verbosity&quot;
+  )
+  val files = parser.repeatedParam[java.nio.file.Path](
+    &quot;files&quot;,
+    help = &quot;remove these files&quot;
+  )
+  parser.parseOrExit(args)
+  println(s&quot;verbosity: ${verbosity.value}&quot;)
+  for (file &lt;- files.value) {
+    println(s&quot;if this were a real program, we would delete $file&quot;)
+  }
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app --verbosity
+error processing argument --verbosity: argument expected
+run with '--help' for more information
+
+$ app --verbosity 1
+verbosity: 1
+
+$ app --verbosity=1
+verbosity: 1
+
+$ app --verbosity 1 file1 file2
+verbosity: 1
+if this were a real program, we would delete file1
+if this were a real program, we would delete file2
+
+$ app file1 --verbosity 1 file2
+verbosity: 1
+if this were a real program, we would delete file1
+if this were a real program, we would delete file2
+
+$ app file1 -- --verbosity 1 file2
+verbosity: 0
+if this were a real program, we would delete file1
+if this were a real program, we would delete --verbosity
+if this were a real program, we would delete 1
+if this were a real program, we would delete file2
+</code></pre>
+<p>Here is what is happening:</p>
+<ul>
+<li>
+<p>A <em>named</em> parameter is a parameter that is identified by a name on the command
+line instead of a position. Named arguments are syntactically distinguished
+from positional arguments by a leading <code>-</code> (or <code>--</code> as is common).</p>
+</li>
+<li>
+<p>Arguments to named parameters can be either separated by a space or an equals
+sign.</p>
+</li>
+<li>
+<p>Named arguments may appear in any order on the command line. They can be
+intermingled with positional arguments.</p>
+</li>
+<li>
+<p>A standalone <code>--</code> serves as a delimiter, and allows arguments that start with
+<code>-</code> to be treated as positionals. This is very handy for accepting untrusted
+input in scripts, or deleting files that start with a hyphen.</p>
+</li>
+</ul>
+<p>All parameter declaration methods, <code>param()</code>, <code>requiredParam()</code> and
+<code>repeatedParam()</code> allow defining parameters as positional and named. The only
+hint you can see is in the name: if it starts with '-', then it is a named
+parameter, otherwise it is positional. Note however, that it is most common and
+good practice to only use positional parameters for required parameters, or
+conversely, always make named parameters optional.</p>
+<h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
+<p>Flags are a special kind of named parameter. They don't take an argument, and we
+are only ever interested if they are present on the command-line or not.</p>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val verbose = parser.param[Boolean](
+    &quot;--verbose&quot;,
+    default = false,
+    help = &quot;use verbose output&quot;,
+    flag = true
+  )
+  parser.parseOrExit(args)
+  println(verbose.value)
+</code></pre>
+<p>Running it:</p>
+<pre><code>$ app
+false
+
+$ app --verbose
+true
+
+$ app --verbose=false
+false
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>A parameter is declared as a <strong>flag</strong> by setting the <em>flag</em> parameter,</p>
+<p>This instructs the argument parser that the parameter does not take an
+argument.</p>
+</li>
+<li>
+<p>If the flag is encountered on the command line, then it is assigned the string
+value <code>&quot;true&quot;</code>.</p>
+<p>Thus, it only makes sense to declare <code>Boolean</code> parameters as <code>flags</code>.</p>
+</li>
+<li>
+<p>You can still override the argument by explicitly passing it after an equals
+sign.</p>
+</li>
+</ul>
+<h2 id="short-named-parameters-and-aliases"><a class="header" href="#short-named-parameters-and-aliases">Short Named Parameters and Aliases</a></h2>
+<p>If you are familiar with command line usage, you will notice that I haven't yet
+touched on the topic of short versions of named parameters. It's quite simple:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val verbose = parser.param[Boolean](
+    &quot;--verbose&quot;,
+    default = false,
+    aliases = Seq(&quot;-v&quot;, &quot;--talkative&quot;),
+    flag = true,
+    help = &quot;use verbose output&quot;
+  )
+  parser.parseOrExit(args)
+  println(verbose.value)
+</code></pre>
+<p>And here goes:</p>
+<pre><code>$ app -v
+true
+
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+  -v, --verbose                 use verbose output
+</code></pre>
+<p>Note that the new aliases are also reflected in the help text.</p>
+<h2 id="reading-from-the-environment"><a class="header" href="#reading-from-the-environment">Reading from the Environment</a></h2>
+<p>In some cases it can be useful to fall back to reading a command line from an
+environment variable.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val creds = parser.param[os.Path](
+    &quot;--credentials-file&quot;,
+    default = os.root / &quot;etc&quot; / &quot;creds&quot;,
+    env = &quot;APP_CREDENTIALS_FILE&quot;,
+    help = &quot;the file containing service credentials&quot;
+  )
+  parser.parseOrExit(args)
+  println(creds.value)
+</code></pre>
+<p>Run it:</p>
+<pre><code>$ APP_CREDENTIALS_FILE=/etc/foo app
+/etc/foo
+
+$ APP_CREDENTIALS_FILE=/etc/foo2 app --credentials-file=/etc/foo1
+/etc/foo1
+
+$ app
+/etc/creds
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>Required and optional parameter declarations can specify an <code>env</code>, which will
+name an environment variable to use if the argument cannot be found on the
+command line.</p>
+</li>
+<li>
+<p>The order of precedence is:</p>
+<ol>
+<li>the argument on the command line</li>
+<li>the environment variable</li>
+<li>the default value</li>
+</ol>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../ll/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="../ll/cookbook.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../ll/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="../ll/cookbook.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="../elasticlunr.min.js"></script>
+        <script src="../mark.min.js"></script>
+        <script src="../searcher.js"></script>
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="../theme/pagetoc.js"></script>
+
+
+    </body>
+</html>

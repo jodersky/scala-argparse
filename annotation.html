@@ -1,0 +1,494 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Annotation Interface - scala-argparse 0.20.0</title>
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/pagetoc.css">
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="annotation.html" class="active"><strong aria-hidden="true">2.</strong> Annotation Interface</a></li><li class="chapter-item expanded "><a href="ll/index.html"><strong aria-hidden="true">3.</strong> Argparse Interface</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="ll/tutorial.html"><strong aria-hidden="true">3.1.</strong> Tutorial</a></li><li class="chapter-item expanded "><a href="ll/cookbook.html"><strong aria-hidden="true">3.2.</strong> Cookbook</a></li></ol></li><li class="chapter-item expanded "><a href="usecases.html"><strong aria-hidden="true">4.</strong> Usecases</a></li><li class="chapter-item expanded "><a href="utils.html"><strong aria-hidden="true">5.</strong> Utilities</a></li><li class="chapter-item expanded "><a href="manpage.html"><strong aria-hidden="true">6.</strong> Man Page Template</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="changelog.html">Changelog</a></li></ol>
+                <a href="javadoc/index.html">API Docs</a>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">scala-argparse 0.20.0</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse/edit/master/book/src/annotation.md" title="Suggest an edit" aria-label="Suggest an edit">
+                            <i id="git-edit-button" class="fa fa-edit"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main><div class="sidetoc"><nav class="pagetoc"></nav></div>
+                        <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<p>Annotate the desired main function with <code>command()</code>. Scala-argparse will then
+generate a standard main method and command line parser with bells-and-whistles
+such as help messages and bash completion.<sup class="footnote-reference"><a href="#1">1</a></sup></p>
+<div class="footnote-definition" id="1"><sup class="footnote-definition-label">1</sup>
+<p>Note that until Scala 3 supports macro annotations (probably in version
+3.3.0), you will need to write a tiny boilerplate snippet as shown in the
+introductory example.</p>
+</div>
+<p>The generated code uses a <a href="./ll/index.html">lower-level interface</a>, which you
+can also use directly if you would like more flexibility than what the
+auto-generated CLI provides.</p>
+<h3 id="parameter-mapping"><a class="header" href="#parameter-mapping">Parameter Mapping</a></h3>
+<p>Scala method parameters will be mapped to command line parameters in the
+following way:</p>
+<ul>
+<li>
+<p>Parameters with defaults will become <code>--named-parameters=</code> on the command
+line. Furthermore, boolean parameters become <code>--flags</code>, meaning that they
+don't need to take a 'true' argument on the command line.</p>
+</li>
+<li>
+<p>Parameters without defaults become positional parameters.</p>
+</li>
+<li>
+<p>Parameters of type <code>Seq[?]</code> become repeatable parameters on the command line.</p>
+</li>
+</ul>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+def main(
+  namedParameter: String = &quot;a&quot;,
+  flag: Boolean = false,
+  repeatable: Seq[String] = Seq(),
+  positional1: Int,
+  positional2: Int,
+  remaining: Seq[String]
+) =
+  println(s&quot;namedParameter=$namedParameter&quot;)
+  println(s&quot;flag=$flag&quot;)
+  println(s&quot;repeatable=$repeatable&quot;)
+  println(s&quot;positional1=$positional1&quot;)
+  println(s&quot;positional2=$positional2&quot;)
+  println(s&quot;remaining=$remaining&quot;)
+
+// boilerplate until Scala 3 supports macro annotations
+def main(args: Array[String]) = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app --named-parameter b --repeatable a 1 2 3 --flag 4 --repeatable b 5
+namedParameter=b
+flag=true
+repeatable=List(a, b)
+positional1=1
+positional2=2
+remaining=List(3, 4, 5)
+
+$ app --help
+Usage: [OPTIONS] POSITIONAL1 POSITIONAL2 REMAINING...
+Options:
+      --bash-completion string  generate bash completion for this command
+      --flag                    
+      --help                    show this message and exit
+      --named-parameter string  
+      --repeatable string       
+</code></pre>
+<h3 id="parameter-types"><a class="header" href="#parameter-types">Parameter Types</a></h3>
+<p>Support for reading arguments from the command line as Scala types is provided
+for many types out-of-the-box. Some examples:</p>
+<ul>
+<li>numeric types</li>
+<li><code>java.io</code>, <code>java.nio</code> and <code>os.Path</code> file types</li>
+<li>various <code>java.time</code> date types</li>
+<li><code>key=value</code> pairs of other supported types</li>
+</ul>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+def main(
+  num: Int = 0,
+  num2: Double = 0,
+  path: os.Path = os.pwd, // relative paths on the command line will be resolved to absolute paths w.r.t. to pwd
+  keyValue: (String, Int) = (&quot;a&quot; -&gt; 2),
+  keyValues: Seq[(String, Int)] = Seq()
+) =
+  println(s&quot;num=$num&quot;)
+  println(s&quot;num2=$num2&quot;)
+  println(s&quot;path=$path&quot;)
+  println(s&quot;keyValue=$keyValue&quot;)
+  println(s&quot;keyValues=$keyValues&quot;)
+
+// boilerplate until Scala 3 supports macro annotations
+def main(args: Array[String]) = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app --num 42 --num2 1.1 --path /a/b/c --key-value hello=2 --key-values a=1 --key-values b=2
+num=42
+num2=1.1
+path=/a/b/c
+keyValue=(hello,2)
+keyValues=List((a,1), (b,2))
+
+$ app --num 1.1
+error processing argument --num: '1.1' is not an integral number
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --key-value string=int    
+      --key-values string=int   
+      --num int                 
+      --num2 float              
+      --path path               
+</code></pre>
+<p>The mechanism by which command line arguments are converted to Scala types is
+highly customizable and <a href="./ll/cookbook.html#adding-support-for-a-new-type-of-parameter">new types can easily be
+added</a>.</p>
+<h3 id="parameter-overrides"><a class="header" href="#parameter-overrides">Parameter Overrides</a></h3>
+<p>The generated command line parameters can further be customized by annotating
+Scala parameters with certain annotations:</p>
+<ul>
+<li>
+<p><a href="javadoc/api/argparse/alias.html"><code>@alias()</code></a>: set other names by which the
+parameter will be available. This is particularly useful for defining
+single-letter short names for frequently used parameters.</p>
+</li>
+<li>
+<p><a href="javadoc/api/argparse/env.html"><code>@env()</code></a>: set the name of an environment
+variable which will be used to lookup the parameter if it is not found on the
+command line.</p>
+</li>
+<li>
+<p><a href="javadoc/api/argparse/name.html"><code>@name()</code></a>: override the name derived from
+the parameter name. This can be used as an escape hatch for changing
+positional to named arguments and vice versa.</p>
+</li>
+</ul>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+def main(
+  @ap.alias(&quot;-s&quot;, &quot;--address&quot;) server: String = &quot;a&quot;,
+  @ap.env(&quot;APPLICATION_CREDENTIALS&quot;) creds: os.Path = os.pwd / &quot;creds&quot;,
+  @ap.name(&quot;--named&quot;) positional: Int
+) =
+  println(s&quot;server=$server&quot;)
+  println(s&quot;creds=$creds&quot;)
+  println(s&quot;positional=$positional&quot;)
+
+// boilerplate until Scala 3 supports macro annotations
+def main(args: Array[String]) = argparse.main(this, args)
+</code></pre>
+<pre><code>$ APPLICATION_CREDENTIALS=/secret app -s localhost --named 42
+server=localhost
+creds=/secret
+positional=42
+</code></pre>
+<h3 id="output-mapping"><a class="header" href="#output-mapping">Output Mapping</a></h3>
+<p>The returned values of annotated functions are automatically converted to
+strings and printed to standard out. There are builtin conversions for some
+common return values:</p>
+<ul>
+<li>iterables of products (aka case classes) are printed in a tabular format</li>
+<li>other iterables are printed one per line</li>
+<li>byte arrays and other sources of binary data are streamed</li>
+<li>futures are awaited</li>
+</ul>
+<p>In other cases, the <code>toString</code> method of the returned value is simply called.</p>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+case class Item(
+  name: String,
+  value: Double,
+  comment: String
+)
+
+@ap.command()
+def main() =
+  List(
+    Item(&quot;item1&quot;, 2, &quot;&quot;),
+    Item(&quot;item2&quot;, 0.213, &quot;notice the numeric alignment&quot;),
+    Item(&quot;item3&quot;, -100.2, &quot;&quot;),
+    Item(&quot;item4&quot;, 10.2, &quot;a comment&quot;),
+    Item(&quot;another_item&quot;, 12.54, &quot;a comment&quot;),
+    Item(&quot;&quot;, 12.54, &quot;item has no name&quot;),
+    Item(&quot;etc&quot;, 0, &quot;...&quot;)
+  )
+
+// boilerplate necessary until macro annotations become available in Scala 3
+def main(args: Array[String]): Unit = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app
+NAME         VALUE    COMMENT                     
+item1           2.0                               
+item2           0.213 notice the numeric alignment
+item3        -100.2                               
+item4          10.2   a comment                   
+another_item   12.54  a comment                   
+               12.54  item has no name            
+etc             0.0   ...                         
+</code></pre>
+<p>You can also define your own conversions by defining instances of the
+<code>argparse.core.OutputApi#Printer</code> typeclass.</p>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<p>In case a command throws, only the exception's message is printed. The stack trace
+is not shown unless a <code>DEBUG</code> environment variable is defined.</p>
+<p>You can change this behavior by overriding the <code>handleError</code> function of the
+<code>OutputApi</code> trait.</p>
+<h3 id="nested-commands"><a class="header" href="#nested-commands">Nested Commands</a></h3>
+<p>As an application grows, it is common to organise different &quot;actions&quot; or
+&quot;flavours&quot; of the application under nested commands, each taking their own list
+of parameters. See the <code>git</code> or <code>docker</code> tools for some such examples.</p>
+<p>In scala-argparse, nested commands use the same mechanism as single, top-level
+commands, with one small twist: instead of annotating a <em>method</em> with
+<code>command()</code>, you annotate a <em>class definition</em> (or a method that returns an
+instance of a class containing other commands). This can be done recursively,
+and classes can declare parameters which can be referenced by child commands.</p>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+class app():
+
+  @ap.command()
+  def version() = println(s&quot;v1000&quot;)
+
+  @ap.command()
+  class op(factor: Double = 1.0):
+
+    @ap.command()
+    def showFactor() = println(s&quot;the factor is $factor&quot;)
+
+    @ap.command()
+    def multiply(operand: Double) = println(s&quot;result is: ${factor * operand}&quot;)
+
+// this is boilerplate for now; it will become obsolete once macro-annotations
+// are released
+def main(args: Array[String]): Unit = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app
+missing argument: command
+run with '--help' for more information
+
+$ app version
+v1000
+
+$ app op show-factor
+the factor is 1.0
+
+$ app op multiply 2
+result is: 2.0
+
+$ app op --factor 3 multiply 2
+result is: 6.0
+</code></pre>
+<h3 id="bells-and-whistles"><a class="header" href="#bells-and-whistles">Bells and Whistles</a></h3>
+<p>Any program that uses scala-argparse automatically gets:</p>
+<ul>
+<li>
+<p>A concise help dialogue (that is formatted according to your terminal's
+current dimensions) derived from the main function's scaladoc comment.</p>
+<p>You can view the help dialogue by passing the <code>--help</code> flag.</p>
+</li>
+<li>
+<p>A bash-completion script, which will allow users to get tab-completion in
+their terminal.</p>
+<p>The bash completion script can be generated by passing a
+<code>--bash-completion=&lt;program name&gt;</code> argument.</p>
+</li>
+<li>
+<p>Bash-awareness for interactive bash completion.</p>
+</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li>
+<p>Now that you know the high-level API, check out the <a href="./ll/index.html">lower-level
+API</a>, which underpins the former and can be helpful for
+understanding customizations.</p>
+</li>
+<li>
+<p>Read the API docs. Start with the <a href="javadoc/api/argparse/default$.html"><code>argparse.default</code>
+bundle</a>.</p>
+</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+
+                            <a rel="next" href="ll/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+
+                    <a rel="next" href="ll/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/pagetoc.js"></script>
+
+
+    </body>
+</html>

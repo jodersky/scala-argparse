@@ -1,0 +1,1601 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>scala-argparse 0.20.0</title>
+        <meta name="robots" content="noindex" />
+
+
+        <!-- Custom HTML head -->
+        
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="favicon.svg">
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link rel="stylesheet" href="fonts/fonts.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="theme/pagetoc.css">
+
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded "><a href="index.html"><strong aria-hidden="true">1.</strong> Introduction</a></li><li class="chapter-item expanded "><a href="annotation.html"><strong aria-hidden="true">2.</strong> Annotation Interface</a></li><li class="chapter-item expanded "><a href="ll/index.html"><strong aria-hidden="true">3.</strong> Argparse Interface</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="ll/tutorial.html"><strong aria-hidden="true">3.1.</strong> Tutorial</a></li><li class="chapter-item expanded "><a href="ll/cookbook.html"><strong aria-hidden="true">3.2.</strong> Cookbook</a></li></ol></li><li class="chapter-item expanded "><a href="usecases.html"><strong aria-hidden="true">4.</strong> Usecases</a></li><li class="chapter-item expanded "><a href="utils.html"><strong aria-hidden="true">5.</strong> Utilities</a></li><li class="chapter-item expanded "><a href="manpage.html"><strong aria-hidden="true">6.</strong> Man Page Template</a></li><li class="spacer"></li><li class="chapter-item expanded affix "><a href="changelog.html">Changelog</a></li></ol>
+                <a href="javadoc/index.html">API Docs</a>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">scala-argparse 0.20.0</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        <a href="https://github.com/jodersky/scala-argparse" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main><div class="sidetoc"><nav class="pagetoc"></nav></div>
+                        <p>Command line parsing for Scala applications.</p>
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<p>In Scala:</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+/** This is an example app. It shows how a command line interface can be
+  * generated from various kinds of method parameters.
+  *
+  * @param server a sample named parameter
+  * @param secure this is a flag
+  * @param path a positional parameter
+  */
+@ap.command()
+def main(
+  server: String = &quot;localhost&quot;,
+  secure: Boolean = false,
+  path: os.SubPath
+): String =
+  val scheme = if secure then &quot;https&quot; else &quot;http&quot;
+  s&quot;$scheme://$server/$path&quot;
+
+// boilerplate necessary until macro annotations become available in Scala 3
+def main(args: Array[String]): Unit = argparse.main(this, args)
+</code></pre>
+<p>In a terminal:</p>
+<pre><code>$ app --server example.org --secure a/b/c
+https://example.org/a/b/c
+
+$ app
+missing argument: path
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS] PATH
+
+This is an example app. It shows how a command line interface can be generated from various kinds of method parameters.
+
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --secure                  this is a flag
+      --server string           a sample named parameter
+</code></pre>
+<h2 id="highlights"><a class="header" href="#highlights">Highlights</a></h2>
+<ul>
+<li>
+<p>Simple interfaces</p>
+<ul>
+<li>
+<p>High-level, annotation-based, CLI generator.</p>
+</li>
+<li>
+<p>Lower-level interface inspired by the
+<a href="https://docs.python.org/3/library/argparse.html">argparse</a> package from Python.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Bash completion</p>
+<ul>
+<li>
+<p>Standalone bash completion for a super snappy user experience, even on the
+JVM.</p>
+</li>
+<li>
+<p>Interactive bash completion for the most custom needs.</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Works with Scala 3.2, on the JVM and Native (the lower-level interface also
+works with Scala 2.13)</p>
+</li>
+<li>
+<p>Support for subcommands (aka &quot;verbs&quot;)</p>
+</li>
+</ul>
+<h2 id="binaries"><a class="header" href="#binaries">Binaries</a></h2>
+<p>This library is published for Scala 3.2 and 2.13, for the JVM and Native. It is
+available on maven central under the coordinates:</p>
+<ul>
+<li>
+<p>mill: <code>ivy&quot;io.crashbox::argparse::0.20.0&quot;</code></p>
+</li>
+<li>
+<p>sbt: <code>&quot;io.crashbox&quot; %%% &quot;argparse&quot; % &quot;0.20.0&quot;</code></p>
+</li>
+</ul>
+<h2 id="getting-help"><a class="header" href="#getting-help">Getting Help</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Channel</th><th>Links</th></tr></thead><tbody>
+<tr><td>Forum</td><td><a href="https://github.com/jodersky/scala-argparse/discussions">GitHub Discussions</a></td></tr>
+<tr><td>Chat</td><td><a href="https://discord.gg/usj9DC8FDN"><img src="https://img.shields.io/badge/chat-discord-blue" alt="discord" /></a> <a href="https://crashbox.zulipchat.com/#narrow/stream/330744-argparse"><img src="https://img.shields.io/badge/zulip-join_chat-brightgreen.svg" alt="project chat" /></a></td></tr>
+<tr><td>Issues</td><td><a href="https://github.com/jodersky/scala-argparse/issues">GitHub</a></td></tr>
+</tbody></table>
+</div><div style="break-before: page; page-break-before: always;"></div><h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<p>Annotate the desired main function with <code>command()</code>. Scala-argparse will then
+generate a standard main method and command line parser with bells-and-whistles
+such as help messages and bash completion.<sup class="footnote-reference"><a href="#1">1</a></sup></p>
+<div class="footnote-definition" id="1"><sup class="footnote-definition-label">1</sup>
+<p>Note that until Scala 3 supports macro annotations (probably in version
+3.3.0), you will need to write a tiny boilerplate snippet as shown in the
+introductory example.</p>
+</div>
+<p>The generated code uses a <a href="./ll/index.html">lower-level interface</a>, which you
+can also use directly if you would like more flexibility than what the
+auto-generated CLI provides.</p>
+<h3 id="parameter-mapping"><a class="header" href="#parameter-mapping">Parameter Mapping</a></h3>
+<p>Scala method parameters will be mapped to command line parameters in the
+following way:</p>
+<ul>
+<li>
+<p>Parameters with defaults will become <code>--named-parameters=</code> on the command
+line. Furthermore, boolean parameters become <code>--flags</code>, meaning that they
+don't need to take a 'true' argument on the command line.</p>
+</li>
+<li>
+<p>Parameters without defaults become positional parameters.</p>
+</li>
+<li>
+<p>Parameters of type <code>Seq[?]</code> become repeatable parameters on the command line.</p>
+</li>
+</ul>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+def main(
+  namedParameter: String = &quot;a&quot;,
+  flag: Boolean = false,
+  repeatable: Seq[String] = Seq(),
+  positional1: Int,
+  positional2: Int,
+  remaining: Seq[String]
+) =
+  println(s&quot;namedParameter=$namedParameter&quot;)
+  println(s&quot;flag=$flag&quot;)
+  println(s&quot;repeatable=$repeatable&quot;)
+  println(s&quot;positional1=$positional1&quot;)
+  println(s&quot;positional2=$positional2&quot;)
+  println(s&quot;remaining=$remaining&quot;)
+
+// boilerplate until Scala 3 supports macro annotations
+def main(args: Array[String]) = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app --named-parameter b --repeatable a 1 2 3 --flag 4 --repeatable b 5
+namedParameter=b
+flag=true
+repeatable=List(a, b)
+positional1=1
+positional2=2
+remaining=List(3, 4, 5)
+
+$ app --help
+Usage: [OPTIONS] POSITIONAL1 POSITIONAL2 REMAINING...
+Options:
+      --bash-completion string  generate bash completion for this command
+      --flag                    
+      --help                    show this message and exit
+      --named-parameter string  
+      --repeatable string       
+</code></pre>
+<h3 id="parameter-types"><a class="header" href="#parameter-types">Parameter Types</a></h3>
+<p>Support for reading arguments from the command line as Scala types is provided
+for many types out-of-the-box. Some examples:</p>
+<ul>
+<li>numeric types</li>
+<li><code>java.io</code>, <code>java.nio</code> and <code>os.Path</code> file types</li>
+<li>various <code>java.time</code> date types</li>
+<li><code>key=value</code> pairs of other supported types</li>
+</ul>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+def main(
+  num: Int = 0,
+  num2: Double = 0,
+  path: os.Path = os.pwd, // relative paths on the command line will be resolved to absolute paths w.r.t. to pwd
+  keyValue: (String, Int) = (&quot;a&quot; -&gt; 2),
+  keyValues: Seq[(String, Int)] = Seq()
+) =
+  println(s&quot;num=$num&quot;)
+  println(s&quot;num2=$num2&quot;)
+  println(s&quot;path=$path&quot;)
+  println(s&quot;keyValue=$keyValue&quot;)
+  println(s&quot;keyValues=$keyValues&quot;)
+
+// boilerplate until Scala 3 supports macro annotations
+def main(args: Array[String]) = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app --num 42 --num2 1.1 --path /a/b/c --key-value hello=2 --key-values a=1 --key-values b=2
+num=42
+num2=1.1
+path=/a/b/c
+keyValue=(hello,2)
+keyValues=List((a,1), (b,2))
+
+$ app --num 1.1
+error processing argument --num: '1.1' is not an integral number
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+      --key-value string=int    
+      --key-values string=int   
+      --num int                 
+      --num2 float              
+      --path path               
+</code></pre>
+<p>The mechanism by which command line arguments are converted to Scala types is
+highly customizable and <a href="./ll/cookbook.html#adding-support-for-a-new-type-of-parameter">new types can easily be
+added</a>.</p>
+<h3 id="parameter-overrides"><a class="header" href="#parameter-overrides">Parameter Overrides</a></h3>
+<p>The generated command line parameters can further be customized by annotating
+Scala parameters with certain annotations:</p>
+<ul>
+<li>
+<p><a href="javadoc/api/argparse/alias.html"><code>@alias()</code></a>: set other names by which the
+parameter will be available. This is particularly useful for defining
+single-letter short names for frequently used parameters.</p>
+</li>
+<li>
+<p><a href="javadoc/api/argparse/env.html"><code>@env()</code></a>: set the name of an environment
+variable which will be used to lookup the parameter if it is not found on the
+command line.</p>
+</li>
+<li>
+<p><a href="javadoc/api/argparse/name.html"><code>@name()</code></a>: override the name derived from
+the parameter name. This can be used as an escape hatch for changing
+positional to named arguments and vice versa.</p>
+</li>
+</ul>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+def main(
+  @ap.alias(&quot;-s&quot;, &quot;--address&quot;) server: String = &quot;a&quot;,
+  @ap.env(&quot;APPLICATION_CREDENTIALS&quot;) creds: os.Path = os.pwd / &quot;creds&quot;,
+  @ap.name(&quot;--named&quot;) positional: Int
+) =
+  println(s&quot;server=$server&quot;)
+  println(s&quot;creds=$creds&quot;)
+  println(s&quot;positional=$positional&quot;)
+
+// boilerplate until Scala 3 supports macro annotations
+def main(args: Array[String]) = argparse.main(this, args)
+</code></pre>
+<pre><code>$ APPLICATION_CREDENTIALS=/secret app -s localhost --named 42
+server=localhost
+creds=/secret
+positional=42
+</code></pre>
+<h3 id="output-mapping"><a class="header" href="#output-mapping">Output Mapping</a></h3>
+<p>The returned values of annotated functions are automatically converted to
+strings and printed to standard out. There are builtin conversions for some
+common return values:</p>
+<ul>
+<li>iterables of products (aka case classes) are printed in a tabular format</li>
+<li>other iterables are printed one per line</li>
+<li>byte arrays and other sources of binary data are streamed</li>
+<li>futures are awaited</li>
+</ul>
+<p>In other cases, the <code>toString</code> method of the returned value is simply called.</p>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+case class Item(
+  name: String,
+  value: Double,
+  comment: String
+)
+
+@ap.command()
+def main() =
+  List(
+    Item(&quot;item1&quot;, 2, &quot;&quot;),
+    Item(&quot;item2&quot;, 0.213, &quot;notice the numeric alignment&quot;),
+    Item(&quot;item3&quot;, -100.2, &quot;&quot;),
+    Item(&quot;item4&quot;, 10.2, &quot;a comment&quot;),
+    Item(&quot;another_item&quot;, 12.54, &quot;a comment&quot;),
+    Item(&quot;&quot;, 12.54, &quot;item has no name&quot;),
+    Item(&quot;etc&quot;, 0, &quot;...&quot;)
+  )
+
+// boilerplate necessary until macro annotations become available in Scala 3
+def main(args: Array[String]): Unit = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app
+NAME         VALUE    COMMENT                     
+item1           2.0                               
+item2           0.213 notice the numeric alignment
+item3        -100.2                               
+item4          10.2   a comment                   
+another_item   12.54  a comment                   
+               12.54  item has no name            
+etc             0.0   ...                         
+</code></pre>
+<p>You can also define your own conversions by defining instances of the
+<code>argparse.core.OutputApi#Printer</code> typeclass.</p>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<p>In case a command throws, only the exception's message is printed. The stack trace
+is not shown unless a <code>DEBUG</code> environment variable is defined.</p>
+<p>You can change this behavior by overriding the <code>handleError</code> function of the
+<code>OutputApi</code> trait.</p>
+<h3 id="nested-commands"><a class="header" href="#nested-commands">Nested Commands</a></h3>
+<p>As an application grows, it is common to organise different &quot;actions&quot; or
+&quot;flavours&quot; of the application under nested commands, each taking their own list
+of parameters. See the <code>git</code> or <code>docker</code> tools for some such examples.</p>
+<p>In scala-argparse, nested commands use the same mechanism as single, top-level
+commands, with one small twist: instead of annotating a <em>method</em> with
+<code>command()</code>, you annotate a <em>class definition</em> (or a method that returns an
+instance of a class containing other commands). This can be done recursively,
+and classes can declare parameters which can be referenced by child commands.</p>
+<p>E.g.</p>
+<pre><code class="language-scala">import argparse.default as ap
+
+@ap.command()
+class app():
+
+  @ap.command()
+  def version() = println(s&quot;v1000&quot;)
+
+  @ap.command()
+  class op(factor: Double = 1.0):
+
+    @ap.command()
+    def showFactor() = println(s&quot;the factor is $factor&quot;)
+
+    @ap.command()
+    def multiply(operand: Double) = println(s&quot;result is: ${factor * operand}&quot;)
+
+// this is boilerplate for now; it will become obsolete once macro-annotations
+// are released
+def main(args: Array[String]): Unit = argparse.main(this, args)
+</code></pre>
+<pre><code>$ app
+missing argument: command
+run with '--help' for more information
+
+$ app version
+v1000
+
+$ app op show-factor
+the factor is 1.0
+
+$ app op multiply 2
+result is: 2.0
+
+$ app op --factor 3 multiply 2
+result is: 6.0
+</code></pre>
+<h3 id="bells-and-whistles"><a class="header" href="#bells-and-whistles">Bells and Whistles</a></h3>
+<p>Any program that uses scala-argparse automatically gets:</p>
+<ul>
+<li>
+<p>A concise help dialogue (that is formatted according to your terminal's
+current dimensions) derived from the main function's scaladoc comment.</p>
+<p>You can view the help dialogue by passing the <code>--help</code> flag.</p>
+</li>
+<li>
+<p>A bash-completion script, which will allow users to get tab-completion in
+their terminal.</p>
+<p>The bash completion script can be generated by passing a
+<code>--bash-completion=&lt;program name&gt;</code> argument.</p>
+</li>
+<li>
+<p>Bash-awareness for interactive bash completion.</p>
+</li>
+</ul>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li>
+<p>Now that you know the high-level API, check out the <a href="./ll/index.html">lower-level
+API</a>, which underpins the former and can be helpful for
+understanding customizations.</p>
+</li>
+<li>
+<p>Read the API docs. Start with the <a href="javadoc/api/argparse/default$.html"><code>argparse.default</code>
+bundle</a>.</p>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><p>This is the documentation for the lower-level interface. It is used by the
+annotation-based <a href="ll/../annotation.html">higher-level interface</a>, but offers more
+flexibility.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
+<p><em>Acknowledgement: this tutorial is inspired by and largely copied from the
+<a href="https://docs.python.org/3/howto/argparse.html">Python Argparse Tutorial by Tshepang
+Lekhonkhobe</a>, made available
+under the Zero Clause BSD License.</em></p>
+<p>This tutorial is intended to be an introduction to the lower-level interface of
+argparse. This interface deals with building command line parsers, and is
+generated by the higher-level annotation-based interface. As such, it is helpful
+to understand these concepts, even if you only use the higher-level interface.</p>
+<h2 id="concepts"><a class="header" href="#concepts">Concepts</a></h2>
+<p>Let's show the sort of functionality that we are going to explore in this
+introductory tutorial by making use of the <code>ls</code> command:</p>
+<pre><code>$ ls
+argparse  build.sc  ci  examples  ini  LICENSE.md  mill  out  README.md
+$ ls argparse
+src  src-2  src-3  test
+$ ls -l
+total 48
+drwxr-xr-x 9 jodersky jodersky  4096 Jul  3 10:12 argparse
+-rw-r--r-- 1 jodersky jodersky  4836 Jul  3 15:30 build.sc
+drwxr-xr-x 2 jodersky jodersky  4096 Jan 31 18:05 ci
+drwxr-xr-x 5 jodersky jodersky  4096 Jul  3 15:07 examples
+drwxr-xr-x 4 jodersky jodersky  4096 May 20 19:58 ini
+-rw-r--r-- 1 jodersky jodersky  1473 Apr 30  2020 LICENSE.md
+-rwxr-xr-x 1 jodersky jodersky  1646 Mar  7  2021 mill
+drwxr-xr-x 5 jodersky jodersky  4096 Jul  3 15:54 out
+-rw-r--r-- 1 jodersky jodersky 10090 Jul  3 17:10 README.md
+$ ls --help
+Usage: ls [OPTION]... [FILE]...
+List information about the FILEs (the current directory by default).
+Sort entries alphabetically if none of -cftuvSUX nor --sort is specified.
+...
+</code></pre>
+<p>A few concepts we can learn from the four commands:</p>
+<ul>
+<li>
+<p>The <strong>ls</strong> command is useful when run without any arguments at all. It
+defaults to displaying the contents of the current directory.</p>
+</li>
+<li>
+<p>If we want beyond what it provides by default, we tell it a bit more. In this
+case, we want it to display a different directory, <code>argparse</code>. What we did is
+specify what is known as a <em>positional argument</em>. It's called so because the
+program should know what to do with the value, solely based on where it
+appears on the command line. This concept is more relevant to a command like
+<strong>cp</strong>, whose most basic usage is <code>cp SRC DEST</code>. The first position is what
+you want copied, and the second position is where you want it copied to.</p>
+</li>
+<li>
+<p>Now, say we want to change behaviour of the program. In our example, we
+display more info for each file instead of just showing the file names. The
+<code>-l</code> in that case is known as a <em>named argument</em>.</p>
+</li>
+<li>
+<p>That's a snippet of the help text. It's very useful in that you can come
+across a program you have never used before, and can figure out how it works
+simply by reading its help text.</p>
+</li>
+</ul>
+<p>These concepts are core to <code>argparse</code>:</p>
+<p><strong>parameter</strong>
+: a named variable, a placeholder, in a command line definition</p>
+<p><strong>argument</strong>
+: the value assigned to a parameter</p>
+<p><strong><em>named</em> argument</strong>
+: an argument that starts with <code>-</code>. The characters following determine the name
+of the parameter that the argument is assigned to. The actual value assigned to
+the parameter is given after an '=' or a space. For instance <code>--foo=bar</code> assigns
+<code>bar</code> to <code>foo</code>. Named arguments may appear in any order on a command line.</p>
+<p><strong><em>positional</em> argument</strong>
+: an argument that is not named. Positional arguments are assigned to positional
+parameters according to their respective order of occurence.</p>
+<h2 id="basics"><a class="header" href="#basics">Basics</a></h2>
+<p>Let's start with an example that does almost nothing:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  parser.parseOrExit(args)
+</code></pre>
+<p>The following is a result of running the code:</p>
+<pre><code>$ app
+
+
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+
+$ app --verbose
+unknown argument: --verbose
+run with '--help' for more information
+
+$ app foo
+unknown argument: foo
+run with '--help' for more information
+</code></pre>
+<p>Here is what is happening:</p>
+<ul>
+<li>
+<p>Running the program without any arguments results in nothing displayed to
+stdout. Not so useful.</p>
+</li>
+<li>
+<p>The second one starts to display the usefulness of the <code>argparse</code> library. We
+have done almost nothing, but already we get a help message.</p>
+</li>
+<li>
+<p>The <code>--help</code> option is the only option we get for free (i.e. no need to
+specify it). Specifying anything else results in an error. But even then, we
+do get a useful usage message, also for free.</p>
+</li>
+</ul>
+<h2 id="required-parameters"><a class="header" href="#required-parameters">Required Parameters</a></h2>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val echo = parser.requiredParam[String](&quot;echo&quot;)
+  parser.parseOrExit(args)
+  println(echo.value)
+</code></pre>
+<p>And running the code:</p>
+<pre><code>$ app
+missing argument: echo
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS] ECHO
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+
+$ app foo
+foo
+</code></pre>
+<p>Here is what's happening:</p>
+<ul>
+<li>
+<p>We've added the <code>requiredParam()</code> method, which is what we use to specify
+which command-line arguments the program needs. In this case, I've named it
+<code>echo</code> so that it's in line with its function.</p>
+<p>The result of this method is a holder to some future value of an argument,
+which can be accessed by calling the <code>.value</code> method.</p>
+</li>
+<li>
+<p>Calling our program now <strong>requires</strong> us to specify an argument.</p>
+</li>
+<li>
+<p>We can specify how an argument should be read from the command line by
+specifying the type of the parameter, <code>String</code> in this case.</p>
+</li>
+<li>
+<p>The <code>parser.parseOrExit()</code> method is what actually goes through the command
+line arguments and sets the argument holders' values.</p>
+<p>After calling this method, the arguments can be accessed via the <code>.value</code>
+method of the argument holders.</p>
+</li>
+</ul>
+<p>Note however that, although the help display looks nice and all, it currently is
+not as helpful as it can be. For example we see that we got <code>echo</code> as a
+positional argument, but we don't know what it does, other than by guessing or
+by reading the source code. So, let's make it a bit more useful:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val echo: argparse.Argument[String] = parser.requiredParam[String](
+    &quot;echo&quot;,
+    help = &quot;echo the string you use here&quot;
+  )
+  parser.parseOrExit(args)
+  print(echo.value)
+</code></pre>
+<p>And we get:</p>
+<pre><code>$ app --help
+Usage: [OPTIONS] ECHO
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+</code></pre>
+<p>Now, how about doing something even more useful:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val square = parser.requiredParam[Int](
+    &quot;square&quot;,
+    help = &quot;display a square of a given number&quot;
+  )
+  parser.parseOrExit(args)
+  print(square.value * square.value)
+
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app 4
+16
+
+$ app four
+error processing argument square: 'four' is not an integral number
+run with '--help' for more information
+</code></pre>
+<p>That went well. The program now even helpfully quits on bad input.</p>
+<h2 id="optional-parameters"><a class="header" href="#optional-parameters">Optional Parameters</a></h2>
+<p>So far the parameters that we have specified were required. Let's look at how we
+can make an argument optional.</p>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val answer = parser.param[Int](
+    &quot;answer&quot;,
+    default = 42,
+    help = &quot;display the answer to the universe&quot;
+  )
+  parser.parseOrExit(args)
+  println(answer.value)
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app
+42
+
+$ app 1000
+1000
+</code></pre>
+<p>Here is what's happening:</p>
+<ul>
+<li>
+<p>The parameter is made <strong>optional</strong> by declaring it with the <code>param()</code> method
+instead of the <code>requiredParam()</code> method.</p>
+</li>
+<li>
+<p>This method requires a default value.</p>
+</li>
+<li>
+<p>The default value will be used if the argument is not encountered on the
+command-line.</p>
+</li>
+</ul>
+<h2 id="repeated-parameters"><a class="header" href="#repeated-parameters">Repeated Parameters</a></h2>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val files = parser.repeatedParam[os.FilePath](
+    &quot;files&quot;,
+    help = &quot;remove these files&quot;
+  )
+  parser.parseOrExit(args)
+  for (file &lt;- files.value) {
+    println(s&quot;if this were a real program, we would delete $file&quot;)
+  }
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app
+
+
+$ app file1
+if this were a real program, we would delete file1
+
+$ app file1 file2 file3
+if this were a real program, we would delete file1
+if this were a real program, we would delete file2
+if this were a real program, we would delete file3
+</code></pre>
+<p>Here is what's happening:</p>
+<ul>
+<li>
+<p>The parameter is made <strong>repeated</strong> by declaring it with the <code>repeatedParam()</code>.</p>
+</li>
+<li>
+<p>Repeated parameters accumulate all ocurences in the argument holder.</p>
+<p>Thus, here, <code>value</code> will give us back a <code>Seq[os.FilePath]</code> rather than a single
+<code>os.FilePath</code>.</p>
+</li>
+</ul>
+<h2 id="named-parameters-and-positional-parameters"><a class="header" href="#named-parameters-and-positional-parameters">Named Parameters and Positional Parameters</a></h2>
+<p>So far you may have noticed that all our examples have used <em>positional</em>
+parameters. Recall from the initial <code>ls</code> example, that a positional parameter is
+one which is set solely based on the position of its argument. When parameter
+lists get very long or change over time, it can become very difficult to keep
+matching argument lists coherent. Therefore, most command line tools will mostly
+use <em>named</em> parameters.</p>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val verbosity = parser.param[Int](
+    &quot;--verbosity&quot;,
+    default = 0,
+    help = &quot;level of verbosity&quot;
+  )
+  val files = parser.repeatedParam[java.nio.file.Path](
+    &quot;files&quot;,
+    help = &quot;remove these files&quot;
+  )
+  parser.parseOrExit(args)
+  println(s&quot;verbosity: ${verbosity.value}&quot;)
+  for (file &lt;- files.value) {
+    println(s&quot;if this were a real program, we would delete $file&quot;)
+  }
+</code></pre>
+<p>Following is a result of running the code:</p>
+<pre><code>$ app --verbosity
+error processing argument --verbosity: argument expected
+run with '--help' for more information
+
+$ app --verbosity 1
+verbosity: 1
+
+$ app --verbosity=1
+verbosity: 1
+
+$ app --verbosity 1 file1 file2
+verbosity: 1
+if this were a real program, we would delete file1
+if this were a real program, we would delete file2
+
+$ app file1 --verbosity 1 file2
+verbosity: 1
+if this were a real program, we would delete file1
+if this were a real program, we would delete file2
+
+$ app file1 -- --verbosity 1 file2
+verbosity: 0
+if this were a real program, we would delete file1
+if this were a real program, we would delete --verbosity
+if this were a real program, we would delete 1
+if this were a real program, we would delete file2
+</code></pre>
+<p>Here is what is happening:</p>
+<ul>
+<li>
+<p>A <em>named</em> parameter is a parameter that is identified by a name on the command
+line instead of a position. Named arguments are syntactically distinguished
+from positional arguments by a leading <code>-</code> (or <code>--</code> as is common).</p>
+</li>
+<li>
+<p>Arguments to named parameters can be either separated by a space or an equals
+sign.</p>
+</li>
+<li>
+<p>Named arguments may appear in any order on the command line. They can be
+intermingled with positional arguments.</p>
+</li>
+<li>
+<p>A standalone <code>--</code> serves as a delimiter, and allows arguments that start with
+<code>-</code> to be treated as positionals. This is very handy for accepting untrusted
+input in scripts, or deleting files that start with a hyphen.</p>
+</li>
+</ul>
+<p>All parameter declaration methods, <code>param()</code>, <code>requiredParam()</code> and
+<code>repeatedParam()</code> allow defining parameters as positional and named. The only
+hint you can see is in the name: if it starts with '-', then it is a named
+parameter, otherwise it is positional. Note however, that it is most common and
+good practice to only use positional parameters for required parameters, or
+conversely, always make named parameters optional.</p>
+<h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
+<p>Flags are a special kind of named parameter. They don't take an argument, and we
+are only ever interested if they are present on the command-line or not.</p>
+<p>An example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val verbose = parser.param[Boolean](
+    &quot;--verbose&quot;,
+    default = false,
+    help = &quot;use verbose output&quot;,
+    flag = true
+  )
+  parser.parseOrExit(args)
+  println(verbose.value)
+</code></pre>
+<p>Running it:</p>
+<pre><code>$ app
+false
+
+$ app --verbose
+true
+
+$ app --verbose=false
+false
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>A parameter is declared as a <strong>flag</strong> by setting the <em>flag</em> parameter,</p>
+<p>This instructs the argument parser that the parameter does not take an
+argument.</p>
+</li>
+<li>
+<p>If the flag is encountered on the command line, then it is assigned the string
+value <code>&quot;true&quot;</code>.</p>
+<p>Thus, it only makes sense to declare <code>Boolean</code> parameters as <code>flags</code>.</p>
+</li>
+<li>
+<p>You can still override the argument by explicitly passing it after an equals
+sign.</p>
+</li>
+</ul>
+<h2 id="short-named-parameters-and-aliases"><a class="header" href="#short-named-parameters-and-aliases">Short Named Parameters and Aliases</a></h2>
+<p>If you are familiar with command line usage, you will notice that I haven't yet
+touched on the topic of short versions of named parameters. It's quite simple:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val verbose = parser.param[Boolean](
+    &quot;--verbose&quot;,
+    default = false,
+    aliases = Seq(&quot;-v&quot;, &quot;--talkative&quot;),
+    flag = true,
+    help = &quot;use verbose output&quot;
+  )
+  parser.parseOrExit(args)
+  println(verbose.value)
+</code></pre>
+<p>And here goes:</p>
+<pre><code>$ app -v
+true
+
+$ app --help
+Usage: [OPTIONS]
+Options:
+      --bash-completion string  generate bash completion for this command
+      --help                    show this message and exit
+  -v, --verbose                 use verbose output
+</code></pre>
+<p>Note that the new aliases are also reflected in the help text.</p>
+<h2 id="reading-from-the-environment"><a class="header" href="#reading-from-the-environment">Reading from the Environment</a></h2>
+<p>In some cases it can be useful to fall back to reading a command line from an
+environment variable.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val creds = parser.param[os.Path](
+    &quot;--credentials-file&quot;,
+    default = os.root / &quot;etc&quot; / &quot;creds&quot;,
+    env = &quot;APP_CREDENTIALS_FILE&quot;,
+    help = &quot;the file containing service credentials&quot;
+  )
+  parser.parseOrExit(args)
+  println(creds.value)
+</code></pre>
+<p>Run it:</p>
+<pre><code>$ APP_CREDENTIALS_FILE=/etc/foo app
+/etc/foo
+
+$ APP_CREDENTIALS_FILE=/etc/foo2 app --credentials-file=/etc/foo1
+/etc/foo1
+
+$ app
+/etc/creds
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>Required and optional parameter declarations can specify an <code>env</code>, which will
+name an environment variable to use if the argument cannot be found on the
+command line.</p>
+</li>
+<li>
+<p>The order of precedence is:</p>
+<ol>
+<li>the argument on the command line</li>
+<li>the environment variable</li>
+<li>the default value</li>
+</ol>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="cookbook"><a class="header" href="#cookbook">Cookbook</a></h2>
+<p>This <em>cookbook</em> contains recipes (i.e. &quot;how-tos&quot;) for accomplishing common tasks
+which are more advanced than what is described in the <a href="ll/cookbook.html#tutorial">Tutorial</a>.</p>
+<h3 id="subcommands"><a class="header" href="#subcommands">Subcommands</a></h3>
+<p>Many applications actually split their functionality into multiple nested
+commands, each corresponding to the verb of an action (such as <code>docker run</code> or
+<code>git clone</code>). This approach works particularly well if an application performs
+different functions which require different kinds of arguments.</p>
+<p><code>ArgumentParser</code> has built-in support for these kinds of sub-commands with the
+<code>subparser()</code> method. This method will return a new <code>ArgumentParser</code> which can
+be modified as usual. The parent parser is aware of the child parser, and will
+include it in help messages and bash completion scripts. Each child parser will
+have its own parameters, but can access the arguments declared in the parent.</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser(description = &quot;an example application&quot;)
+
+  val global = parser.param[String](&quot;--global&quot;, &quot;unset&quot;)
+
+  val getter = parser.subparser(&quot;get&quot;, &quot;get a value&quot;)
+  val getterKey = getter.requiredParam[String](&quot;key&quot;)
+  getter.action{
+    println(s&quot;global: ${global.value}&quot;)
+    println(s&quot;getting key ${getterKey.value}&quot;)
+  }
+
+  val setter = parser.subparser(&quot;set&quot;, &quot;set a value&quot;)
+  val setterKey = setter.requiredParam[String](&quot;key&quot;)
+  val setterValue = setter.requiredParam[String](&quot;value&quot;)
+  setter.action{
+    println(s&quot;global: ${global.value}&quot;)
+    println(s&quot;setting key ${setterKey.value} to ${setterValue.value}&quot;)
+  }
+
+  val nested = parser.subparser(&quot;nested&quot;, &quot;another command&quot;)
+  nested.subparser(&quot;inner1&quot;)
+  nested.subparser(&quot;inner2&quot;)
+
+  parser.parseOrExit(args)
+</code></pre>
+<pre><code>$ app
+missing argument: command
+run with '--help' for more information
+
+$ app get k
+global: unset
+getting key k
+
+$ app set k v
+global: unset
+setting key k to v
+
+$ app --global=a set k v
+global: a
+setting key k to v
+
+$ app set --global=a k v
+unknown argument: --global
+run with '--help' for more information
+
+$ app --help
+Usage: [OPTIONS] COMMAND ARGS...
+
+an example application
+
+Options:
+      --bash-completion string  generate bash completion for this command
+      --global string           
+      --help                    show this message and exit
+Commands:
+  set       set a value
+  get       get a value
+  nested    another command
+</code></pre>
+<h3 id="bash-completion"><a class="header" href="#bash-completion">Bash Completion</a></h3>
+<p>If you are an avid user of the command line, you will probably have noticed that
+you can get argument suggestions by pressing the <code>tab</code> key on a partially typed
+word. This is a very helpful feature for quickly navigating and exploring
+command line tools. It is known as <em>bash completion</em>, and can work in one of two
+ways:</p>
+<ol>
+<li>
+<p>Standalone. A <em>completion script</em> has been <em>sourced</em> by your shell and is
+what is called to generate completions when you press tab.</p>
+</li>
+<li>
+<p>Interactive. Your program is called to complete the partially typed word.</p>
+</li>
+</ol>
+<p>The <code>argparse</code> library allows you to use both options with minimal setup. We do
+however recommend to use <em>standalone</em> completion if you are writing your program
+for the JVM, since you otherwise have to suffer the JVM's startup delay when
+you're waiting for tab completion.</p>
+<h4 id="standalone-bash-completion"><a class="header" href="#standalone-bash-completion">Standalone Bash Completion</a></h4>
+<p>Every <code>ArgumentParser</code> accepts a <code>--bash-completion</code> parameter which will
+generate a bash-completion script. You can source this script at the start of
+your shell session, for example by adding it to your <code>~/.bashrc</code>.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  parser.param[os.Path](&quot;--foo&quot;, os.pwd)
+  parser.param[os.Path](&quot;--bar&quot;, os.pwd)
+  parser.param[os.Path](
+    &quot;--baz&quot;,
+    os.pwd,
+    standaloneCompleter = argparse.BashCompleter.Fixed(Set(&quot;a&quot;, &quot;b&quot;))
+  )
+  parser.parseOrExit(args)
+</code></pre>
+<pre><code>$ app --bash-completion app &gt; complete.sh
+$ source complete.sh
+$ app -[press tab]
+--bar=  --baz=  --foo=  --help
+$ app --baz=[press tab]
+a  b
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>The argument <code>--bash-completion</code> will generate a completion script for bash.</p>
+<p>You can read the full details of how bash completion works on <code>man 1 bash</code>.</p>
+</li>
+<li>
+<p>Completions are based on the parameter type, but can be overriden by
+explicitly setting the <code>standaloneCompleter</code> parameter.</p>
+</li>
+<li>
+<p>Completion will only complete positional arguments by default, unless you have
+started typing a word which starts with <code>-</code>.</p>
+</li>
+<li>
+<p>This works also with subcommands.</p>
+</li>
+</ul>
+<p>We suggest that you include the bash completion script in the files distributed alongside the binary distribution of your application.</p>
+<h4 id="interactive-bash-completion"><a class="header" href="#interactive-bash-completion">Interactive Bash Completion</a></h4>
+<p>You can also write completion logic in the program itself. In this case, you
+will need to instruct bash to call your program with a special environment when
+you press tab. You can do this by running <code>complete -o nospace -C &lt;program&gt; &lt;program&gt;</code> at the start of your shell session, for exmaple by putting it into
+<code>~/.bashrc</code>.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  parser.param[os.Path](&quot;--foo&quot;, os.pwd)
+  parser.param[os.Path](&quot;--bar&quot;, os.pwd)
+  parser.param[os.Path](
+    &quot;--baz&quot;,
+    os.pwd,
+    interactiveCompleter = s =&gt; Seq(&quot;a&quot;, &quot;b&quot;)
+  )
+  parser.parseOrExit(args)
+</code></pre>
+<pre><code>$ complete -o nospace -C app app
+$ app -[press tab]
+--bar    --baz    --foo    --help
+$ app --baz [press tab]
+a  b
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p>Bash sets a few &quot;magic&quot; environment variables before invoking your program,
+which will cause it to behave differently than when invoked normally.</p>
+</li>
+<li>
+<p>Completions are based on the parameter type, but can be overriden by
+explicitly setting the <code>interactiveCompleter</code> parameter.</p>
+</li>
+<li>
+<p>You can read the full details of how bash completion works on <code>man 1 bash</code>.</p>
+</li>
+</ul>
+<p>We suggest that you only use interactive completion for programs targeting
+Scala Native.</p>
+<h3 id="depending-on-another-parameter"><a class="header" href="#depending-on-another-parameter">Depending on another Parameter</a></h3>
+<p>In some situations you may want a parameter's default value to depend on the
+value of another parameter. You can achieve this by simply calling the
+argument holder's <code>value</code> method in the default.</p>
+<p>Example:</p>
+<pre><code class="language-scala">def main(args: Array[String]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val dir = parser.param[os.Path](&quot;-C&quot;, default = os.root)
+  val file = parser.param[os.Path](&quot;--file&quot;, default = dir.value / &quot;file&quot;)
+  parser.parseOrExit(args)
+  println(file.value)
+</code></pre>
+<pre><code>$ app
+/file
+
+$ app -C /foo
+/foo/file
+
+$ app --file /bar
+/bar
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>The <code>default</code> method parameter is call-by-name.</li>
+<li>Arguments are parsed in order of parameter definition. Hence a parameter can
+reference the values of others in its default value.</li>
+</ul>
+<h3 id="adding-support-for-a-new-type-of-parameter"><a class="header" href="#adding-support-for-a-new-type-of-parameter">Adding Support for a New Type of Parameter</a></h3>
+<p>This library has support for reading arguments for many kinds of Scala types. In
+advanced programs however, it can happen that you run into an unsupported type.
+You will receive a <em>compile-time</em> error, informing you that a specific type is
+not supported. In this situation, you can define a custom <em>API bundle</em> with an
+additional <code>Reader</code> for your type of parameter.</p>
+<p>Example of the problem:</p>
+<pre><code class="language-scala">case class Level(n: Int)
+
+def main(args: Array[Strig]): Unit =
+  val parser = argparse.default.ArgumentParser()
+  val level = parser.requiredParam[Level](&quot;log-level&quot;) // Compile error: no Reader[Level] found
+  parser.parseOrExit(args)
+  println(bytes.value.n)
+</code></pre>
+<p>Solution:</p>
+<pre><code class="language-scala">case class Level(n: Int)
+
+object custom extends argparse.core.Api {
+
+  given Reader[Level] with {
+    def read(str: String): Reader.Result[Level] = str match {
+      case &quot;DEBUG&quot; =&gt; Reader.Success(Level(0))
+      case &quot;INFO&quot; =&gt; Reader.Success(Level(1))
+      case &quot;WARN&quot; =&gt; Reader.Success(Level(2))
+      case &quot;ERROR&quot; =&gt; Reader.Success(Level(3))
+      case other =&gt; Reader.Error(s&quot;'$other' is not a valid level&quot;)
+    }
+    def typeName = &quot;level&quot;
+  }
+
+}
+
+def main(args: Array[String]): Unit =
+  val parser = custom.ArgumentParser() // notice how we use `custom` instead of `argparse.default`
+  val level = parser.requiredParam[Level](&quot;log-level&quot;)
+  parser.parseOrExit(args)
+  println(level.value.n)
+</code></pre>
+<pre><code class="language-scala">$ app WARN
+2
+
+$ app FATAL
+error processing argument log-level: 'FATAL' is not a valid level
+run with '--help' for more information
+</code></pre>
+<p>How it works:</p>
+<ul>
+<li>
+<p><code>Reader</code> is a <em>typeclass</em> which is responsible for parsing strings from the
+command line into instances of Scala types.</p>
+</li>
+<li>
+<p>Readers are declared in an API bundle. An API bundle is a bunch of traits that
+are mixed together in order to define &quot;a flavor&quot; of argparse.</p>
+<p>The default bundle implemented in this library is
+<a href="ll/../javadoc/api/argparse/default$.html"><code>argparse.default</code></a>, which includes
+Readers for most common types.</p>
+</li>
+<li>
+<p>You can create a custom bundle by creating an object which extends
+<code>argparse.core.Api</code>, and declare additional readers in it.</p>
+</li>
+<li>
+<p>The <code>ArgumentParser</code> from the custom bundle will find the <em>Reader</em> instance
+which can parse the desired parameter type.</p>
+</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="real-world-examples"><a class="header" href="#real-world-examples">Real World Examples</a></h1>
+<ul>
+<li><em>Feel free to open a <a href="https://github.com/jodersky/scala-argparse/blob/master/docs/users.md">pull
+request</a>
+and list your application here! (you can use the &quot;edit&quot; link on the top-right
+of this page)</em></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="utilities"><a class="header" href="#utilities">Utilities</a></h1>
+<p>Argparse has a few utility classes that can help with some common
+application-related tasks.</p>
+<h2 id="terminal-properties"><a class="header" href="#terminal-properties">Terminal Properties</a></h2>
+<p>The <a href="./javadoc/api/argparse/term$.html"><code>argparse.term</code></a> helper contains methods
+to retrieve terminal properties, such as number of rows and columns.</p>
+<h2 id="standard-file-paths"><a class="header" href="#standard-file-paths">Standard File Paths</a></h2>
+<p>You can use <a href="./javadoc/api/argparse/userdirs$.html"><code>argparse.userdirs</code></a> to
+access standard directories for configuration, state or data of user
+applications. This utility is based on the <a href="https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html">XDG Base Directory
+Specification</a>,
+with some adaptations made for macOS. It is recomended to use this helper
+instead of hardcoding directories or creating a new folder in the user's home
+directory.</p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="writing-man-pages"><a class="header" href="#writing-man-pages">Writing Man Pages</a></h1>
+<p>The built-in help message system is useful for quick reference, but is too terse
+for thoroughly documenting command line applications. For this, I recommend that
+you write a <strong>man page</strong> and ship it alongside every application that you
+create.</p>
+<p>I recommend that you watch the presentation <a href="https://www.youtube.com/watch?v=_UjJMrahc8o&amp;list=UU3Pk-8hhzME2w5BL_JvXfRg&amp;index=16">&quot;Man, ‘splained: 40 Plus Years of
+Man Page History&quot;, by Breanne
+Boland</a>.
+It goes into the reasons and best-practices of writing man pages. You can also
+read the manual page's manual page (run <code>man man</code>) if you like.</p>
+<h2 id="template"><a class="header" href="#template">Template</a></h2>
+<p>Instead of writing a manual page by hand in
+<a href="https://en.wikipedia.org/wiki/Troff">troff</a>, you can use the following markdown
+template and run it through <a href="https://pandoc.org/">pandoc</a>.</p>
+<pre><code class="language-markdown">---
+title: MY-APP
+section: 1
+header: User Manual
+footer: App 1.0.0
+date: June 2022
+---
+
+# NAME
+
+my-app \- do something
+
+# SYNOPSIS
+
+**`my-app [--option1 &lt;name&gt;] [--option2 &lt;name&gt;] &lt;arg&gt;`**
+
+# DESCRIPTION
+
+An application which does something useful with `&lt;arg&gt;`.
+
+The description can go into details of what the application does, and can span
+multiple paragraphs.
+
+## A subsection
+
+You can use subsections in the description to go into finer details.
+
+# OPTIONS
+
+**`--option1=&lt;string&gt;`**
+: An arbitrary string which sets some specific configuration value. Defaults to
+some sane value.
+
+**`--option2=&lt;string&gt;`**
+: Another arbitrary string which sets some specific configuration value.
+Defaults to some sane value.
+
+# EXIT STATUS
+
+Return 0 on success, 1 on error.
+
+# ENVIRONMENT
+
+`MY_APP_VARIABLE`
+: Environment variable used by this application.
+
+# FILES
+
+`/etc/my-app.conf`
+: This is an important file. Configuration values are read from this file if
+they are not specified on the command-line
+
+# EXAMPLES
+
+**An example tells a thousand words.**
+
+```
+you can use markdown code sections
+```
+
+**Please include at least one example!**
+
+# SEE ALSO
+
+[A reference](https://pandoc.org/)
+</code></pre>
+<p>To preview the page after editing, run:</p>
+<pre><code>pandoc -s -f markdown-smart manpage.md -t man | man -l -
+</code></pre>
+<p>(the <code>-smart</code> is necessary here, to avoid converting '--' into an em-dash)</p>
+<p>And, once ready, save it as a man page:</p>
+<pre><code>pandoc -s -f markdown-smart manpage.md -t man &gt; manpage.1
+</code></pre>
+<p>then finally ship it alongside your application.</p>
+<p>Since it's written in markdown, you can also convert to html and make it
+available online.</p>
+<hr />
+<div style="break-before: page; page-break-before: always;"></div><h1 id="changelog"><a class="header" href="#changelog">Changelog</a></h1>
+<h2 id="0200"><a class="header" href="#0200">0.20.0</a></h2>
+<p>This release focuses on changes to the annotation-based API. The minimum Scala 3
+version has been bumped to 3.2</p>
+<ul>
+<li>Refactor the annotation-based macro parser to work with Scala 3.2 and avoid
+some strange compiler crashes.</li>
+<li>Include the exception class's name in the default error message,</li>
+</ul>
+<h2 id="0191"><a class="header" href="#0191">0.19.1</a></h2>
+<ul>
+<li>Add support for defining top-level main functions with nested commands.</li>
+</ul>
+<h2 id="0190"><a class="header" href="#0190">0.19.0</a></h2>
+<ul>
+<li>Add error handling and output printing to the annotation API.</li>
+</ul>
+<h2 id="0181"><a class="header" href="#0181">0.18.1</a></h2>
+<ul>
+<li>Fix flag-derivation in the annotation API.</li>
+</ul>
+<h2 id="0180"><a class="header" href="#0180">0.18.0</a></h2>
+<ul>
+<li>Migrate documentation from custom static site to mdbook.</li>
+<li>Improve documentation</li>
+<li>Replace general <code>arg()</code> annotation with more specialized versions</li>
+</ul>
+<h2 id="0170"><a class="header" href="#0170">0.17.0</a></h2>
+<h3 id="breaking"><a class="header" href="#breaking">Breaking</a></h3>
+<ul>
+<li>
+<p>Rework annotation-based macro API and remove experimental status. This is now
+the recommended interface for basic use cases.</p>
+</li>
+<li>
+<p>Replace sub-commands with more structured sub-parsers.</p>
+<p>While the idea of independent subcommands seems quite elegant, there are
+unfortunately a couple of pitfalls which make them quite brittle to use. The
+first is that the current API made it easy to capture arguments at the wrong
+time in lambdas, hence leading to incomplete argument errors. The second, more
+fundamental issue, is that independent commands are by definition independent,
+and hence generating shared help messages and bash completion is quite tricky.
+For example, we needed to resort to hacky workarounds that relied on the stack
+and thread locals in combination with &quot;magic&quot; parameters to achieve composable
+bash completion that worked with nested commands.</p>
+<p>Subparsers are less powerful but also less brittle and should still be
+suitable for the majority of usecases. In situations where absolute control is
+necessary, the user can still define an all-absorbing parameter and handle
+subcommands manually.</p>
+</li>
+</ul>
+<h3 id="minor"><a class="header" href="#minor">Minor</a></h3>
+<ul>
+<li>Remove parameter style checker.</li>
+</ul>
+<h3 id="experimental"><a class="header" href="#experimental">Experimental</a></h3>
+<ul>
+<li>Add experimental configuration parsing library.</li>
+</ul>
+<h2 id="0162"><a class="header" href="#0162">0.16.2</a></h2>
+<ul>
+<li>Add low-level escape hatches for manually adding parameter descriptors to the
+argument parser and bash completion scripts.</li>
+<li>Add a hook provide hook for handling unknown subcommands.</li>
+</ul>
+<h2 id="0161"><a class="header" href="#0161">0.16.1</a></h2>
+<p>Add support for annotation-based, macro-generated argument parsers
+(experimental).</p>
+<h2 id="0160"><a class="header" href="#0160">0.16.0</a></h2>
+<p>The major change in this release is the migration to a mixin-based API. The
+<code>ArgumentParser</code> trait as well as all readers have been moved to traits in
+<code>argparse.core._</code>, and the new top-level object for users is <code>argparse.default</code>.
+Thus, any references to <code>argparse.ArgumentParser</code> need to updated to
+<code>argparse.default.ArgumentParser</code>.</p>
+<p>Other breaking changes:</p>
+<ul>
+<li>Disable most experimental macro-based parser. This includes <code>settings</code> and
+<code>mutableSetting</code>. A new macro-based parser is in the works.</li>
+<li>Remove <code>show()</code> function from <code>Reader</code>.</li>
+<li>Add a <code>typeName</code> function to <code>Reader</code>.</li>
+<li>Rename <code>BashCompletion</code> to <code>InteractiveBashCompletion</code>.</li>
+<li>Make argument a top-level class, instead of <code>() =&gt; A</code>.</li>
+<li>Remove deprecated features.</li>
+</ul>
+<p>Other changes:</p>
+<ul>
+<li>Implement terminal properties for Native (the code between Native and JVM is
+now shared).</li>
+<li>Upgrade to Scala Native 0.4.4</li>
+</ul>
+<h2 id="0152"><a class="header" href="#0152">0.15.2</a></h2>
+<ul>
+<li>Add an INI printer</li>
+<li>Derive publish version from Git</li>
+</ul>
+<h2 id="0151"><a class="header" href="#0151">0.15.1</a></h2>
+<ul>
+<li>Cleanup INI parser support and add more tests.</li>
+</ul>
+<h2 id="0150"><a class="header" href="#0150">0.15.0</a></h2>
+<ul>
+<li>Add support for Scala Native for Scala 3.</li>
+<li>Add standalone bash completion. This allows user programs to generate bash
+scripts for completion, rather than relying on the program itself to generate
+completions. Although the former is less powerful than the latter, it is
+suitable for JVM programs, where the startup cost would be prohibitive for
+interactive completions.</li>
+<li>Remove the ability for parameters to fall back to values provided in a
+configuration file. This was experimental, and configuration files are not in
+scope of this project.</li>
+<li>Move INI-style configuration parser into separate package.</li>
+<li>Add toggles for default help and bash-completion parameters.</li>
+</ul>
+<h2 id="0140"><a class="header" href="#0140">0.14.0</a></h2>
+<p>Rename project to scala-argparse.</p>
+<h2 id="0130"><a class="header" href="#0130">0.13.0</a></h2>
+<ul>
+<li>Remove ability to read args from a file (predef reader). This caused ordering
+issues in the parser and seemed like a recipe for obsuring config origins.</li>
+<li>Implement an ini-style config parser, and allow params to read from config.</li>
+</ul>
+<h2 id="0121"><a class="header" href="#0121">0.12.1</a></h2>
+<ul>
+<li>Add range reader.</li>
+<li>Upgrade mill to 0.9.10</li>
+</ul>
+<h2 id="0120"><a class="header" href="#0120">0.12.0</a></h2>
+<ul>
+<li>Add experimental case class parser (Scala 3 only), available under
+<code>parser.settings</code> (the previous mutable settings parser has been renamed to
+<code>parser.mutableSettings</code>).</li>
+<li>Add readers for:
+<ul>
+<li><code>scala.concurrent.time.Duration</code></li>
+<li>Common <code>java.time</code> data types</li>
+<li>Collections of paths. These readers use <code>:</code> as a separator, instead of the
+usual <code>,</code>'.</li>
+</ul>
+</li>
+<li>Upgrade to Scala 3.0.2.</li>
+</ul>
+<h2 id="0110"><a class="header" href="#0110">0.11.0</a></h2>
+<ul>
+<li>Upgrade to Scala 2.13.6</li>
+<li>Refactor XDG directory implemention</li>
+<li>Refactor default help message</li>
+</ul>
+<h2 id="0103"><a class="header" href="#0103">0.10.3</a></h2>
+<ul>
+<li>Add support for Scala 3.0.0</li>
+</ul>
+<h2 id="0102"><a class="header" href="#0102">0.10.2</a></h2>
+<ul>
+<li>Wrap text in help messages</li>
+<li>Add support for Scala 3.0.0-RC3</li>
+</ul>
+<h2 id="0101"><a class="header" href="#0101">0.10.1</a></h2>
+<ul>
+<li>Add support for Scala 3.0.0-RC2</li>
+</ul>
+<h2 id="0100"><a class="header" href="#0100">0.10.0</a></h2>
+<ul>
+<li>Add readers for <code>() =&gt; InputStream</code>, <code>() =&gt; OutputStream</code> and <code>geny.Readable</code>.
+These readers follow the convention of using '-' to read/write from
+stdin/stdout.</li>
+<li>Change the parser to support inserting parameters during parsing. Predefs can
+now be specified as parameters.</li>
+</ul>
+<h2 id="090"><a class="header" href="#090">0.9.0</a></h2>
+<ul>
+<li>Show default values of named parameters in help messages.</li>
+<li>Implement XDG Base Directory Specification.</li>
+<li>Introduce the concept of a &quot;predef&quot;, a flat configuration file which contains
+command line arguments</li>
+</ul>
+<h2 id="080-and-before"><a class="header" href="#080-and-before">0.8.0 and before</a></h2>
+<p>A command line parser for Scala 2 and 3, featuring:</p>
+<ul>
+<li>simple interfaces</li>
+<li>bash completion</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr.min.js"></script>
+        <script src="mark.min.js"></script>
+        <script src="searcher.js"></script>
+
+        <script src="clipboard.min.js"></script>
+        <script src="highlight.js"></script>
+        <script src="book.js"></script>
+
+        <!-- Custom JS scripts -->
+        <script src="theme/pagetoc.js"></script>
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+    </body>
+</html>
