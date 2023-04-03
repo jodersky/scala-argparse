@@ -103,7 +103,7 @@ Here is what is happening:
   specify it). Specifying anything else results in an error. But even then, we
   do get a useful usage message, also for free.
 
-## Introducing Required Parameters
+## Required Parameters
 
 An example:
 
@@ -167,7 +167,7 @@ Following is a result of running the code:
 
 That went well. The program now even helpfully quits on bad input.
 
-## Introducing Optional Parameters
+## Optional Parameters
 
 So far the parameters that we have specified were required. Let's look at how we
 can make an argument optional.
@@ -194,7 +194,7 @@ Here is what's happening:
 - The default value will be used if the argument is not encountered on the
   command-line.
 
-## Introducing Repeated Parameters
+## Repeated Parameters
 
 An example:
 

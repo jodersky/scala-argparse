@@ -8,10 +8,9 @@ such as help messages and bash completion.[^1]
     3.3.0), you will need to write a tiny boilerplate snippet as shown in the
     introductory example.
 
-Note: the generated code uses a lower-level interface, which can also be
-directly used for more flexibility. It is suggested that you [read the
-tutorial](./ll/index.html) in any case, for further understanding of how
-argument parsing works at a lower level.
+The generated code uses a [lower-level interface](./ll/index.html), which you
+can also use directly if you would like more flexibility than what the
+auto-generated CLI provides.
 
 ### Parameter Mapping
 
@@ -46,10 +45,6 @@ for many types out-of-the-box. Some examples:
 - various `java.time` date types
 - `key=value` pairs of other supported types
 
-The mechanism in which command line arguments are converted to Scala types is
-highly customizable and [new types can easily be
-added](./ll/cookbook.md#adding-support-for-a-new-type-of-parameter).
-
 E.g.
 
 ```scala
@@ -59,6 +54,10 @@ E.g.
 ```
 {{#include ../../examples/annotation-types/src/shell.txt}}
 ```
+
+The mechanism by which command line arguments are converted to Scala types is
+highly customizable and [new types can easily be
+added](./ll/cookbook.md#adding-support-for-a-new-type-of-parameter).
 
 ### Parameter Overrides
 
@@ -129,9 +128,9 @@ of parameters. See the `git` or `docker` tools for some such examples.
 
 In scala-argparse, nested commands use the same mechanism as single, top-level
 commands, with one small twist: instead of annotating a *method* with
-`command()`, you annotate a *class definition* (or a function that returns an
-instance of an annotated class). This can be done recursively, and classes can
-declare parameters which can be referenced by child commands.
+`command()`, you annotate a *class definition* (or a method that returns an
+instance of a class containing other commands). This can be done recursively,
+and classes can declare parameters which can be referenced by child commands.
 
 E.g.
 
@@ -164,7 +163,7 @@ Any program that uses scala-argparse automatically gets:
 
 - Now that you know the high-level API, check out the [lower-level
   API](./ll/index.html), which underpins the former and can be helpful for
-  understanding cusomizations.
+  understanding customizations.
 
 - Read the API docs. Start with the [`argparse.default`
   bundle](javadoc/api/argparse/default$.html).

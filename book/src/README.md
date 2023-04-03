@@ -18,7 +18,7 @@ In a terminal:
 
 - Simple interfaces
 
-  - Top-level, annotation-based.
+  - High-level, annotation-based, CLI generator.
 
   - Lower-level interface inspired by the
     [argparse](https://docs.python.org/3/library/argparse.html) package from Python.
@@ -49,5 +49,6 @@ available on maven central under the coordinates:
 
 | Channel | Links |
 |---------|-------|
+| Forum | [GitHub Discussions](https://github.com/jodersky/scala-argparse/discussions) |
 | Chat | [![discord](https://img.shields.io/badge/chat-discord-blue)](https://discord.gg/usj9DC8FDN) [![project chat](https://img.shields.io/badge/zulip-join_chat-brightgreen.svg)](https://crashbox.zulipchat.com/#narrow/stream/330744-argparse) |
 | Issues | [GitHub](https://github.com/jodersky/scala-argparse/issues) |
